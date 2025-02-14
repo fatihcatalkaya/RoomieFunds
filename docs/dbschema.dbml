@@ -1,0 +1,39 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table person {
+  id integer [pk]
+  name TEXT [not null]
+  room TEXT [not null]
+  pays_floor_fees bool [not null]
+  account_id integer [ref: > account.id]
+}
+
+Table account {
+  id integer [pk]
+  name TEXT [not null]
+  is_active bool [not null]
+}
+
+Table transaction {
+  id integer [pk]
+  source_account_id integer [ref: > account.id, not null]
+  target_account_id integer [ref: > account.id, not null]
+  amount integer [not null]
+  created_at timestamp [not null]
+  description text [not null, default: ''] 
+}
+
+Enum received_from {
+  cash
+  bank_account
+  paypal
+}
+
+Table physical_transaction {
+  id integer [pk]
+  transaction_id integer [not null, ref: > transaction.id]
+  source received_from [not null, default: '']
+  created_at timestamp [not null]
+  transaction_description text [not null, default: ''] 
+}
