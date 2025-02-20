@@ -1,4 +1,5 @@
 # Admin Features
+
 - Personen verwalten
 - Transaktionen verwalten
 - Flurbeitrag einrichten
@@ -9,6 +10,7 @@
 - Getränke-Produkte mit Preisen verwalten
 
 # Personen Features
+
 - Eigenen Kontostand einsehen
 - Eigene Transaktionshistorie einsehen
 - Kontostand Flurkasse einsehen
