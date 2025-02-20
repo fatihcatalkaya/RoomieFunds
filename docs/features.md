@@ -14,3 +14,10 @@
 - Eigenen Kontostand einsehen
 - Eigene Transaktionshistorie einsehen
 - Kontostand Flurkasse einsehen
+
+# Audit Log
+Das Audit Log soll speichern...
+- ...was verändert wurde (Zustand nachher bei CREATE, Zustand vorher bei DELETE, Zustand vor- und nachher bei UPDATE)
+- ...wann etwas verändert wurde
+- ...von wem etwas verändert wurde
+- ...in welcher Tabelle etwas verändert wurde

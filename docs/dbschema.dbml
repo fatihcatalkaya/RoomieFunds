@@ -1,5 +1,26 @@
 // Use DBML to define your database structure
 // Docs: https://dbml.dbdiagram.io/docs
+Enum log_operations {
+  create
+  update
+  delete
+}
+
+Table log {
+  id integer [pk]
+  created_at timestamptz [not null]
+  operation log_operations [not null]
+  modified_table_name text [not null]
+  modified_by text [not null, note: 'username parsed from jwt token']
+  subject_before jsonb
+  subject_after jsonb
+}
+
+Table product {
+  id integer [pk]
+  name TEXT [not null]
+  price integer [not null, note: 'in cent']
+}
 
 Table person {
   id integer [pk]
@@ -19,8 +40,8 @@ Table transaction {
   id integer [pk]
   source_account_id integer [ref: > account.id, not null]
   target_account_id integer [ref: > account.id, not null]
-  amount integer [not null]
-  created_at timestamp [not null]
+  amount integer [not null, note: 'in cent']
+  created_at timestamptz [not null]
   description text [not null, default: ''] 
 }
 
