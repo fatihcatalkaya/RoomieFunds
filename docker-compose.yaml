@@ -9,14 +9,6 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
       POSTGRES_DATABASE: app
-  sso:
-    image: quay.io/keycloak/keycloak:26.0.7
-    ports:
-      - "9090:8080"
-    command: [ "start-dev", "--import-realm" ]
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
 
 volumes:
   roomiefunds-db:
