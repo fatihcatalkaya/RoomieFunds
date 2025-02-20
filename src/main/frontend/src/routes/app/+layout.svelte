@@ -43,7 +43,7 @@
             <span class="mr-auto text-xl font-bold">RoomieFunds</span>
             {#if username}
               <span class="mr-2 flex items-center sm:text-base md:text-xl"
-                >[<MdiPerson /> {username}]</span
+                >[{$AuthStore.roles.join(',')}] [<MdiPerson /> {username}]</span
               >
             {/if}
             <button
