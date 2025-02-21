@@ -1,7 +1,9 @@
-<script>
-	import Breadcrumb from "$lib/components/Breadcrumb.svelte";
+<script context="module">
+    export const prerender = false;
+	export const breadcrumbLabel = "Produkte";
 </script>
-<div class="mx-auto max-w-6xl px-2">
+
+<div class="mx-auto max-w-6xl">
 	<table class="w-full border-collapse bg-white text-left text-black mt-2">
 		<thead class="bg-slate-200 rounded-lg">
 			<tr>

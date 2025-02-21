@@ -1,3 +1,7 @@
+<script module lang="ts">
+	export const breadcrumbLabel = "Home";
+</script>
+
 <script>
 	import MdiLiquor from '~icons/mdi/liquor';
 	import MdiBank from '~icons/mdi/bank';

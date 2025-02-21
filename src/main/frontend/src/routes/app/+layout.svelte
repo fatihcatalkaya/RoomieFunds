@@ -55,7 +55,7 @@
             >
           </div>
         </div>
-        <div class="w-screen flex-1" style="min-height: 0;">
+        <div class="mx-auto w-full max-w-6xl px-2 my-2" style="min-height: 0;">
           <Breadcrumb />
           {@render children()}
         </div>

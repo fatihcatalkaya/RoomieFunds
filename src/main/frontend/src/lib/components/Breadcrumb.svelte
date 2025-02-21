@@ -1,23 +1,57 @@
 <script lang="ts">
 	import { page } from '$app/state';
+
+	function decideLabel(routeModule: any, pathName: string) {
+		if (Object.hasOwn(routeModule, "breadcrumbLabel")) {
+			return routeModule["breadcrumbLabel"];
+		} else {
+			return String(pathName).charAt(0).toUpperCase() + String(pathName).slice(1);
+		}
+	}
+
 	let crumbs: Array<{ label: string; href: string }> = $derived.by(() => {
 		const tokens = page.url.pathname
-			.replace('/app', '')
 			.split('/')
 			.filter((t) => t !== '');
 
-		let tokenPath = '';
-		let bla = tokens.map((t) => {
-			tokenPath += '/' + t;
-			t = t.charAt(0).toUpperCase() + t.slice(1);
-			return {
-				label: page.data.label || t,
-				href: '/app' + tokenPath
-			};
+		let routeModules = import.meta.glob("/src/routes/**/*.svelte", {
+			eager: true,
 		});
-		// Add a way to get home too.
-		bla.unshift({ label: 'Home', href: '/app' });
-		return bla;
+
+		let completeUrl = "";
+		const paths = page.url.pathname.split("/").filter((p) => p != "");
+
+		let _crumbs = [];
+
+		for (let i = 0; i < paths.length; i++) {
+			let path = paths[i];
+			let previousUrl = completeUrl;
+			completeUrl += `/${path}`;
+
+			if (Object.hasOwn(routeModules, "/src/routes" + completeUrl + "/+page.svelte")) {
+				_crumbs.push({
+					label: decideLabel(routeModules["/src/routes" + completeUrl + "/+page.svelte"], path),
+					href: completeUrl
+				});
+			} else {
+				let matchingRoutes = Object.keys(routeModules).filter(route => route.startsWith("/src/routes" + previousUrl + "/["));
+				if (matchingRoutes.length != 1) {
+					console.warn(`Breadcrumb path ${completeUrl} matches multiple or no routes. Defaulting to capitalized path label.`)
+					// console.log(matchingRoutes) // <= uncomment to show what went wrong :)
+					_crumbs.push({
+						label: String(path).charAt(0).toUpperCase() + String(path).slice(1),
+						href: completeUrl
+					});
+				} else {
+					_crumbs.push({
+						label: decideLabel(matchingRoutes[0], path),
+						href: completeUrl
+					});
+				}
+			}
+		}
+
+		return _crumbs;
 	});
 </script>
 
