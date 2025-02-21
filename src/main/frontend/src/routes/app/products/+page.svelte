@@ -2,7 +2,6 @@
 	import Breadcrumb from "$lib/components/Breadcrumb.svelte";
 </script>
 <div class="mx-auto max-w-6xl px-2">
-    <Breadcrumb />
 	<table class="w-full border-collapse bg-white text-left text-black mt-2">
 		<thead class="bg-slate-200 rounded-lg">
 			<tr>

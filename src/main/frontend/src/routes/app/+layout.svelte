@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { getUsername, loginSilent, logout } from '$lib/auth';
+	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
     import { AuthStore } from '$lib/stores/auth_store';
     import { onMount } from 'svelte';
     import { get } from 'svelte/store';
@@ -55,6 +56,7 @@
           </div>
         </div>
         <div class="w-screen flex-1" style="min-height: 0;">
+          <Breadcrumb />
           {@render children()}
         </div>
       </div>

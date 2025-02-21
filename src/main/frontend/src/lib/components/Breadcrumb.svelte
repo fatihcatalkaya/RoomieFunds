@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
-
-	const tokens = page.url.pathname
-		.replace('/app', '')
-		.split('/')
-		.filter((t) => t !== '');
-
 	let crumbs: Array<{ label: string; href: string }> = $derived.by(() => {
+		const tokens = page.url.pathname
+			.replace('/app', '')
+			.split('/')
+			.filter((t) => t !== '');
+
 		let tokenPath = '';
-        let bla = tokens.map((t) => {
+		let bla = tokens.map((t) => {
 			tokenPath += '/' + t;
 			t = t.charAt(0).toUpperCase() + t.slice(1);
 			return {
