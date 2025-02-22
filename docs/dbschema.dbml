@@ -20,6 +20,7 @@ Table product {
   id integer [pk]
   name TEXT [not null]
   price integer [not null, note: 'in cent']
+  print boolean [default: true]
 }
 
 Table person {

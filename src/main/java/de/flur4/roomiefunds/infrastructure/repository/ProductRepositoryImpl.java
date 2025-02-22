@@ -25,7 +25,8 @@ public class ProductRepositoryImpl implements ProductRepository {
         return jooq.select(
                         PRODUCT.ID,
                         PRODUCT.NAME,
-                        PRODUCT.PRICE
+                        PRODUCT.PRICE,
+                        PRODUCT.PRINT
                 ).from(PRODUCT).where(PRODUCT.ID.eq(productId))
                 .fetchOptional(mapping(Product::new));
     }
@@ -35,7 +36,8 @@ public class ProductRepositoryImpl implements ProductRepository {
         return jooq.select(
                         PRODUCT.ID,
                         PRODUCT.NAME,
-                        PRODUCT.PRICE
+                        PRODUCT.PRICE,
+                        PRODUCT.PRINT
                 ).from(PRODUCT)
                 .fetch(mapping(Product::new));
     }
@@ -43,9 +45,9 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public Product createProduct(CreateProductDto createProductDto) {
         return jooq.insertInto(PRODUCT)
-                .columns(PRODUCT.NAME, PRODUCT.PRICE)
-                .values(createProductDto.name(), createProductDto.price())
-                .returningResult(PRODUCT.ID, PRODUCT.NAME, PRODUCT.PRICE)
+                .columns(PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT)
+                .values(createProductDto.name(), createProductDto.price(), createProductDto.print())
+                .returningResult(PRODUCT.ID, PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT)
                 .fetchOne(mapping(Product::new));
     }
 
@@ -61,8 +63,11 @@ public class ProductRepositoryImpl implements ProductRepository {
         if (updateProductDto.price().isPresent()) {
             product.setPrice(updateProductDto.price().get());
         }
+        if (updateProductDto.print().isPresent()) {
+            product.setPrint(updateProductDto.print().get());
+        }
         product.store();
-        return new Product(product.getId(), product.getName(), product.getPrice());
+        return new Product(product.getId(), product.getName(), product.getPrice(), product.getPrint());
     }
 
     @Override
