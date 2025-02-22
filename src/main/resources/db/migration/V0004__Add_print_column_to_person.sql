@@ -1,0 +1,1 @@
+ALTER TABLE person ADD COLUMN print_on_product_tally_list BOOLEAN DEFAULT true;

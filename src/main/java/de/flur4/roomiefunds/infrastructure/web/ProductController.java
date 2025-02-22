@@ -23,6 +23,7 @@ public class ProductController {
     final CreateProduct createProduct;
     final UpdateProduct updateProduct;
     final DeleteProduct deleteProduct;
+    final GetProductTallySheet getProductTallySheet;
     final JsonWebToken jwt;
 
     @GET
@@ -38,6 +39,18 @@ public class ProductController {
             throw new NotFoundException("Product with id " + productId + " not found");
         }
         return result.get();
+    }
+
+    @GET
+    @Path("/tallylist")
+    @Produces(value = "application/pdf")
+    public byte[] getTallyList() {
+        try {
+            return getProductTallySheet.getProductTallySheet();
+        } catch (Exception e) {
+            log.error("An error occurred while generating product tally list", e);
+            throw new InternalServerErrorException("An error occurred while generating product tally list", e);
+        }
     }
 
     @POST

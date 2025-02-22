@@ -16,6 +16,8 @@ public interface PersonRepository {
 
     List<Person> getAllPersons();
 
+    List<Person> getPersonsToPrintOnTallyList();
+
     Pair<Person, Account> createPerson(CreatePersonDto createPersonDto);
 
     Person updatePerson(long personId, UpdatePersonDto updatePersonDto);

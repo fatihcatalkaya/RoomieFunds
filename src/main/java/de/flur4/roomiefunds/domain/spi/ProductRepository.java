@@ -14,6 +14,8 @@ public interface ProductRepository {
 
     List<Product> getAllProducts();
 
+    List<Product> getProductsToPrintOnTallyList();
+
     Product createProduct(CreateProductDto createProductDto);
 
     Product updateProduct(long productId, UpdateProductDto updateProductDto) throws ProductNotFoundException;

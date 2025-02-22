@@ -29,6 +29,7 @@ Table person {
   room TEXT [not null]
   pays_floor_fees bool [not null]
   account_id integer [ref: > account.id]
+  print_on_product_tally_list boolean [default: true]
 }
 
 Table account {

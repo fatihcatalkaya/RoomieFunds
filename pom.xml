@@ -83,13 +83,17 @@
             <artifactId>quarkus-hibernate-validator</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkiverse.qute.web</groupId>
+            <artifactId>quarkus-qute-web</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
         <dependency>
             <groupId>io.github.fatihcatalkaya</groupId>
             <artifactId>java-typst</artifactId>
-            <version>1.1.1</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.jooq</groupId>

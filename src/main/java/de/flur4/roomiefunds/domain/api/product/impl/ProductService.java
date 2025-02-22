@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.flur4.roomiefunds.domain.api.product.*;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
 import de.flur4.roomiefunds.domain.spi.ProductRepository;
+import de.flur4.roomiefunds.domain.spi.ProductTallyListRenderer;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
@@ -16,10 +17,11 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class ProductService implements CreateProduct, GetProduct, UpdateProduct, DeleteProduct {
+public class ProductService implements CreateProduct, GetProduct, GetProductTallySheet, UpdateProduct, DeleteProduct {
 
     final ProductRepository productRepository;
     final LogRepository logRepository;
+    final ProductTallyListRenderer tallyListRenderer;
 
     @Override
     public Product createProduct(ModifyingPersonDto modifiyingPerson, CreateProductDto createProductDto) throws JsonProcessingException {
@@ -73,5 +75,10 @@ public class ProductService implements CreateProduct, GetProduct, UpdateProduct,
                 Optional.of(updatedProduct)
         ));
         return updatedProduct;
+    }
+
+    @Override
+    public byte[] getProductTallySheet() {
+        return tallyListRenderer.renderTallyList();
     }
 }

@@ -5,5 +5,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record CreatePersonDto(@NotBlank String name,
                               @NotBlank String room,
-                              @NotNull boolean paysFloorFees) {
+                              @NotNull boolean paysFloorFees,
+                              @NotNull boolean printOnProductTallyList) {
 }

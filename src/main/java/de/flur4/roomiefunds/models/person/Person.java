@@ -4,5 +4,6 @@ public record Person(long id,
                      String name,
                      String room,
                      boolean paysFloorFees,
-                     long accountId) {
+                     long accountId,
+                     boolean printOnProductTallyList) {
 }

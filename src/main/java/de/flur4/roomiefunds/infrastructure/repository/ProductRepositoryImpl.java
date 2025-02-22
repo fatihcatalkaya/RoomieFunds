@@ -43,6 +43,18 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public List<Product> getProductsToPrintOnTallyList() {
+        return jooq.select(
+                        PRODUCT.ID,
+                        PRODUCT.NAME,
+                        PRODUCT.PRICE,
+                        PRODUCT.PRINT
+                ).from(PRODUCT)
+                .where(PRODUCT.PRINT.eq(true))
+                .fetch(mapping(Product::new));
+    }
+
+    @Override
     public Product createProduct(CreateProductDto createProductDto) {
         return jooq.insertInto(PRODUCT)
                 .columns(PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT)

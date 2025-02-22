@@ -23,7 +23,7 @@ import static org.jooq.Records.mapping;
 @RequiredArgsConstructor
 public class PersonRepositoryImpl implements PersonRepository {
 
-    DSLContext jooq;
+    final DSLContext jooq;
     private static final String DEFAULT_PERSON_ACCOUNT_NAME = "%ss (%s) Konto";
 
     @Override
@@ -33,7 +33,8 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
-                        PERSON.ACCOUNT_ID
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                 ).from(PERSON)
                 .where(PERSON.ID.eq(id))
                 .fetchOptional(mapping(Person::new));
@@ -46,8 +47,24 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
-                        PERSON.ACCOUNT_ID
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                 ).from(PERSON)
+                .fetch(mapping(Person::new));
+    }
+
+    @Override
+    public List<Person> getPersonsToPrintOnTallyList() {
+        return jooq.select(
+                        PERSON.ID,
+                        PERSON.NAME,
+                        PERSON.ROOM,
+                        PERSON.PAYS_FLOOR_FEES,
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                ).from(PERSON)
+                .where(PERSON.PRINT_ON_PRODUCT_TALLY_LIST.eq(true))
+                .orderBy(PERSON.ROOM)
                 .fetch(mapping(Person::new));
     }
 
@@ -68,18 +85,21 @@ public class PersonRepositoryImpl implements PersonRepository {
                             PERSON.NAME,
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
-                            PERSON.ACCOUNT_ID
+                            PERSON.ACCOUNT_ID,
+                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                     ).values(
                             createPersonDto.name(),
                             createPersonDto.room(),
                             createPersonDto.paysFloorFees(),
-                            account.get().id()
+                            account.get().id(),
+                            createPersonDto.printOnProductTallyList()
                     ).returningResult(
                             PERSON.ID,
                             PERSON.NAME,
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
-                            PERSON.ACCOUNT_ID
+                            PERSON.ACCOUNT_ID,
+                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                     ).fetchOne(mapping(Person::new)));
         });
         return new Pair<>(person.get(), account.get());
@@ -99,13 +119,17 @@ public class PersonRepositoryImpl implements PersonRepository {
         if (updatePersonDto.paysFloorFees().isPresent()) {
             person.setPaysFloorFees(updatePersonDto.paysFloorFees().get());
         }
+        if(updatePersonDto.printOnProductTallyList().isPresent()) {
+            person.setPrintOnProductTallyList(updatePersonDto.printOnProductTallyList().get());
+        }
         person.store();
         return new Person(
                 person.getId(),
                 person.getName(),
                 person.getRoom(),
                 person.getPaysFloorFees(),
-                person.getAccountId()
+                person.getAccountId(),
+                person.getPrintOnProductTallyList()
         );
     }
 
@@ -116,7 +140,8 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
-                        PERSON.ACCOUNT_ID
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                 ).from(PERSON)
                 .where(PERSON.ID.eq(personId))
                 .fetchOne(mapping(Person::new));
