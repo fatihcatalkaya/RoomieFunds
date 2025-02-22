@@ -24,10 +24,15 @@ public class GatewayResource {
     @Path("/{fileName:.+}")
     public Response getFrontendStaticFile(@PathParam("fileName") String fileName) throws IOException {
         InputStream requestedFileStream;
-        if(fileName.contains(".")) {
-            requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + fileName);
+        String escapedFilename = fileName;
+        if(escapedFilename.charAt(escapedFilename.length()-1) == '/') {
+            escapedFilename = fileName.substring(0, escapedFilename.length()-1);
+        }
+
+        if(escapedFilename.contains(".")) {
+            requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + escapedFilename);
         } else {
-            requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + fileName + ".html");
+            requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + escapedFilename + ".html");
         }
 
         final InputStream inputStream = requestedFileStream != null ?
