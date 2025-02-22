@@ -42,7 +42,7 @@ public class ProductController {
 
     @POST
     public Product createProduct(@Valid CreateProductDto dto) {
-        var modifyingPerson = Utils.createModifyingPersonDtoFromSecurityIdentity(jwt);
+        var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
             return createProduct.createProduct(modifyingPerson, dto);
         } catch (Exception e) {
@@ -54,7 +54,7 @@ public class ProductController {
     @PATCH
     @Path("/{productId}:\\d+")
     public Product patchProduct(@PathParam("productId") long productId, @Valid UpdateProductDto dto) {
-        var modifyingPerson = Utils.createModifyingPersonDtoFromSecurityIdentity(jwt);
+        var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
             return updateProduct.updateProduct(modifyingPerson, productId, dto);
         } catch (ProductNotFoundException e) {
@@ -68,7 +68,7 @@ public class ProductController {
     @DELETE
     @Path("/{productId}:\\d+")
     public void deleteProduct(@PathParam("productId") long productId) {
-        var modifyingPerson = Utils.createModifyingPersonDtoFromSecurityIdentity(jwt);
+        var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
             deleteProduct.deleteProduct(modifyingPerson, productId);
         } catch (ProductNotFoundException e) {

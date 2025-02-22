@@ -20,7 +20,7 @@
         <flywayMavenPlugin.version>11.3.1</flywayMavenPlugin.version>
         <groovyMavenPluginVersion>2.1.1</groovyMavenPluginVersion>
         <buildHelperPlugin.version>3.5.0</buildHelperPlugin.version>
-        <jooq.version>3.20.0</jooq.version>
+        <jooq.version>3.20.1</jooq.version>
         <quarkus.jooq.version>2.0.1</quarkus.jooq.version>
 
         <postgresContainerVersion>postgres:17.3-alpine</postgresContainerVersion>
@@ -107,6 +107,12 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.36</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
         </dependency>
 
         <dependency>

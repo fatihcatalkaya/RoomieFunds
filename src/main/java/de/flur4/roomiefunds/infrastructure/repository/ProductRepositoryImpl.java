@@ -50,7 +50,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public Product updateProduct(long productId, UpdateProductDto updateProductDto) {
+    public Product updateProduct(long productId, UpdateProductDto updateProductDto) throws ProductNotFoundException {
         var product = jooq.selectFrom(PRODUCT).where(PRODUCT.ID.eq(productId)).fetchOne();
         if (product == null) {
             throw new ProductNotFoundException(productId);

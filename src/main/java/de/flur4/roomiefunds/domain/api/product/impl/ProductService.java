@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class ProductApiImpl implements CreateProduct, GetProduct, UpdateProduct, DeleteProduct {
+public class ProductService implements CreateProduct, GetProduct, UpdateProduct, DeleteProduct {
 
     final ProductRepository productRepository;
     final LogRepository logRepository;
