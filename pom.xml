@@ -128,7 +128,7 @@
                 <directory>src/main/resources</directory>
             </resource>
             <resource>
-                <directory>src/main/frontend/dist</directory>
+                <directory>src/main/frontend/dist/</directory>
                 <targetPath>frontend</targetPath>
             </resource>
         </resources>
