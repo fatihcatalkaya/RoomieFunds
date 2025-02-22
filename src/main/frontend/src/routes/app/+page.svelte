@@ -5,6 +5,7 @@
 <script>
 	import MdiLiquor from '~icons/mdi/liquor';
 	import MdiBank from '~icons/mdi/bank';
+	import MdiAccount from '~icons/mdi/account';
 	import MainMenuButton from '$lib/components/MainMenuButton.svelte';
 </script>
 
@@ -17,6 +18,10 @@
         <MainMenuButton redirectTo="/app/accounts">
 			<MdiBank class="mx-auto h-10 w-10" />
 			<h3 class="text-center text-2xl text-black">Konten</h3>
+		</MainMenuButton>
+		<MainMenuButton redirectTo="/app/persons">
+			<MdiAccount class="mx-auto h-10 w-10" />
+			<h3 class="text-center text-2xl text-black">Personen</h3>
 		</MainMenuButton>
 	</div>
 </div>

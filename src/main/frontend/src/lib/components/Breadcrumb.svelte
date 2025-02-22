@@ -2,7 +2,8 @@
 	import { page } from '$app/state';
 
 	function decideLabel(routeModule: any, pathName: string) {
-		if (Object.hasOwn(routeModule, "breadcrumbLabel")) {
+		console.log(routeModule, pathName)
+		if (routeModule && Object.hasOwn(routeModule, "breadcrumbLabel")) {
 			return routeModule["breadcrumbLabel"];
 		} else {
 			return String(pathName).charAt(0).toUpperCase() + String(pathName).slice(1);
@@ -19,6 +20,7 @@
 		});
 
 		let completeUrl = "";
+		let completeRoute = "/src/routes";
 		const paths = page.url.pathname.split("/").filter((p) => p != "");
 
 		let _crumbs = [];
@@ -28,13 +30,14 @@
 			let previousUrl = completeUrl;
 			completeUrl += `/${path}`;
 
-			if (Object.hasOwn(routeModules, "/src/routes" + completeUrl + "/+page.svelte")) {
+			if (Object.hasOwn(routeModules, completeRoute + "/+page.svelte")) {
+				completeRoute += `/${path}`
 				_crumbs.push({
 					label: decideLabel(routeModules["/src/routes" + completeUrl + "/+page.svelte"], path),
 					href: completeUrl
 				});
 			} else {
-				let matchingRoutes = Object.keys(routeModules).filter(route => route.startsWith("/src/routes" + previousUrl + "/["));
+				let matchingRoutes = Object.keys(routeModules).filter(route => route.startsWith(completeRoute + "/["));
 				if (matchingRoutes.length != 1) {
 					console.warn(`Breadcrumb path ${completeUrl} matches multiple or no routes. Defaulting to capitalized path label.`)
 					// console.log(matchingRoutes) // <= uncomment to show what went wrong :)
@@ -43,8 +46,12 @@
 						href: completeUrl
 					});
 				} else {
+					console.log("a")
+					let string = matchingRoutes[0].replace("/src/routes" + previousUrl + "/", "").split("/")[0]
+					console.log(string)
+					completeRoute += `/${string}`
 					_crumbs.push({
-						label: decideLabel(matchingRoutes[0], path),
+						label: decideLabel(routeModules[completeRoute + "/+page.svelte"], path),
 						href: completeUrl
 					});
 				}
@@ -55,8 +62,8 @@
 	});
 </script>
 
-<nav aria-label="breadcrumb" class="mt-1 rounded-sm border-1 border-slate-200 p-2">
-	<ol class="inline-flex items-center space-x-4 text-sm font-medium">
+<nav aria-label="breadcrumb" class="px-4 py-2 mb-2 mt-4 rounded-box border-base-content/5 bg-base-100 border border-slate-300 overflow-x-scroll">
+	<ol class="inline-flex items-center space-x-4 text-sm font-medium text-nowrap">
 		{#each crumbs as c, i}
 			<li class="inline-flex items-center">
 				{#if i == crumbs.length - 1}
