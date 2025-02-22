@@ -23,8 +23,10 @@ public class GatewayResource {
     @GET
     @Path("/{fileName:.+}")
     public Response getFrontendStaticFile(@PathParam("fileName") String fileName) throws IOException {
-        InputStream requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + fileName);
-        if(requestedFileStream == null) {
+        InputStream requestedFileStream;
+        if(fileName.contains(".")) {
+            requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + fileName);
+        } else {
             requestedFileStream = GatewayResource.class.getResourceAsStream("/frontend/" + fileName + ".html");
         }
 
