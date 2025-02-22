@@ -58,3 +58,9 @@ Table physical_transaction {
   created_at timestamp [not null]
   transaction_description text [not null, default: ''] 
 }
+
+Table settings {
+  setting_key text [pk, unique, not null]
+  value_int BIGINT
+  value_string TEXT
+}

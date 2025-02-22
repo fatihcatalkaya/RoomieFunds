@@ -186,141 +186,8 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.gmaven</groupId>
-                <artifactId>groovy-maven-plugin</artifactId>
-                <version>${groovyMavenPluginVersion}</version>
-                <executions>
-                    <execution>
-                        <!-- Start the container in any phase before the actual code
-                             generation is required, i.e. at the latest in
-                             generate-sources -->
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <source>
-                                db = new org.testcontainers.containers.PostgreSQLContainer(
-                                        "${postgresContainerVersion}")
-                                        .withUsername("${jooq.codegen.jdbc.username}")
-                                        .withDatabaseName("${jooq.codegen.jdbc.database}")
-                                        .withPassword("${jooq.codegen.jdbc.password}")
-
-                                db.start()
-
-                                // After you've started the container, collect its generated
-                                // JDBC URL (which contains a random port)
-                                project.properties.setProperty('db.url', db.getJdbcUrl())
-                            </source>
-                        </configuration>
-                    </execution>
-                </executions>
-
-                <dependencies>
-                    <dependency>
-                        <groupId>org.testcontainers</groupId>
-                        <artifactId>postgresql</artifactId>
-                        <version>${testcontainers.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-            <plugin>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-maven-plugin</artifactId>
-                <version>${flywayMavenPlugin.version}</version>
-                <executions>
-                    <execution>
-
-                        <!-- We run the migration in the same phase, before jOOQ's
-                             code generation -->
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>migrate</goal>
-                        </goals>
-                        <configuration>
-                            <!-- This URL has been set by groovy, above -->
-                            <url>${db.url}</url>
-                            <user>${jooq.codegen.jdbc.username}</user>
-                            <password>${jooq.codegen.jdbc.password}</password>
-                            <locations>
-                                <location>
-                                    filesystem:src/main/resources/db/migration
-                                </location>
-                            </locations>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.flywaydb</groupId>
-                        <artifactId>flyway-database-postgresql</artifactId>
-                        <version>${flywayMavenPlugin.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-codegen-maven</artifactId>
-                <version>${jooq.version}</version>
-                <executions>
-                    <execution>
-                        <id>java-generator</id>
-
-                        <!-- Same phase as above, but the previous plugins have already
-                             executed, so we're generating the db post migration -->
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-
-                        <configuration>
-                            <jdbc>
-                                <!-- Again, this URL has been set by groovy, above -->
-                                <url>${db.url}</url>
-                                <user>${jooq.codegen.jdbc.username}</user>
-                                <password>${jooq.codegen.jdbc.password}</password>
-                            </jdbc>
-                            <generator>
-                                <generate>
-                                    <implicitJoinPathsToMany>false</implicitJoinPathsToMany>
-                                </generate>
-                                <database>
-                                    <inputSchema>public</inputSchema>
-                                    <excludes>flyway_schema_history|gin.*|gtrgm.*|word.*|strict_word_similarity_.*|similarity.*|strict_word_similarity.*|set_limit|show_limit|show_trgm</excludes>
-                                </database>
-                                <target>
-                                    <packageName>de.flur4.roomiefunds.infrastructure.jooq</packageName>
-                                    <directory>${project.build.directory}/generated-sources/jooq</directory>
-                                </target>
-                            </generator>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>${buildHelperPlugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.directory}/generated-sources/jooq</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
-
     <profiles>
         <profile>
             <id>native</id>
@@ -333,6 +200,204 @@
                 <skipITs>false</skipITs>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
             </properties>
+        </profile>
+        <profile>
+            <id>jooq</id>
+            <activation>
+                <property>
+                    <name>gen-jooq</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>groovy-maven-plugin</artifactId>
+                        <version>${groovyMavenPluginVersion}</version>
+                        <executions>
+                            <execution>
+                                <!-- Start the container in any phase before the actual code
+                                     generation is required, i.e. at the latest in
+                                     generate-sources -->
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <source>
+                                        db = new org.testcontainers.containers.PostgreSQLContainer(
+                                                "${postgresContainerVersion}")
+                                                .withUsername("${jooq.codegen.jdbc.username}")
+                                                .withDatabaseName("${jooq.codegen.jdbc.database}")
+                                                .withPassword("${jooq.codegen.jdbc.password}")
+
+                                        db.start()
+
+                                        // After you've started the container, collect its generated
+                                        // JDBC URL (which contains a random port)
+                                        project.properties.setProperty('db.url', db.getJdbcUrl())
+                                    </source>
+                                </configuration>
+                            </execution>
+                        </executions>
+
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.testcontainers</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>${testcontainers.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-maven-plugin</artifactId>
+                        <version>${flywayMavenPlugin.version}</version>
+                        <executions>
+                            <execution>
+
+                                <!-- We run the migration in the same phase, before jOOQ's
+                                     code generation -->
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>migrate</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- This URL has been set by groovy, above -->
+                                    <url>${db.url}</url>
+                                    <user>${jooq.codegen.jdbc.username}</user>
+                                    <password>${jooq.codegen.jdbc.password}</password>
+                                    <locations>
+                                        <location>
+                                            filesystem:src/main/resources/db/migration
+                                        </location>
+                                    </locations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.flywaydb</groupId>
+                                <artifactId>flyway-database-postgresql</artifactId>
+                                <version>${flywayMavenPlugin.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-codegen-maven</artifactId>
+                        <version>${jooq.version}</version>
+                        <executions>
+                            <execution>
+                                <id>java-generator</id>
+
+                                <!-- Same phase as above, but the previous plugins have already
+                                     executed, so we're generating the db post migration -->
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+
+                                <configuration>
+                                    <jdbc>
+                                        <!-- Again, this URL has been set by groovy, above -->
+                                        <url>${db.url}</url>
+                                        <user>${jooq.codegen.jdbc.username}</user>
+                                        <password>${jooq.codegen.jdbc.password}</password>
+                                    </jdbc>
+                                    <generator>
+                                        <generate>
+                                            <implicitJoinPathsToMany>false</implicitJoinPathsToMany>
+                                        </generate>
+                                        <database>
+                                            <inputSchema>public</inputSchema>
+                                            <excludes>
+                                                flyway_schema_history|gin.*|gtrgm.*|word.*|strict_word_similarity_.*|similarity.*|strict_word_similarity.*|set_limit|show_limit|show_trgm
+                                            </excludes>
+                                        </database>
+                                        <target>
+                                            <packageName>de.flur4.roomiefunds.infrastructure.jooq</packageName>
+                                            <directory>${project.build.directory}/generated-sources/jooq</directory>
+                                        </target>
+                                    </generator>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${buildHelperPlugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>${project.build.directory}/generated-sources/jooq</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>frontend</id>
+            <activation>
+                <property>
+                    <name>gen-frontend</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>1.15.1</version>
+                        <executions>
+                            <execution>
+                                <id>install node and npm</id>
+                                <configuration>
+                                    <nodeVersion>v20.18.2</nodeVersion>
+                                    <npmVersion>10.8.2</npmVersion>
+                                    <workingDirectory>${project.build.sourceDirectory}/../frontend</workingDirectory>
+                                </configuration>
+                                <goals>
+                                    <goal>install-node-and-npm</goal>
+                                </goals>
+                                <phase>generate-resources</phase>
+                            </execution>
+                            <execution>
+                                <id>npm ci</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>ci</arguments>
+                                    <workingDirectory>${project.build.sourceDirectory}/../frontend</workingDirectory>
+                                </configuration>
+                                <phase>generate-resources</phase>
+                            </execution>
+                            <execution>
+                                <id>npm run build</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run build</arguments>
+                                    <workingDirectory>${project.build.sourceDirectory}/../frontend</workingDirectory>
+                                </configuration>
+                                <phase>generate-resources</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
