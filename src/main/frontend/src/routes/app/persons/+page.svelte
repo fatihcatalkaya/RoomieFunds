@@ -1,5 +1,4 @@
 <script module lang="ts">
-	export const prerender = false;
 	export const breadcrumbLabel = 'Personen';
 </script>
 

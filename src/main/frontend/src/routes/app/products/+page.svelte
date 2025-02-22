@@ -1,5 +1,4 @@
 <script module lang="ts">
-	export const prerender = false;
 	export const breadcrumbLabel = 'Produkte';
 </script>
 
@@ -7,35 +6,10 @@
 	import { formatEuroCents } from '$lib/formatter';
 	import MdiPencil from '~icons/mdi/pencil';
 	import MdiPlus from '~icons/mdi/plus';
+	import { type Product } from '$lib/client';
+	import type { PageProps } from './$types';
 
-	type Product = {
-		id: number;
-		name: string;
-		price: number;
-	}
-
-	let products: Array<Product> = $derived([
-		{
-			id: 1,
-			name: "Paulaner Spezi",
-			price: 96
-		},
-		{
-			id: 2,
-			name: "Wiesentaler Vit Grape",
-			price: 87
-		},
-		{
-			id: 3,
-			name: "Club Mate",
-			price: 74
-		},
-		{
-			id: 4,
-			name: "Coca Cola 1,0 L",
-			price: 106
-		},
-	]);
+	let { data }: PageProps = $props();
 </script>
 
 <div class="inline-flex items-center w-full my-4">
@@ -58,11 +32,11 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each products as product}
+			{#each data.products ?? [] as product}
 				<tr>
 					<th>{product.id}</th>
 					<td>{product.name}</td>
-					<td class="text-right">{formatEuroCents(product.price)}</td>
+					<td class="text-right">{formatEuroCents(product.price!)}</td>
 					<td class="max-w-4 text-center">
 						<a href="/app/products/edit/{product.id}" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
 							<MdiPencil />
