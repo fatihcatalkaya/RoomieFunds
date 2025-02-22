@@ -1,0 +1,1 @@
+ALTER TABLE transaction ADD COLUMN value_date TIMESTAMPTZ NOT NULL default now();

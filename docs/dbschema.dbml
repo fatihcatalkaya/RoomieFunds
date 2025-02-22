@@ -44,6 +44,7 @@ Table transaction {
   target_account_id integer [ref: > account.id, not null]
   amount integer [not null, note: 'in cent']
   created_at timestamptz [not null]
+  value_date timestamptz [not null]
   description text [not null, default: ''] 
 }
 
