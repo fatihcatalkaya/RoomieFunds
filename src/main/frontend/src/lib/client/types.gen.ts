@@ -15,12 +15,65 @@ export type CreatePersonDto = {
     name: string;
     room: string;
     paysFloorFees: boolean;
+    printOnProductTallyList: boolean;
 };
 
 export type CreateProductDto = {
     name: string;
     price?: number;
+    print?: boolean;
 };
+
+export type CreateRecurringTransactionDto = {
+    amount?: number;
+    sourceAccountId?: number;
+    targetAccountId?: number;
+    valueDayOfMonth?: number;
+    name: string;
+    transactionDescription: string;
+};
+
+export type CreateTransactionDto = {
+    sourceAccountId?: number;
+    targetAccountId?: number;
+    amount?: number;
+    valueDate?: LocalDate;
+    description: string;
+};
+
+export type Flurbeitrag = {
+    flurbeitrag?: number;
+};
+
+export type GetRecurringTransactionDto = {
+    id?: number;
+    amount?: number;
+    sourceAccountId?: number;
+    sourceAccountName?: string;
+    sourceAccountActive?: boolean;
+    targetAccountId?: number;
+    targetAccountName?: string;
+    targetAccountActive?: boolean;
+    valueDayOfMonth?: number;
+    name?: string;
+    transactionDescription?: string;
+};
+
+export type LocalDate = string;
+
+export type LogEntryDto = {
+    id?: number;
+    createdAt?: OffsetDateTime;
+    logOperation?: LogOperations;
+    modifiedTableName?: string;
+    modifiedBy?: string;
+    subjectBeforeJson?: string;
+    subjectAfterJson?: string;
+};
+
+export type LogOperations = 'create' | 'update' | 'delete';
+
+export type OffsetDateTime = string;
 
 export type Person = {
     id?: number;
@@ -28,12 +81,35 @@ export type Person = {
     room?: string;
     paysFloorFees?: boolean;
     accountId?: number;
+    printOnProductTallyList?: boolean;
 };
 
 export type Product = {
     id?: number;
     name?: string;
     price?: number;
+    print?: boolean;
+};
+
+export type Transaction = {
+    id?: number;
+    sourceAccountId?: number;
+    sourceAccountName?: string;
+    sourceAccountActive?: boolean;
+    targetAccountId?: number;
+    targetAccountName?: string;
+    targetAccountActive?: boolean;
+    amount?: number;
+    createdAt?: OffsetDateTime;
+    valueDate?: LocalDate;
+    description?: string;
+};
+
+export type TransactionSaldoDto = {
+    transaction?: Transaction;
+    saldo?: number;
+    sourceAccountNameParts?: Array<string>;
+    targetAccountNameParts?: Array<string>;
 };
 
 export type UpdateAccountDto = {
@@ -45,11 +121,30 @@ export type UpdatePersonDto = {
     name?: string | null;
     room?: string | null;
     paysFloorFees?: boolean | null;
+    printOnProductTallyList?: boolean | null;
 };
 
 export type UpdateProductDto = {
     name?: string | null;
     price?: number | null;
+    print?: boolean | null;
+};
+
+export type UpdateRecurringTransactionDto = {
+    amount?: number | null;
+    sourceAccountId?: number | null;
+    targetAccountId?: number | null;
+    valueDayOfMonth?: number | null;
+    name?: string | null;
+    transactionDescription?: string | null;
+};
+
+export type UpdateTransactionDto = {
+    sourceAccountId?: number | null;
+    targetAccountId?: number | null;
+    amount?: number | null;
+    valueDate?: LocalDate | null;
+    description?: string | null;
 };
 
 export type GetData = {
@@ -120,16 +215,16 @@ export type PostApiAccountResponses = {
 
 export type PostApiAccountResponse = PostApiAccountResponses[keyof PostApiAccountResponses];
 
-export type DeleteApiAccountByAccountIdDData = {
+export type DeleteApiAccountByAccountIdData = {
     body?: never;
     path: {
         accountId: number;
     };
     query?: never;
-    url: '/api/account/{accountId}:\\d+';
+    url: '/api/account/{accountId}';
 };
 
-export type DeleteApiAccountByAccountIdDErrors = {
+export type DeleteApiAccountByAccountIdErrors = {
     /**
      * Not Authorized
      */
@@ -140,25 +235,25 @@ export type DeleteApiAccountByAccountIdDErrors = {
     403: unknown;
 };
 
-export type DeleteApiAccountByAccountIdDResponses = {
+export type DeleteApiAccountByAccountIdResponses = {
     /**
      * No Content
      */
     204: void;
 };
 
-export type DeleteApiAccountByAccountIdDResponse = DeleteApiAccountByAccountIdDResponses[keyof DeleteApiAccountByAccountIdDResponses];
+export type DeleteApiAccountByAccountIdResponse = DeleteApiAccountByAccountIdResponses[keyof DeleteApiAccountByAccountIdResponses];
 
-export type GetApiAccountByAccountIdDData = {
+export type GetApiAccountByAccountIdData = {
     body?: never;
     path: {
         accountId: number;
     };
     query?: never;
-    url: '/api/account/{accountId}:\\d+';
+    url: '/api/account/{accountId}';
 };
 
-export type GetApiAccountByAccountIdDErrors = {
+export type GetApiAccountByAccountIdErrors = {
     /**
      * Not Authorized
      */
@@ -169,25 +264,25 @@ export type GetApiAccountByAccountIdDErrors = {
     403: unknown;
 };
 
-export type GetApiAccountByAccountIdDResponses = {
+export type GetApiAccountByAccountIdResponses = {
     /**
      * OK
      */
     200: Account;
 };
 
-export type GetApiAccountByAccountIdDResponse = GetApiAccountByAccountIdDResponses[keyof GetApiAccountByAccountIdDResponses];
+export type GetApiAccountByAccountIdResponse = GetApiAccountByAccountIdResponses[keyof GetApiAccountByAccountIdResponses];
 
-export type PatchApiAccountByAccountIdDData = {
+export type PatchApiAccountByAccountIdData = {
     body: UpdateAccountDto;
     path: {
         accountId: number;
     };
     query?: never;
-    url: '/api/account/{accountId}:\\d+';
+    url: '/api/account/{accountId}';
 };
 
-export type PatchApiAccountByAccountIdDErrors = {
+export type PatchApiAccountByAccountIdErrors = {
     /**
      * Not Authorized
      */
@@ -198,14 +293,149 @@ export type PatchApiAccountByAccountIdDErrors = {
     403: unknown;
 };
 
-export type PatchApiAccountByAccountIdDResponses = {
+export type PatchApiAccountByAccountIdResponses = {
     /**
      * OK
      */
     200: Account;
 };
 
-export type PatchApiAccountByAccountIdDResponse = PatchApiAccountByAccountIdDResponses[keyof PatchApiAccountByAccountIdDResponses];
+export type PatchApiAccountByAccountIdResponse = PatchApiAccountByAccountIdResponses[keyof PatchApiAccountByAccountIdResponses];
+
+export type GetApiFlurbeitragData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/flurbeitrag';
+};
+
+export type GetApiFlurbeitragErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiFlurbeitragResponses = {
+    /**
+     * OK
+     */
+    200: Flurbeitrag;
+};
+
+export type GetApiFlurbeitragResponse = GetApiFlurbeitragResponses[keyof GetApiFlurbeitragResponses];
+
+export type PutApiFlurbeitragData = {
+    body: Flurbeitrag;
+    path?: never;
+    query?: never;
+    url: '/api/flurbeitrag';
+};
+
+export type PutApiFlurbeitragErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PutApiFlurbeitragResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type PutApiFlurbeitragResponse = PutApiFlurbeitragResponses[keyof PutApiFlurbeitragResponses];
+
+export type GetApiFlurkontoData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/flurkonto';
+};
+
+export type GetApiFlurkontoErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiFlurkontoResponses = {
+    /**
+     * OK
+     */
+    200: Account | null;
+};
+
+export type GetApiFlurkontoResponse = GetApiFlurkontoResponses[keyof GetApiFlurkontoResponses];
+
+export type PutApiFlurkontoData = {
+    body: number;
+    path?: never;
+    query?: never;
+    url: '/api/flurkonto';
+};
+
+export type PutApiFlurkontoErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PutApiFlurkontoResponses = {
+    /**
+     * OK
+     */
+    200: Account;
+};
+
+export type PutApiFlurkontoResponse = PutApiFlurkontoResponses[keyof PutApiFlurkontoResponses];
+
+export type GetApiLogData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/log';
+};
+
+export type GetApiLogErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiLogResponses = {
+    /**
+     * OK
+     */
+    200: Array<LogEntryDto>;
+};
+
+export type GetApiLogResponse = GetApiLogResponses[keyof GetApiLogResponses];
 
 export type GetApiPersonData = {
     body?: never;
@@ -261,16 +491,16 @@ export type PostApiPersonResponses = {
 
 export type PostApiPersonResponse = PostApiPersonResponses[keyof PostApiPersonResponses];
 
-export type DeleteApiPersonByPersonIdDData = {
+export type DeleteApiPersonByPersonIdData = {
     body?: never;
     path: {
         personId: number;
     };
     query?: never;
-    url: '/api/person/{personId}:\\d+';
+    url: '/api/person/{personId}';
 };
 
-export type DeleteApiPersonByPersonIdDErrors = {
+export type DeleteApiPersonByPersonIdErrors = {
     /**
      * Not Authorized
      */
@@ -281,25 +511,25 @@ export type DeleteApiPersonByPersonIdDErrors = {
     403: unknown;
 };
 
-export type DeleteApiPersonByPersonIdDResponses = {
+export type DeleteApiPersonByPersonIdResponses = {
     /**
      * No Content
      */
     204: void;
 };
 
-export type DeleteApiPersonByPersonIdDResponse = DeleteApiPersonByPersonIdDResponses[keyof DeleteApiPersonByPersonIdDResponses];
+export type DeleteApiPersonByPersonIdResponse = DeleteApiPersonByPersonIdResponses[keyof DeleteApiPersonByPersonIdResponses];
 
-export type GetApiPersonByPersonIdDData = {
+export type GetApiPersonByPersonIdData = {
     body?: never;
     path: {
         personId: number;
     };
     query?: never;
-    url: '/api/person/{personId}:\\d+';
+    url: '/api/person/{personId}';
 };
 
-export type GetApiPersonByPersonIdDErrors = {
+export type GetApiPersonByPersonIdErrors = {
     /**
      * Not Authorized
      */
@@ -310,25 +540,25 @@ export type GetApiPersonByPersonIdDErrors = {
     403: unknown;
 };
 
-export type GetApiPersonByPersonIdDResponses = {
+export type GetApiPersonByPersonIdResponses = {
     /**
      * OK
      */
     200: Person;
 };
 
-export type GetApiPersonByPersonIdDResponse = GetApiPersonByPersonIdDResponses[keyof GetApiPersonByPersonIdDResponses];
+export type GetApiPersonByPersonIdResponse = GetApiPersonByPersonIdResponses[keyof GetApiPersonByPersonIdResponses];
 
-export type PatchApiPersonByPersonIdDData = {
+export type PatchApiPersonByPersonIdData = {
     body: UpdatePersonDto;
     path: {
         personId: number;
     };
     query?: never;
-    url: '/api/person/{personId}:\\d+';
+    url: '/api/person/{personId}';
 };
 
-export type PatchApiPersonByPersonIdDErrors = {
+export type PatchApiPersonByPersonIdErrors = {
     /**
      * Not Authorized
      */
@@ -339,14 +569,14 @@ export type PatchApiPersonByPersonIdDErrors = {
     403: unknown;
 };
 
-export type PatchApiPersonByPersonIdDResponses = {
+export type PatchApiPersonByPersonIdResponses = {
     /**
      * OK
      */
     200: Person;
 };
 
-export type PatchApiPersonByPersonIdDResponse = PatchApiPersonByPersonIdDResponses[keyof PatchApiPersonByPersonIdDResponses];
+export type PatchApiPersonByPersonIdResponse = PatchApiPersonByPersonIdResponses[keyof PatchApiPersonByPersonIdResponses];
 
 export type GetApiProductData = {
     body?: never;
@@ -402,16 +632,14 @@ export type PostApiProductResponses = {
 
 export type PostApiProductResponse = PostApiProductResponses[keyof PostApiProductResponses];
 
-export type DeleteApiProductByProductIdDData = {
+export type GetApiProductTallylistData = {
     body?: never;
-    path: {
-        productId: number;
-    };
+    path?: never;
     query?: never;
-    url: '/api/product/{productId}:\\d+';
+    url: '/api/product/tallylist';
 };
 
-export type DeleteApiProductByProductIdDErrors = {
+export type GetApiProductTallylistErrors = {
     /**
      * Not Authorized
      */
@@ -422,25 +650,54 @@ export type DeleteApiProductByProductIdDErrors = {
     403: unknown;
 };
 
-export type DeleteApiProductByProductIdDResponses = {
+export type GetApiProductTallylistResponses = {
+    /**
+     * OK
+     */
+    200: Blob | File;
+};
+
+export type GetApiProductTallylistResponse = GetApiProductTallylistResponses[keyof GetApiProductTallylistResponses];
+
+export type DeleteApiProductByProductIdData = {
+    body?: never;
+    path: {
+        productId: number;
+    };
+    query?: never;
+    url: '/api/product/{productId}';
+};
+
+export type DeleteApiProductByProductIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiProductByProductIdResponses = {
     /**
      * No Content
      */
     204: void;
 };
 
-export type DeleteApiProductByProductIdDResponse = DeleteApiProductByProductIdDResponses[keyof DeleteApiProductByProductIdDResponses];
+export type DeleteApiProductByProductIdResponse = DeleteApiProductByProductIdResponses[keyof DeleteApiProductByProductIdResponses];
 
-export type GetApiProductByProductIdDData = {
+export type GetApiProductByProductIdData = {
     body?: never;
     path: {
         productId: number;
     };
     query?: never;
-    url: '/api/product/{productId}:\\d+';
+    url: '/api/product/{productId}';
 };
 
-export type GetApiProductByProductIdDErrors = {
+export type GetApiProductByProductIdErrors = {
     /**
      * Not Authorized
      */
@@ -451,25 +708,25 @@ export type GetApiProductByProductIdDErrors = {
     403: unknown;
 };
 
-export type GetApiProductByProductIdDResponses = {
+export type GetApiProductByProductIdResponses = {
     /**
      * OK
      */
     200: Product;
 };
 
-export type GetApiProductByProductIdDResponse = GetApiProductByProductIdDResponses[keyof GetApiProductByProductIdDResponses];
+export type GetApiProductByProductIdResponse = GetApiProductByProductIdResponses[keyof GetApiProductByProductIdResponses];
 
-export type PatchApiProductByProductIdDData = {
+export type PatchApiProductByProductIdData = {
     body: UpdateProductDto;
     path: {
         productId: number;
     };
     query?: never;
-    url: '/api/product/{productId}:\\d+';
+    url: '/api/product/{productId}';
 };
 
-export type PatchApiProductByProductIdDErrors = {
+export type PatchApiProductByProductIdErrors = {
     /**
      * Not Authorized
      */
@@ -480,14 +737,298 @@ export type PatchApiProductByProductIdDErrors = {
     403: unknown;
 };
 
-export type PatchApiProductByProductIdDResponses = {
+export type PatchApiProductByProductIdResponses = {
     /**
      * OK
      */
     200: Product;
 };
 
-export type PatchApiProductByProductIdDResponse = PatchApiProductByProductIdDResponses[keyof PatchApiProductByProductIdDResponses];
+export type PatchApiProductByProductIdResponse = PatchApiProductByProductIdResponses[keyof PatchApiProductByProductIdResponses];
+
+export type GetApiRecurringTransactionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/recurring-transaction';
+};
+
+export type GetApiRecurringTransactionErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiRecurringTransactionResponses = {
+    /**
+     * OK
+     */
+    200: Array<GetRecurringTransactionDto>;
+};
+
+export type GetApiRecurringTransactionResponse = GetApiRecurringTransactionResponses[keyof GetApiRecurringTransactionResponses];
+
+export type PostApiRecurringTransactionData = {
+    body: CreateRecurringTransactionDto;
+    path?: never;
+    query?: never;
+    url: '/api/recurring-transaction';
+};
+
+export type PostApiRecurringTransactionErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiRecurringTransactionResponses = {
+    /**
+     * OK
+     */
+    200: GetRecurringTransactionDto;
+};
+
+export type PostApiRecurringTransactionResponse = PostApiRecurringTransactionResponses[keyof PostApiRecurringTransactionResponses];
+
+export type DeleteApiRecurringTransactionByRecurringTransactionIdData = {
+    body?: never;
+    path: {
+        recurringTransactionId: number;
+    };
+    query?: never;
+    url: '/api/recurring-transaction/{recurringTransactionId}';
+};
+
+export type DeleteApiRecurringTransactionByRecurringTransactionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiRecurringTransactionByRecurringTransactionIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiRecurringTransactionByRecurringTransactionIdResponse = DeleteApiRecurringTransactionByRecurringTransactionIdResponses[keyof DeleteApiRecurringTransactionByRecurringTransactionIdResponses];
+
+export type GetApiRecurringTransactionByRecurringTransactionIdData = {
+    body?: never;
+    path: {
+        recurringTransactionId: number;
+    };
+    query?: never;
+    url: '/api/recurring-transaction/{recurringTransactionId}';
+};
+
+export type GetApiRecurringTransactionByRecurringTransactionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiRecurringTransactionByRecurringTransactionIdResponses = {
+    /**
+     * OK
+     */
+    200: GetRecurringTransactionDto;
+};
+
+export type GetApiRecurringTransactionByRecurringTransactionIdResponse = GetApiRecurringTransactionByRecurringTransactionIdResponses[keyof GetApiRecurringTransactionByRecurringTransactionIdResponses];
+
+export type PatchApiRecurringTransactionByRecurringTransactionIdData = {
+    body: UpdateRecurringTransactionDto;
+    path: {
+        recurringTransactionId: number;
+    };
+    query?: never;
+    url: '/api/recurring-transaction/{recurringTransactionId}';
+};
+
+export type PatchApiRecurringTransactionByRecurringTransactionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PatchApiRecurringTransactionByRecurringTransactionIdResponses = {
+    /**
+     * OK
+     */
+    200: GetRecurringTransactionDto;
+};
+
+export type PatchApiRecurringTransactionByRecurringTransactionIdResponse = PatchApiRecurringTransactionByRecurringTransactionIdResponses[keyof PatchApiRecurringTransactionByRecurringTransactionIdResponses];
+
+export type PostApiTransactionData = {
+    body: CreateTransactionDto;
+    path?: never;
+    query?: never;
+    url: '/api/transaction';
+};
+
+export type PostApiTransactionErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiTransactionResponses = {
+    /**
+     * OK
+     */
+    200: Transaction;
+};
+
+export type PostApiTransactionResponse = PostApiTransactionResponses[keyof PostApiTransactionResponses];
+
+export type GetApiTransactionAccountByAccountIdData = {
+    body?: never;
+    path: {
+        accountId: number;
+    };
+    query?: never;
+    url: '/api/transaction/account/{accountId}';
+};
+
+export type GetApiTransactionAccountByAccountIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiTransactionAccountByAccountIdResponses = {
+    /**
+     * OK
+     */
+    200: Array<TransactionSaldoDto>;
+};
+
+export type GetApiTransactionAccountByAccountIdResponse = GetApiTransactionAccountByAccountIdResponses[keyof GetApiTransactionAccountByAccountIdResponses];
+
+export type DeleteApiTransactionByTransactionIdData = {
+    body?: never;
+    path: {
+        transactionId: number;
+    };
+    query?: never;
+    url: '/api/transaction/{transactionId}';
+};
+
+export type DeleteApiTransactionByTransactionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiTransactionByTransactionIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiTransactionByTransactionIdResponse = DeleteApiTransactionByTransactionIdResponses[keyof DeleteApiTransactionByTransactionIdResponses];
+
+export type GetApiTransactionByTransactionIdData = {
+    body?: never;
+    path: {
+        transactionId: number;
+    };
+    query?: never;
+    url: '/api/transaction/{transactionId}';
+};
+
+export type GetApiTransactionByTransactionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiTransactionByTransactionIdResponses = {
+    /**
+     * OK
+     */
+    200: Transaction;
+};
+
+export type GetApiTransactionByTransactionIdResponse = GetApiTransactionByTransactionIdResponses[keyof GetApiTransactionByTransactionIdResponses];
+
+export type PatchApiTransactionByTransactionIdData = {
+    body: UpdateTransactionDto;
+    path: {
+        transactionId: number;
+    };
+    query?: never;
+    url: '/api/transaction/{transactionId}';
+};
+
+export type PatchApiTransactionByTransactionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PatchApiTransactionByTransactionIdResponses = {
+    /**
+     * OK
+     */
+    200: Transaction;
+};
+
+export type PatchApiTransactionByTransactionIdResponse = PatchApiTransactionByTransactionIdResponses[keyof PatchApiTransactionByTransactionIdResponses];
 
 export type GetByFileNameData = {
     body?: never;

@@ -34,7 +34,7 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
         long saldo = 0;
         for (int i = 0; i < transactions.size(); i++) {
             final Transaction t = transactions.get(i);
-            if (t.sourceAccountActive() == t.targetAccountActive()) {
+            if (t.sourceAccountActive() != t.targetAccountActive()) {
                 saldo += t.amount();
             } else if (t.sourceAccountId() == accountId) {
                 saldo -= t.amount();

@@ -3,53 +3,87 @@
 </script>
 
 <script lang="ts">
-	import { formatEuroCents } from '$lib/formatter';
+	import { getApiAccount, type Account } from '$lib/client';
+	import MdiPlus from '~icons/mdi/plus';
+	import AccountListSubtree from '$lib/components/AccountListSubtree.svelte';
 
-    import MdiPlus from '~icons/mdi/plus';
+	type TreeNode = {
+		name: string;
+		children: (TreeNode | Account)[];
+	};
+
+	function buildTree(accounts: Account[]): TreeNode[] {
+		const rootNodes: TreeNode[] = [];
+
+		// Function to insert an account into the tree
+		const insertToTree = (path: string[], account: Account, node: TreeNode[]) => {
+			const segment = path.shift();
+			if (!segment) return;
+
+			// Find if the node with the same name already exists
+			let currentNode = node.find((n) => n.name === segment) as TreeNode | undefined;
+
+			if (!currentNode) {
+				// If the node doesn't exist, create a new one
+				currentNode = { name: segment, children: [] };
+				node.push(currentNode);
+			}
+
+			// If there are still parts of the path, continue building the tree
+			if (path.length > 1) {
+				insertToTree(path, account, currentNode.children as any);
+			} else {
+				// When we reach the last segment, insert the account as a leaf node
+				// Instead of pushing an Account directly, we push a TreeNode with children
+				currentNode.children.push(account);
+			}
+		};
+
+		// Iterate through all accounts and insert them into the tree
+		accounts.forEach((account) => {
+			const path = account.name!.split(':');
+			insertToTree(path, account, rootNodes);
+		});
+
+        console.log(rootNodes);
+		return rootNodes;
+	}
+
+	let accounts = $derived.by(async () => {
+		let accountQuery = await getApiAccount();
+
+		if (accountQuery.error) {
+			throw accountQuery.error;
+		} else {
+			return buildTree(accountQuery.data!);
+		}
+	});
 </script>
 
 <div class="my-4 inline-flex w-full items-center">
-	<h1 class="text-2xl font-bold pr-6">
-        Konten
-    </h1>
-    <div class="flex-1 md:flex-0"></div>
-    <label class="inline-flex gap-2 items-center">
-        <input type="checkbox" class="toggle" />
-        <span>
-            Inaktiv<span class="hidden md:inline">e Konten anzeigen</span>
-        </span>
-    </label>
-    <div class="flex-2"></div>
+	<h1 class="pr-6 text-2xl font-bold">Konten</h1>
+	<div class="flex-1 md:flex-0"></div>
+	<label class="inline-flex items-center gap-2">
+		<input type="checkbox" class="toggle" />
+		<span>
+			Inaktiv<span class="hidden md:inline">e Konten anzeigen</span>
+		</span>
+	</label>
+	<div class="flex-2"></div>
 	<a href="/app/accounts/create" class="btn btn-success m-0 h-8 w-8 p-0 text-lg">
 		<MdiPlus />
 	</a>
 </div>
 
-<ul class="menu bg-base-200 rounded-box w-full">
-	<li>
-		<h2 class="menu-title text-neutral">Aktiv</h2>
-		<ul>
-			<li><a>Barkasse</a></li>
-			<li><a>Bankkonto</a></li>
-			<li><a>PayPal</a></li>
-		</ul>
-        <h2 class="menu-title text-neutral">Passiv</h2>
-		<ul>
-            <li>
-                <a href="/app/accounts/transactions/1" class="inline-flex">
-                    <span class="flex-1">Flurkasse</span>
-                    <span>Saldo: {formatEuroCents(477)}</span>
-                </a>
-            </li>
-			<li>
-                <h2 class="menu-title text-neutral">Bewohner</h2>
-                <ul>
-                    <li><a>Yusuf R403</a></li>
-                    <li><a>Fatih R405</a></li>
-                    <li><a>Christian R406</a></li>
-                </ul>
-            </li>
-			<li><a>Getränkekasse</a></li>
-		</ul>
-	</li>
-</ul>
+{#await accounts}
+	<div>Loading data...</div>
+{:then accounts}
+	<ul class="menu bg-base-200 rounded-box w-full">
+        {#each accounts as tree}
+            <AccountListSubtree {...tree} />
+        {/each}
+	</ul>
+{:catch error}
+	Error while fetching data!
+	<code class="mt-4 block">{error}</code>
+{/await}
