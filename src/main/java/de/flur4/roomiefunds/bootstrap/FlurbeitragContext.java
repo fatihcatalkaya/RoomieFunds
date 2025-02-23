@@ -1,5 +1,6 @@
 package de.flur4.roomiefunds.bootstrap;
 
+import de.flur4.roomiefunds.domain.api.flurbeitrag.CreateFlurbeitragTransaction;
 import de.flur4.roomiefunds.domain.api.flurbeitrag.GetFlurbeitrag;
 import de.flur4.roomiefunds.domain.api.flurbeitrag.SetFlurbeitrag;
 import de.flur4.roomiefunds.domain.api.flurbeitrag.impl.FlurbeitragService;
@@ -20,6 +21,12 @@ public class FlurbeitragContext {
     @Produces
     @ApplicationScoped
     public SetFlurbeitrag setFlurbeitrag(FlurbeitragRepository flurbeitragRepository, FlurkontoRepository flurkontoRepository, PersonRepository personRepository, LogRepository logRepository) {
+        return new FlurbeitragService(flurbeitragRepository, flurkontoRepository, personRepository, logRepository);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public CreateFlurbeitragTransaction createFlurbeitragTransaction(FlurbeitragRepository flurbeitragRepository, FlurkontoRepository flurkontoRepository, PersonRepository personRepository, LogRepository logRepository){
         return new FlurbeitragService(flurbeitragRepository, flurkontoRepository, personRepository, logRepository);
     }
 }
