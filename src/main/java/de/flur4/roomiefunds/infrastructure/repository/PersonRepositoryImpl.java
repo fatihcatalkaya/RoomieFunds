@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ACCOUNT;
-import static de.flur4.roomiefunds.infrastructure.jooq.Tables.PERSON;
+import static de.flur4.roomiefunds.infrastructure.jooq.Tables.*;
 import static org.jooq.Records.mapping;
 
 @ApplicationScoped
@@ -37,6 +36,7 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                 ).from(PERSON)
                 .where(PERSON.ID.eq(id))
+                .orderBy(PERSON.ID)
                 .fetchOptional(mapping(Person::new));
     }
 
@@ -50,6 +50,7 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST
                 ).from(PERSON)
+                .orderBy(PERSON.NAME)
                 .fetch(mapping(Person::new));
     }
 

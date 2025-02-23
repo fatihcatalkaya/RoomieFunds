@@ -39,6 +39,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                         PRODUCT.PRICE,
                         PRODUCT.PRINT
                 ).from(PRODUCT)
+                .orderBy(PRODUCT.NAME)
                 .fetch(mapping(Product::new));
     }
 
