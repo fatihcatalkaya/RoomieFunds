@@ -35,8 +35,8 @@ public class RecurringTransactionRepositoryImpl implements RecurringTransactionR
                         RECURRING_TRANSACTION.TRANSACTION_DESCRIPTION,
                         RECURRING_TRANSACTION.NAME
                 ).from(RECURRING_TRANSACTION)
-                .join(ACCOUNT.as("source_account")).on(RECURRING_TRANSACTION.SOURCE_ACCOUNT_ID.eq(ACCOUNT.ID))
-                .join(ACCOUNT.as("target_account")).on(RECURRING_TRANSACTION.TARGET_ACCOUNT_ID.eq(ACCOUNT.ID))
+                .join(ACCOUNT.as("source_account")).on(RECURRING_TRANSACTION.SOURCE_ACCOUNT_ID.eq(ACCOUNT.as("source_account").ID))
+                .join(ACCOUNT.as("target_account")).on(RECURRING_TRANSACTION.TARGET_ACCOUNT_ID.eq(ACCOUNT.as("target_account").ID))
                 .fetchOptional(mapping(GetRecurringTransactionDto::new));
     }
 
@@ -55,8 +55,8 @@ public class RecurringTransactionRepositoryImpl implements RecurringTransactionR
                         RECURRING_TRANSACTION.TRANSACTION_DESCRIPTION,
                         RECURRING_TRANSACTION.NAME
                 ).from(RECURRING_TRANSACTION)
-                .join(ACCOUNT.as("source_account")).on(RECURRING_TRANSACTION.SOURCE_ACCOUNT_ID.eq(ACCOUNT.ID))
-                .join(ACCOUNT.as("target_account")).on(RECURRING_TRANSACTION.TARGET_ACCOUNT_ID.eq(ACCOUNT.ID))
+                .join(ACCOUNT.as("source_account")).on(RECURRING_TRANSACTION.SOURCE_ACCOUNT_ID.eq(ACCOUNT.as("source_account").ID))
+                .join(ACCOUNT.as("target_account")).on(RECURRING_TRANSACTION.TARGET_ACCOUNT_ID.eq(ACCOUNT.as("target_account").ID))
                 .orderBy(RECURRING_TRANSACTION.ID)
                 .fetch(mapping(GetRecurringTransactionDto::new));
     }

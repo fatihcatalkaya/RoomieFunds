@@ -48,8 +48,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
                         TRANSACTION.VALUE_DATE,
                         TRANSACTION.DESCRIPTION
                 ).from(TRANSACTION)
-                .join(ACCOUNT.as("source_account")).on(ACCOUNT.ID.eq(TRANSACTION.SOURCE_ACCOUNT_ID))
-                .join(ACCOUNT.as("target_account")).on(ACCOUNT.ID.eq(TRANSACTION.TARGET_ACCOUNT_ID))
+                .join(ACCOUNT.as("source_account")).on(ACCOUNT.as("source_account").ID.eq(TRANSACTION.SOURCE_ACCOUNT_ID))
+                .join(ACCOUNT.as("target_account")).on(ACCOUNT.as("target_account").ID.eq(TRANSACTION.TARGET_ACCOUNT_ID))
                 .where(TRANSACTION.ID.eq(transactionId))
                 .fetchOptional(mapping(Transaction::new));
     }
@@ -69,8 +69,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
                         TRANSACTION.VALUE_DATE,
                         TRANSACTION.DESCRIPTION
                 ).from(TRANSACTION)
-                .join(ACCOUNT.as("source_account")).on(ACCOUNT.ID.eq(TRANSACTION.SOURCE_ACCOUNT_ID))
-                .join(ACCOUNT.as("target_account")).on(ACCOUNT.ID.eq(TRANSACTION.TARGET_ACCOUNT_ID))
+                .join(ACCOUNT.as("source_account")).on(ACCOUNT.as("source_account").ID.eq(TRANSACTION.SOURCE_ACCOUNT_ID))
+                .join(ACCOUNT.as("target_account")).on(ACCOUNT.as("target_account").ID.eq(TRANSACTION.TARGET_ACCOUNT_ID))
                 .where(TRANSACTION.SOURCE_ACCOUNT_ID.eq(accountId).or(TRANSACTION.TARGET_ACCOUNT_ID.eq(accountId)))
                 .orderBy(TRANSACTION.VALUE_DATE, TRANSACTION.CREATED_AT)
                 .fetch(mapping(Transaction::new));
