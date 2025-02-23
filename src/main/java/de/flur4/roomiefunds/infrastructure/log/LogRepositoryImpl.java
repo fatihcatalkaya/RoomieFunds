@@ -6,15 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
+import de.flur4.roomiefunds.models.log.LogEntryDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.jbosslog.JBossLog;
 import org.jooq.DSLContext;
 import org.jooq.JSONB;
 
+import java.util.List;
 import java.util.Locale;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.LOG;
+import static org.jooq.Records.mapping;
+import static org.jooq.impl.DSL.nvl;
 
 @ApplicationScoped
 @JBossLog
@@ -63,5 +67,20 @@ public class LogRepositoryImpl implements LogRepository {
                 objectBeforeJson == null ? "" : objectBeforeJson,
                 objectAfterJson == null ? "" : objectAfterJson
         ));
+    }
+
+    @Override
+    public List<LogEntryDto> getAllLogEntries() {
+        return jooq.select(
+                        LOG.ID,
+                        LOG.CREATED_AT,
+                        LOG.OPERATION,
+                        LOG.MODIFIED_TABLE_NAME,
+                        LOG.MODIFIED_BY,
+                        nvl(LOG.SUBJECT_BEFORE, JSONB.jsonb("{}")).cast(String.class),
+                        nvl(LOG.SUBJECT_AFTER, JSONB.jsonb("{}")).cast(String.class)
+                ).from(LOG)
+                .orderBy(LOG.CREATED_AT.desc())
+                .fetch(mapping(LogEntryDto::new));
     }
 }
