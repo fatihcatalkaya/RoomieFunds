@@ -4,7 +4,14 @@ import { defineConfig } from 'vite';
 import Icons from 'unplugin-icons/vite';
 
 export default defineConfig({
-    plugins: [Icons({ compiler: 'svelte', autoInstall: true }), sveltekit(), tailwindcss()],
+    plugins: [
+        Icons({
+            compiler: 'svelte',
+            autoInstall: true,
+        }),
+        sveltekit(),
+        tailwindcss()
+    ],
     server: {
         proxy: {
             '/realms': {
