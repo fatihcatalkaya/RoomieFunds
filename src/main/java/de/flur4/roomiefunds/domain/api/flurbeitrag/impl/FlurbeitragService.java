@@ -21,6 +21,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FlurbeitragService implements GetFlurbeitrag, SetFlurbeitrag, CreateFlurbeitragTransaction {
     final static String SETTINGS_FLURBEITRAG_AMOUNT = "settings.flurbeitrag_amount";
+    final static ModifyingPersonDto SCHEDULER = new ModifyingPersonDto("", Optional.of("Flurbeitrag Scheduler"));
     final FlurbeitragRepository flurbeitragRepository;
     final FlurkontoRepository flurkontoRepository;
     final PersonRepository personRepository;
@@ -65,8 +66,7 @@ public class FlurbeitragService implements GetFlurbeitrag, SetFlurbeitrag, Creat
         }
         // We load the list of persons from which we have to take money
         final var persons = personRepository.getPersonsThatPayFlurbeitrag();
-        final var modifyingPerson = new ModifyingPersonDto("", Optional.of("Flurbeitrag Scheduler"));
-        flurbeitragRepository.createFlurbeitragTransactions(modifyingPerson, persons, flurbeitrag, flurkonto.get().id(), today);
+        flurbeitragRepository.createFlurbeitragTransactions(SCHEDULER, persons, flurbeitrag, flurkonto.get().id(), today);
         return FlurbeitragSchedulerExitCodes.OK;
     }
 }

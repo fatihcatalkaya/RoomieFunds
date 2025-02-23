@@ -4,6 +4,7 @@ import de.flur4.roomiefunds.models.recurringtransaction.CreateRecurringTransacti
 import de.flur4.roomiefunds.models.recurringtransaction.GetRecurringTransactionDto;
 import de.flur4.roomiefunds.models.recurringtransaction.UpdateRecurringTransactionDto;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,4 +14,5 @@ public interface RecurringTransactionRepository {
     GetRecurringTransactionDto createRecurringTransaction(CreateRecurringTransactionDto createRecurringTransaction);
     GetRecurringTransactionDto updateRecurringTransaction(long recurringTransactionId, UpdateRecurringTransactionDto updateRecurringTransaction);
     void deleteRecurringTransaction(long recurringTransactionId);
+    boolean hasTransactionBeenCreatedAlready(long recurringTransactionId, LocalDate date);
 }

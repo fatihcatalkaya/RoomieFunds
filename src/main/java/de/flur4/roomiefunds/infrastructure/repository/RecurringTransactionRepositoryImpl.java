@@ -8,12 +8,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ACCOUNT;
-import static de.flur4.roomiefunds.infrastructure.jooq.Tables.RECURRING_TRANSACTION;
+import static de.flur4.roomiefunds.infrastructure.jooq.Tables.*;
 import static org.jooq.Records.mapping;
+import static org.jooq.impl.DSL.*;
 
 @RequiredArgsConstructor
 @ApplicationScoped
@@ -112,5 +113,16 @@ public class RecurringTransactionRepositoryImpl implements RecurringTransactionR
     @Override
     public void deleteRecurringTransaction(long recurringTransactionId) {
         jooq.deleteFrom(RECURRING_TRANSACTION).where(RECURRING_TRANSACTION.ID.eq(recurringTransactionId)).execute();
+    }
+
+    @Override
+    public boolean hasTransactionBeenCreatedAlready(long recurringTransactionId, LocalDate date) {
+        return jooq.select(exists(
+                jooq.selectOne()
+                        .from(RECURRING_TRANSACTION_SCHEDULER_LOG)
+                        .where(RECURRING_TRANSACTION_SCHEDULER_LOG.RECURRING_TRANSACTION_ID.eq(recurringTransactionId))
+                        .and(month(RECURRING_TRANSACTION_SCHEDULER_LOG.CREATED_AT).eq(date.getDayOfMonth()))
+                        .and(year(RECURRING_TRANSACTION_SCHEDULER_LOG.CREATED_AT).eq(date.getDayOfMonth()))
+        )).fetchOne().value1();
     }
 }
