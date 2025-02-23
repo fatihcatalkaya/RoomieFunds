@@ -24,7 +24,7 @@ import static org.jooq.Records.mapping;
 public class PersonRepositoryImpl implements PersonRepository {
 
     final DSLContext jooq;
-    private static final String DEFAULT_PERSON_ACCOUNT_NAME = "%ss (%s) Konto";
+    private static final String DEFAULT_PERSON_ACCOUNT_NAME = "Passiv:Bewohner:%s %s";
 
     @Override
     public Optional<Person> getPersonById(long id) {
@@ -110,6 +110,7 @@ public class PersonRepositoryImpl implements PersonRepository {
         var person = jooq.selectFrom(PERSON)
                 .where(PERSON.ID.eq(personId))
                 .fetchOne();
+        assert person != null;
         if (updatePersonDto.name().isPresent()) {
             person.setName(updatePersonDto.name().get());
         }
