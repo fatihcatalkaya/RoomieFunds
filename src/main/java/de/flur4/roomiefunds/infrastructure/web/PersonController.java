@@ -62,8 +62,8 @@ public class PersonController {
         } catch (PersonNotFoundException e) {
             throw new NotFoundException("Person with id " + personId + " not found");
         } catch (JsonProcessingException e) {
-            log.error("An error occurred while creating person", e);
-            throw new InternalServerErrorException("An error occurred while creating person", e);
+            log.error("An error occurred while updating person", e);
+            throw new InternalServerErrorException("An error occurred while updating person", e);
         }
     }
 
@@ -78,8 +78,8 @@ public class PersonController {
         } catch (PersonUndeletableException e) {
             throw new ClientErrorException(e.getMessage(), Response.Status.CONFLICT);
         } catch (JsonProcessingException e) {
-            log.error("An error occurred while creating person", e);
-            throw new InternalServerErrorException("An error occurred while creating person", e);
+            log.error("An error occurred while delete person", e);
+            throw new InternalServerErrorException("An error occurred while delete person", e);
         }
     }
 }

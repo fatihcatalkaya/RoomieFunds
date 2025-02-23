@@ -62,8 +62,8 @@ public class TransactionController {
         } catch (TransactionNotFoundException e) {
             throw new NotFoundException("Transaction with id " + transactionId + "not found");
         } catch (Exception e) {
-            log.error("An error occurred while creating transaction", e);
-            throw new InternalServerErrorException("An error occurred while creating transaction", e);
+            log.error("An error occurred while updating transaction", e);
+            throw new InternalServerErrorException("An error occurred while updating transaction", e);
         }
     }
 
@@ -76,8 +76,8 @@ public class TransactionController {
         } catch (TransactionNotFoundException e) {
             throw new NotFoundException("Transaction with id " + transactionId + "not found");
         } catch (Exception e) {
-            log.error("An error occurred while creating transaction", e);
-            throw new InternalServerErrorException("An error occurred while creating transaction", e);
+            log.error("An error occurred while deleting transaction", e);
+            throw new InternalServerErrorException("An error occurred while deleting transaction", e);
         }
     }
 }
