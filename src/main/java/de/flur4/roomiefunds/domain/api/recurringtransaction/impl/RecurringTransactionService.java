@@ -74,4 +74,9 @@ public class RecurringTransactionService implements CreateRecurringTransaction, 
                 Optional.empty()
         ));
     }
+
+    @Override
+    public void createScheduledTransactions() {
+
+    }
 }

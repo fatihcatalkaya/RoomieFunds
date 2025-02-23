@@ -77,3 +77,15 @@ Table recurring_transaction {
   transaction_description text [not null, default: '']
   name text [not null, default: '']
 }
+
+Table flurbeitrag_scheduler_log {
+  id bigint [pk]
+  created_at DATE [not null]
+}
+
+Table recurring_transaction_scheduler_log {
+  id bigint [pk]
+  created_at DATE [not null]
+  recurring_transaction_id BIGINT [not null, note: 'no reference to recurring transaction table, because it might get deleted']
+  recurring_transaction_name TEXT [not null]
+}

@@ -8,4 +8,6 @@ import de.flur4.roomiefunds.models.recurringtransaction.GetRecurringTransactionD
 public interface CreateRecurringTransaction {
     GetRecurringTransactionDto createRecurringTransaction(ModifyingPersonDto modifyingPerson,
                                                           CreateRecurringTransactionDto createRecurringTransaction) throws JsonProcessingException;
+
+    void createScheduledTransactions();
 }

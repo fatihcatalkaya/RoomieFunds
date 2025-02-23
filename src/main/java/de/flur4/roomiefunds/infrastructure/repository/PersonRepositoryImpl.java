@@ -69,6 +69,21 @@ public class PersonRepositoryImpl implements PersonRepository {
     }
 
     @Override
+    public List<Person> getPersonsThatPayFlurbeitrag() {
+        return jooq.select(
+                        PERSON.ID,
+                        PERSON.NAME,
+                        PERSON.ROOM,
+                        PERSON.PAYS_FLOOR_FEES,
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                ).from(PERSON)
+                .where(PERSON.PAYS_FLOOR_FEES.eq(true))
+                .orderBy(PERSON.ROOM)
+                .fetch(mapping(Person::new));
+    }
+
+    @Override
     public Pair<Person, Account> createPerson(CreatePersonDto createPersonDto) {
         final String accountName = DEFAULT_PERSON_ACCOUNT_NAME.formatted(createPersonDto.name(), createPersonDto.room());
         AtomicReference<Account> account = new AtomicReference<>();

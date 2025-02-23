@@ -34,7 +34,7 @@ public class LogRepositoryImpl implements LogRepository {
         // Construct modifying person string
         String modifyingPersonString = modifyingPersonDto.ssoId();
         if (modifyingPersonDto.username().isPresent()) {
-            modifyingPersonString += modifyingPersonDto.username().get();
+            modifyingPersonString += " " + modifyingPersonDto.username().get();
         }
 
         String objectBeforeJson = null;

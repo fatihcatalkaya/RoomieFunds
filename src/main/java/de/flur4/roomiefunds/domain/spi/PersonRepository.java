@@ -18,6 +18,8 @@ public interface PersonRepository {
 
     List<Person> getPersonsToPrintOnTallyList();
 
+    List<Person> getPersonsThatPayFlurbeitrag();
+
     Pair<Person, Account> createPerson(CreatePersonDto createPersonDto);
 
     Person updatePerson(long personId, UpdatePersonDto updatePersonDto);
