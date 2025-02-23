@@ -62,7 +62,7 @@ public class AccountController {
             throw new NotFoundException("Account with id " + accountId + " not found");
         } catch (Exception e) {
             log.error("An error occurred while creating account", e);
-            throw new InternalServerErrorException("An error occurred while creating account", e);
+            throw new InternalServerErrorException("An error occurred while updating account", e);
         }
     }
 
@@ -78,7 +78,7 @@ public class AccountController {
             throw new ClientErrorException(e.getMessage(), Response.Status.CONFLICT);
         } catch (Exception e) {
             log.error("An error occurred while creating account", e);
-            throw new InternalServerErrorException("An error occurred while creating account", e);
+            throw new InternalServerErrorException("An error occurred while deleting account", e);
         }
     }
 }

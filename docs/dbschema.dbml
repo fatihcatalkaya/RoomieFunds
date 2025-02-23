@@ -7,7 +7,7 @@ Enum log_operations {
 }
 
 Table log {
-  id integer [pk]
+  id bigint [pk]
   created_at timestamptz [not null]
   operation log_operations [not null]
   modified_table_name text [not null]
@@ -17,35 +17,35 @@ Table log {
 }
 
 Table product {
-  id integer [pk]
+  id bigint [pk]
   name TEXT [not null]
   price integer [not null, note: 'in cent']
   print boolean [default: true]
 }
 
 Table person {
-  id integer [pk]
+  id bigint [pk]
   name TEXT [not null]
   room TEXT [not null]
   pays_floor_fees bool [not null]
-  account_id integer [ref: > account.id]
+  account_id bigint [ref: > account.id]
   print_on_product_tally_list boolean [default: true]
 }
 
 Table account {
-  id integer [pk]
+  id bigint [pk]
   name TEXT [not null]
   is_active bool [not null]
 }
 
 Table transaction {
-  id integer [pk]
-  source_account_id integer [ref: > account.id, not null]
-  target_account_id integer [ref: > account.id, not null]
+  id bigint [pk]
+  source_account_id bigint [ref: > account.id, not null]
+  target_account_id bigint [ref: > account.id, not null]
   amount integer [not null, note: 'in cent']
   created_at timestamptz [not null]
   value_date timestamptz [not null]
-  description text [not null, default: ''] 
+  description text [not null, default: '']
 }
 
 Enum received_from {
@@ -55,15 +55,25 @@ Enum received_from {
 }
 
 Table physical_transaction {
-  id integer [pk]
-  transaction_id integer [not null, ref: > transaction.id]
+  id bigint [pk]
+  transaction_id bigint [not null, ref: > transaction.id]
   source received_from [not null, default: '']
   created_at timestamp [not null]
-  transaction_description text [not null, default: ''] 
+  transaction_description text [not null, default: '']
 }
 
 Table settings {
   setting_key text [pk, unique, not null]
-  value_int BIGINT
+  value_int bigint
   value_string TEXT
+}
+
+Table recurring_transaction {
+  id bigint [pk]
+  amount int [not null, note: 'in cent']
+  source_account_id bigint [ref: > account.id, not null]
+  target_account_id bigint [ref: > account.id, not null]
+  value_day_of_month int [not null]
+  transaction_description text [not null, default: '']
+  name text [not null, default: '']
 }
