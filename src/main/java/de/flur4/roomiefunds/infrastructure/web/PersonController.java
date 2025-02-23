@@ -33,7 +33,7 @@ public class PersonController {
     }
 
     @GET
-    @Path("/{personId}:\\d+")
+    @Path("/{personId:\\d+}")
     public Person getPerson(@PathParam("personId") long personId) {
         var result = getPerson.getPerson(personId);
         if(result.isEmpty()) {
@@ -54,7 +54,7 @@ public class PersonController {
     }
 
     @PATCH
-    @Path("/{personId}:\\d+")
+    @Path("/{personId:\\d+}")
     public Person patchPerson(@PathParam("personId") long personId, @Valid UpdatePersonDto dto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -68,7 +68,7 @@ public class PersonController {
     }
 
     @DELETE
-    @Path("/{personId}:\\d+")
+    @Path("/{personId:\\d+}")
     public void deletePerson(@PathParam("personId") long personId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {

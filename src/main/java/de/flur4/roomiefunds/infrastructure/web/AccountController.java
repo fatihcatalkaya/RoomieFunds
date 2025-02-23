@@ -32,7 +32,7 @@ public class AccountController {
     }
 
     @GET
-    @Path("/{accountId}:\\d+")
+    @Path("/{accountId:\\d+}")
     public Account getAccount(@PathParam("accountId") long accountId) {
         var result = getAccount.getAccount(accountId);
         if(result.isEmpty()) {
@@ -53,7 +53,7 @@ public class AccountController {
     }
 
     @PATCH
-    @Path("/{accountId}:\\d+")
+    @Path("/{accountId:\\d+}")
     public Account patchAccount(@PathParam("accountId") long accountId, @Valid UpdateAccountDto dto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -67,7 +67,7 @@ public class AccountController {
     }
 
     @DELETE
-    @Path("/{accountId}:\\d+")
+    @Path("/{accountId:\\d+}")
     public void deleteAccount(@PathParam("accountId") long accountId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {

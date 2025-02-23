@@ -32,7 +32,7 @@ public class ProductController {
     }
 
     @GET
-    @Path("/{productId}:\\d+")
+    @Path("/{productId:\\d+}")
     public Product getProduct(@PathParam("productId") long productId) {
         var result = getProduct.getProduct(productId);
         if (result.isEmpty()) {
@@ -65,7 +65,7 @@ public class ProductController {
     }
 
     @PATCH
-    @Path("/{productId}:\\d+")
+    @Path("/{productId:\\d+}")
     public Product patchProduct(@PathParam("productId") long productId, @Valid UpdateProductDto dto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -79,7 +79,7 @@ public class ProductController {
     }
 
     @DELETE
-    @Path("/{productId}:\\d+")
+    @Path("/{productId:\\d+}")
     public void deleteProduct(@PathParam("productId") long productId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {

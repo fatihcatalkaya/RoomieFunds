@@ -31,7 +31,7 @@ public class RecurringTransactionController {
     }
 
     @GET
-    @Path("/{recurringTransactionId}:\\d+")
+    @Path("/{recurringTransactionId:\\d+}")
     public GetRecurringTransactionDto getRecurringTransaction(@PathParam("recurringTransactionId") long recurringTransactionId) {
         var result = getRecurringTransaction.getRecurringTransaction(recurringTransactionId);
         if (result.isEmpty()) {
@@ -52,7 +52,7 @@ public class RecurringTransactionController {
     }
 
     @PATCH
-    @Path("/{recurringTransactionId}:\\d+")
+    @Path("/{recurringTransactionId:\\d+}")
     public GetRecurringTransactionDto updateRecurringTransaction(@PathParam("recurringTransactionId") long recurringTransactionId, @Valid UpdateRecurringTransactionDto dto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -66,7 +66,7 @@ public class RecurringTransactionController {
     }
 
     @DELETE
-    @Path("/{recurringTransactionId}:\\d+")
+    @Path("/{recurringTransactionId:\\d+}")
     public void deleteRecurringTransaction(@PathParam("recurringTransactionId") long recurringTransactionId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {

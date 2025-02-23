@@ -27,13 +27,13 @@ public class TransactionController {
     final JsonWebToken jwt;
 
     @GET
-    @Path("/account/{accountId}:\\d+")
+    @Path("/account/{accountId:\\d+}")
     public List<TransactionSaldoDto> getTransactionForAccount(@PathParam("accountId") long accountId) {
         return getTransaction.getTransactionsForAccount(accountId);
     }
 
     @GET
-    @Path("/{transactionId}:\\d+")
+    @Path("/{transactionId:\\d+}")
     public Transaction getTransaction(@PathParam("transactionId") long transactionId) {
         var result = getTransaction.getTransaction(transactionId);
         if (result.isEmpty()) {
@@ -54,7 +54,7 @@ public class TransactionController {
     }
 
     @PATCH
-    @Path("/{transactionId}:\\d+")
+    @Path("/{transactionId:\\d+}")
     public Transaction updateTransaction(@PathParam("transactionId") long transactionId, @Valid UpdateTransactionDto updateTransactionDto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -68,7 +68,7 @@ public class TransactionController {
     }
 
     @DELETE
-    @Path("/{transactionId}:\\d+")
+    @Path("/{transactionId:\\d+}")
     public void deleteTransaction(@PathParam("transactionId") long transactionId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
