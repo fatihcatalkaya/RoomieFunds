@@ -96,7 +96,7 @@ public class PersonRepositoryImpl implements PersonRepository {
                     .values(accountName, false)
                     .returningResult(ACCOUNT.ID, ACCOUNT.NAME, ACCOUNT.IS_ACTIVE)
                     .fetchOne(mapping(Account::new)));
-            person.set(jooq.insertInto(PERSON)
+            person.set(tx.dsl().insertInto(PERSON)
                     .columns(
                             PERSON.NAME,
                             PERSON.ROOM,

@@ -7,31 +7,32 @@ import de.flur4.roomiefunds.domain.api.recurringtransaction.UpdateRecurringTrans
 import de.flur4.roomiefunds.domain.api.recurringtransaction.impl.RecurringTransactionService;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
 import de.flur4.roomiefunds.domain.spi.RecurringTransactionRepository;
+import de.flur4.roomiefunds.domain.spi.TransactionRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
 public class RecurringTransactionContext {
     @Produces
     @ApplicationScoped
-    public GetRecurringTransaction getRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, LogRepository logRepository) {
-        return new RecurringTransactionService(recurringTransactionRepository, logRepository);
+    public GetRecurringTransaction getRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, TransactionRepository transactionRepository, LogRepository logRepository) {
+        return new RecurringTransactionService(recurringTransactionRepository, transactionRepository, logRepository);
     }
 
     @Produces
     @ApplicationScoped
-    public CreateRecurringTransaction createRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, LogRepository logRepository) {
-        return new RecurringTransactionService(recurringTransactionRepository, logRepository);
+    public CreateRecurringTransaction createRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, TransactionRepository transactionRepository, LogRepository logRepository) {
+        return new RecurringTransactionService(recurringTransactionRepository, transactionRepository, logRepository);
     }
 
     @Produces
     @ApplicationScoped
-    public UpdateRecurringTransaction updateRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, LogRepository logRepository) {
-        return new RecurringTransactionService(recurringTransactionRepository, logRepository);
+    public UpdateRecurringTransaction updateRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, TransactionRepository transactionRepository, LogRepository logRepository) {
+        return new RecurringTransactionService(recurringTransactionRepository, transactionRepository, logRepository);
     }
 
     @Produces
     @ApplicationScoped
-    public DeleteRecurringTransaction deleteRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, LogRepository logRepository) {
-        return new RecurringTransactionService(recurringTransactionRepository, logRepository);
+    public DeleteRecurringTransaction deleteRecurringTransaction(RecurringTransactionRepository recurringTransactionRepository, TransactionRepository transactionRepository, LogRepository logRepository) {
+        return new RecurringTransactionService(recurringTransactionRepository, transactionRepository, logRepository);
     }
 }

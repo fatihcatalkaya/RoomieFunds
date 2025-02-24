@@ -2,7 +2,6 @@
 	import { page } from '$app/state';
 
 	function decideLabel(routeModule: any, pathName: string) {
-		console.log(routeModule, pathName)
 		if (routeModule && Object.hasOwn(routeModule, "breadcrumbLabel")) {
 			return routeModule["breadcrumbLabel"];
 		} else {
@@ -46,9 +45,7 @@
 						href: completeUrl
 					});
 				} else {
-					console.log("a")
 					let string = matchingRoutes[0].replace("/src/routes" + previousUrl + "/", "").split("/")[0]
-					console.log(string)
 					completeRoute += `/${string}`
 					_crumbs.push({
 						label: decideLabel(routeModules[completeRoute + "/+page.svelte"], path),
@@ -63,7 +60,7 @@
 </script>
 
 <nav aria-label="breadcrumb" class="px-4 py-2 mb-2 mt-4 rounded-box border-base-content/5 bg-base-100 border border-slate-300 overflow-x-scroll">
-	<ol class="inline-flex items-center space-x-4 text-sm font-medium text-nowrap">
+	<ol class="inline-flex items-center space-x-4 text-sm font-medium text-nowrap after:w-4">
 		{#each crumbs as c, i}
 			<li class="inline-flex items-center">
 				{#if i == crumbs.length - 1}
