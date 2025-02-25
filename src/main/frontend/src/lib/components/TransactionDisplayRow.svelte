@@ -45,6 +45,15 @@
         }
     })
 
+    let doChangeAmountSign = $derived.by(() => {
+        console.log(dto.transaction?.sourceAccountActive, dto.transaction?.targetAccountActive)
+        if (dto.transaction?.sourceAccountActive! !== dto.transaction?.targetAccountActive!) {
+            return false;
+        } else {
+            return dto.transaction?.sourceAccountId === account.id
+        }
+    });
+
     async function allowEdit() {
         direction = dto.transaction?.sourceAccountId! === account.id ? "decrease" : "increase";
         date = dto.transaction?.valueDate!;
@@ -100,8 +109,12 @@
                 {/each}
             {/if}
         </td>
-        {#if dto.transaction!.sourceAccountName === account.name}
+        {#if doChangeAmountSign && dto.transaction?.amount! > 0}
             <td class="text-right font-semibold text-red-500">{formatEuroCents(dto.transaction?.amount! * -1)}</td>     
+        {:else if doChangeAmountSign && dto.transaction?.amount! < 0}
+            <td class="text-right">{formatEuroCents(dto.transaction?.amount! * -1)}</td>     
+        {:else if dto.transaction?.amount! < 0}
+            <td class="text-right font-semibold text-red-500">{formatEuroCents(dto.transaction?.amount!)}</td>
         {:else}
             <td class="text-right">{formatEuroCents(dto.transaction?.amount!)}</td>
         {/if}
