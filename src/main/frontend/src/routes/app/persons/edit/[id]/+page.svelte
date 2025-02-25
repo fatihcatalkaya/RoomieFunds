@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { deleteApiPersonByPersonId, patchApiPersonByPersonId } from '$lib/client';
+	import { deleteApiPersonByPersonId, getApiAccount, patchApiPersonByPersonId, type Account } from '$lib/client';
     import MdiDelete from '~icons/mdi/delete';
 
 	const { data } = $props();
@@ -13,6 +13,8 @@
 	let room = $state(person.room);
 	let paysFloorFees = $state(person.paysFloorFees);
 	let printOnProductTallyList = $state(person.printOnProductTallyList);
+
+	let personAccountId = $state(person.accountId);
 
 	async function updatePerson() {
 		let query = await patchApiPersonByPersonId({
@@ -31,11 +33,11 @@
 		return false;
 	}
 
-    let modalElement: HTMLDialogElement;
+    let deleteConfirmModal: HTMLDialogElement;
     let showConflictError = $state(false);
 
 	async function deletePerson() {
-        modalElement.showModal();
+        deleteConfirmModal.showModal();
     }
 
     async function reallyDeletePerson() {
@@ -54,10 +56,70 @@
         return true
     }
 
+	let accountChangeModal: HTMLDialogElement;
+	let accountChangeSelect: HTMLSelectElement;
+
+	let accountList: Array<Account> = $state([]);
+
+	async function openAccountChangeModal() {
+		const accountQuery = await getApiAccount();
+		
+		if (accountQuery.error) {
+			if (accountChangeModal) {
+				accountChangeSelect!.disabled = true;
+			}
+		} else {
+			accountList = accountQuery.data!;
+		}
+
+		accountChangeModal.showModal();
+	}
+
 	// TODO: Account dingsbums
 </script>
 
-<dialog class="modal" bind:this={modalElement}>
+<dialog class="modal" bind:this={deleteConfirmModal}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">{name} löschen</h3>
+		<p class="py-4">Bist du dir sicher, dass du Person {person.id} löschen willst?</p>
+		<div class="modal-action">
+			<form method="dialog" class="join">
+				<button class="btn btn-error join-item" onclick={reallyDeletePerson}>Löschen</button>
+				<button class="btn join-item">Abbrechen</button>
+			</form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<dialog class="modal" bind:this={accountChangeModal}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Benutzerkonto von {name} ändern</h3>
+		<p class="py-4">
+			Du änderst gerade das Konto, das mit der Person verknüpft ist.
+			Wenn bereits Buchungen in dem Konto sind, kann das zu
+			ungewünschten Nebenwirkungen führen!
+		</p>
+		<select bind:value={personAccountId}>
+			{#each accountList as account}
+				<option value="{account.id}">{account.name}</option>
+			{/each}
+		</select>
+		<div class="modal-action">
+			<form method="dialog" class="join">
+				<button class="btn btn-error join-item" onclick={reallyDeletePerson}>Löschen</button>
+				<button class="btn join-item">Abbrechen</button>
+			</form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
+<dialog class="modal" bind:this={accountChangeModal}>
 	<div class="modal-box">
 		<h3 class="text-lg font-bold">{name} löschen</h3>
 		<p class="py-4">Bist du dir sicher, dass du Person {person.id} löschen willst?</p>

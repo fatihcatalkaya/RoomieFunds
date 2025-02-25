@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { page } from "$app/state";
     import { type Account } from "$lib/client";
-	import MdiPencilPlus from '~icons/mdi/pencil';
-	import MdiDelete from '~icons/mdi/delete';
+	import MdiBank from '~icons/mdi/bank';
 
+    let { accountId } = page.params;
+ 
     const account: Account = {
         id: 1,
         name: "Flurkasse",
@@ -20,11 +22,8 @@
         <div class="badge badge-lg badge-primary font-bold">Passiv</div>
     {/if}
     <div class="flex-grow"></div>
-	<a href="/app/persons/create" class="btn btn-warning h-8 w-8 p-0 m-0 text-lg">
-		<MdiPencilPlus/>
-	</a>
-    <a href="/app/persons/create" class="btn btn-error h-8 w-8 p-0 m-0 text-lg">
-		<MdiDelete/>
+	<a href="/app/accounts/transactions/{accountId}" title="Zurück zu Transaktionen" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
+		<MdiBank/>
 	</a>
 </div>
 

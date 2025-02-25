@@ -4,8 +4,9 @@
 
 <script lang="ts">
 	import { getApiAccount, type Account } from '$lib/client';
-	import MdiPlus from '~icons/mdi/plus';
 	import AccountListSubtree from '$lib/components/AccountListSubtree.svelte';
+	import MdiPlus from '~icons/mdi/plus';
+	import MdiScriptText from '~icons/mdi/script-text';
 
 	type TreeNode = {
 		name: string;
@@ -45,7 +46,6 @@
 			insertToTree(path, account, rootNodes);
 		});
 
-        console.log(rootNodes);
 		return rootNodes;
 	}
 
@@ -70,6 +70,9 @@
 		</span>
 	</label>
 	<div class="flex-2"></div>
+	<a href="/app/accounts/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 mr-2 text-lg">
+		<MdiScriptText/>
+	</a>
 	<a href="/app/accounts/create" class="btn btn-success m-0 h-8 w-8 p-0 text-lg">
 		<MdiPlus />
 	</a>

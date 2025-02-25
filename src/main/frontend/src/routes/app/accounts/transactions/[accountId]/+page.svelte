@@ -1,15 +1,18 @@
 <script lang="ts">
-	import type { Account, TransactionSaldoDto } from "$lib/client";
-    import { getApiAccountByAccountId, getApiTransactionAccountByAccountId } from "$lib/client";
-
-    import Dingsbums from "$lib/components/dingsbums.svelte";
-	import { formatEuroCents } from "$lib/formatter";
-	import MdiPencilPlus from '~icons/mdi/pencil';
-	import MdiDelete from '~icons/mdi/delete';
 	import { page } from "$app/state";
+	import type { Account, TransactionSaldoDto } from "$lib/client";
+    import { deleteApiTransactionByTransactionId, getApiAccountByAccountId, getApiTransactionAccountByAccountId } from "$lib/client";
+	import TransactionInsert from "$lib/components/TransactionInsert.svelte";
+	import TransactionDisplayRow from "$lib/components/TransactionDisplayRow.svelte";
+    import MdiPencilPlus from '~icons/mdi/pencil';
+	import MdiDelete from '~icons/mdi/delete';
+    import MdiScriptText from '~icons/mdi/script-text';
 
-    // fetch transactions in derived field because the query requires more complex querying
+    let lastUpdated = $state(Date.now());
+
     let fetchQuery: Promise<{transactions: TransactionSaldoDto[], account: Account}> = $derived.by(async () => {
+        let _ = lastUpdated;
+
         let transactionQuery = getApiTransactionAccountByAccountId({
             path: {
                 accountId: Number(page.params.accountId), // if this throws we catch this in the ui
@@ -35,7 +38,46 @@
             }
         }
     });
+
+    let transactionDeleteModal: HTMLDialogElement;
+    let transactionDeleteData: TransactionSaldoDto = $state({});
+
+    function deleteTransaction(dto: TransactionSaldoDto) {
+        transactionDeleteData = dto;
+        transactionDeleteModal.showModal();
+    }
+
+    async function reallyDeleteTransaction(dto: TransactionSaldoDto) {
+        let query = await deleteApiTransactionByTransactionId({
+            path: {
+                transactionId: dto.transaction?.id!
+            }
+        });
+
+        if (query.error) {
+            console.error(query.error)
+        } else {
+            lastUpdated = Date.now()
+        }
+    }
 </script>
+
+<dialog class="modal" bind:this={transactionDeleteModal}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">{transactionDeleteData.transaction?.description} löschen</h3>
+		<p class="py-4">Bist du dir sicher, dass du Transaktion {transactionDeleteData.transaction?.id} löschen willst?</p>
+		<div class="modal-action">
+			<form method="dialog" class="join">
+				<button class="btn btn-error join-item" onclick={() => reallyDeleteTransaction(transactionDeleteData)}>Löschen</button>
+				<button class="btn join-item">Abbrechen</button>
+			</form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
 
 {#await fetchQuery}
 
@@ -58,10 +100,13 @@
             <div class="badge badge-lg badge-primary font-bold md:block hidden">Passiv</div>
         {/if}
         <div class="flex-grow"></div>
+        <a href="/app/accounts/log/{account.id}" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
+            <MdiScriptText/>
+        </a>
         <a href="/app/persons/create" class="btn btn-warning h-8 w-8 p-0 m-0 text-lg">
             <MdiPencilPlus/>
         </a>
-        <button href="/app/persons/create" class="btn btn-error h-8 w-8 p-0 m-0 text-lg" disabled>
+        <button class="btn btn-error h-8 w-8 p-0 m-0 text-lg" disabled>
             <MdiDelete/>
         </button>
     </div>
@@ -75,42 +120,15 @@
                     <th>Buchen Gegen</th>
                     <th class="text-right">Betrag</th>
                     <th class="text-right">Saldo</th>
+                    <th>Bearbeiten</th>
                 </tr>
             </thead>
             <tbody>
                 {#each transactions! as dto}
-                    <tr>
-                        <td>{dto.transaction?.valueDate}</td>
-                        <td>{dto.transaction?.description}</td>
-                        <td>
-                            {#if dto.transaction?.sourceAccountName === account.name}
-                                {#each dto.targetAccountNameParts! as part, i}
-                                    {part}
-                                    {#if i < dto.targetAccountNameParts!.length - 1}
-                                        <Dingsbums/>  
-                                    {/if}
-                                {/each}
-                            {:else}
-                                {#each dto.sourceAccountNameParts! as part, i}
-                                    {part}
-                                    {#if i < dto.sourceAccountNameParts!.length - 1}
-                                        <Dingsbums/>  
-                                    {/if}
-                                {/each}
-                            {/if}
-                        </td>
-                        {#if dto.transaction!.sourceAccountName === account.name}
-                        <td class="text-right font-semibold text-red-500">{formatEuroCents(dto.transaction?.amount! * -1)}</td>     
-                        {:else}
-                            <td class="text-right">{formatEuroCents(dto.transaction?.amount!)}</td>
-                        {/if}
-                        {#if dto.saldo! >= 0}
-                            <td class="text-right">{formatEuroCents(dto.saldo!)}</td>
-                        {:else}
-                            <td class="text-right font-semibold text-red-500">{formatEuroCents(dto.saldo!)}</td>                    
-                        {/if}
-                    </tr>
+                    <TransactionDisplayRow {dto} {account} refreshTransaction={() => lastUpdated = Date.now()} tryDelete={() => deleteTransaction(dto)} />
                 {/each}
+                
+                <TransactionInsert parentAccountId={account.id!} refreshTransactions={() => lastUpdated = Date.now()}/>
             </tbody>
         </table>
     </div>

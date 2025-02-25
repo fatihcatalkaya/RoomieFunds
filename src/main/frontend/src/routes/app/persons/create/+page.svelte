@@ -18,7 +18,7 @@
         });
 
         if (query.error) {
-            console.log(query.error);
+            console.error(query.error);
         } else {
             goto("../");
         }

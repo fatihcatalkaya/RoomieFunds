@@ -8,6 +8,7 @@
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import MdiPrinter from '~icons/mdi/printer';
+	import MdiBankTransfer from '~icons/mdi/bank-transfer';
 	
 	import type { PageProps } from './$types';
 	import { getApiProductTallylist } from '$lib/client';
@@ -33,7 +34,7 @@
 	<h1 class="flex-grow text-2xl font-bold">
 		Produktliste
 	</h1>
-	<button title="Änderungsprotokoll" class="btn btn-warning h-8 w-8 p-0 m-0 mr-2 text-lg" onclick={printTallylist}>
+	<button title="Strichliste Drucken" class="btn btn-warning h-8 w-8 p-0 m-0 mr-2 text-lg" onclick={printTallylist}>
 		<MdiPrinter/>
 	</button>
 	<a href="/app/products/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 mr-2 text-lg">
