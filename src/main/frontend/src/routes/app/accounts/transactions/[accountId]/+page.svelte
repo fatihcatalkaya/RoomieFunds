@@ -124,9 +124,15 @@
                 </tr>
             </thead>
             <tbody>
-                {#each transactions! as dto}
-                    <TransactionDisplayRow {dto} {account} refreshTransaction={() => lastUpdated = Date.now()} tryDelete={() => deleteTransaction(dto)} />
-                {/each}
+                {#if transactions.length == 0}
+                    <tr>
+                        <td colspan="6" class="text-lg p-6 pl-4">Auf diesem Konto sind keine Buchungen verzeichnet.</td>
+                    </tr>    
+                {:else}
+                    {#each transactions! as dto}
+                        <TransactionDisplayRow {dto} {account} refreshTransaction={() => lastUpdated = Date.now()} tryDelete={() => deleteTransaction(dto)} />
+                    {/each}
+                {/if}
                 
                 <TransactionInsert parentAccountId={account.id!} refreshTransactions={() => lastUpdated = Date.now()}/>
             </tbody>

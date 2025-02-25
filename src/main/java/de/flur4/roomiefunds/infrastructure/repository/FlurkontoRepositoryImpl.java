@@ -14,7 +14,7 @@ import static de.flur4.roomiefunds.infrastructure.jooq.Tables.SETTINGS;
 @ApplicationScoped
 @RequiredArgsConstructor
 public class FlurkontoRepositoryImpl implements FlurkontoRepository {
-    final static String SETTINGS_FLURBEITRAG_AMOUNT = "flurbeitrag_amount";
+    final static String SETTINGS_FLURKONTO_ID = "flur_account_id";
     final DSLContext jooq;
     final AccountRepository accountRepository;
 
@@ -22,7 +22,7 @@ public class FlurkontoRepositoryImpl implements FlurkontoRepository {
     public Optional<Account> getFlurkonto() {
         var flurkontoId = jooq.select(SETTINGS.VALUE_INT)
                 .from(SETTINGS)
-                .where(SETTINGS.SETTING_KEY.eq(SETTINGS_FLURBEITRAG_AMOUNT))
+                .where(SETTINGS.SETTING_KEY.eq(SETTINGS_FLURKONTO_ID))
                 .fetchOne().value1();
         return accountRepository.getAccount(flurkontoId);
     }
@@ -31,7 +31,7 @@ public class FlurkontoRepositoryImpl implements FlurkontoRepository {
     public Account setFlurkonto(long accountId) {
         jooq.update(SETTINGS)
                 .set(SETTINGS.VALUE_INT, accountId)
-                .where(SETTINGS.SETTING_KEY.eq(SETTINGS_FLURBEITRAG_AMOUNT))
+                .where(SETTINGS.SETTING_KEY.eq(SETTINGS_FLURKONTO_ID))
                 .execute();
         return accountRepository.getAccount(accountId).get();
     }

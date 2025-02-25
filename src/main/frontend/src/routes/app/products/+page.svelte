@@ -1,5 +1,5 @@
 <script module lang="ts">
-	export const breadcrumbLabel = 'Produkte';
+	export const breadcrumbLabel = "Getränke";
 </script>
 
 <script lang="ts">
@@ -8,7 +8,7 @@
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import MdiPrinter from '~icons/mdi/printer';
-	import MdiBankTransfer from '~icons/mdi/bank-transfer';
+	import MdiTallyMarkFive from '~icons/mdi/tally-mark-5';
 	
 	import type { PageProps } from './$types';
 	import { getApiProductTallylist } from '$lib/client';
@@ -30,14 +30,17 @@
 	}
 </script>
 
-<div class="inline-flex items-center w-full my-4">
+<div class="inline-flex items-center w-full my-4 gap-2">
 	<h1 class="flex-grow text-2xl font-bold">
 		Produktliste
 	</h1>
-	<button title="Strichliste Drucken" class="btn btn-warning h-8 w-8 p-0 m-0 mr-2 text-lg" onclick={printTallylist}>
+	<a href="/app/products/tally-count" title="Strichliste Drucken" class="btn btn-secondary h-8 w-8 p-0 m-0 text-lg">
+		<MdiTallyMarkFive/>
+	</a>
+	<button title="Strichliste Drucken" class="btn btn-warning h-8 w-8 p-0 m-0 text-lg" onclick={printTallylist}>
 		<MdiPrinter/>
 	</button>
-	<a href="/app/products/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 mr-2 text-lg">
+	<a href="/app/products/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
 		<MdiScriptText/>
 	</a>
 	<a href="/app/products/create" title="Neues Produkt" class="btn btn-success h-8 w-8 p-0 m-0 text-lg">

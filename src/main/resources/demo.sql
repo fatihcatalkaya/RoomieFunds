@@ -24,3 +24,7 @@ INSERT INTO product (name, price, print) VALUES
     ('Paulaner Spezi', 83, true),
     ('Club Mate', 76, true),
     ('Coca Cola 1,0L', 108, true);
+
+UPDATE settings
+    SET value_int = (SELECT id from account WHERE name = 'Passiv:Flurkasse')
+    WHERE setting_key = 'flur_account_id';

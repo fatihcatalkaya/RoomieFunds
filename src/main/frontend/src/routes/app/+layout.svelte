@@ -58,6 +58,7 @@
         <div class="mx-auto w-full max-w-6xl px-2" style="min-height: 0;">
           <Breadcrumb />
           {@render children()}
+          <div class="h-8"></div>
         </div>
       </div>
   {/if}

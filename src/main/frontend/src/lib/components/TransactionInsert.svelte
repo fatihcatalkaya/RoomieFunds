@@ -48,7 +48,7 @@
     }
 </script>
 
-<tr>
+<tr class="bg-base-200">
     <td>
         <input form="transaction-new-form" bind:value={date} type="date" class="input">
     </td>

@@ -53,8 +53,8 @@ public class RecurringTransactionRepositoryImpl implements RecurringTransactionR
                         ACCOUNT.as("target_account").NAME,
                         ACCOUNT.as("target_account").IS_ACTIVE,
                         RECURRING_TRANSACTION.VALUE_DAY_OF_MONTH,
-                        RECURRING_TRANSACTION.TRANSACTION_DESCRIPTION,
-                        RECURRING_TRANSACTION.NAME
+                        RECURRING_TRANSACTION.NAME,
+                        RECURRING_TRANSACTION.TRANSACTION_DESCRIPTION
                 ).from(RECURRING_TRANSACTION)
                 .join(ACCOUNT.as("source_account")).on(RECURRING_TRANSACTION.SOURCE_ACCOUNT_ID.eq(ACCOUNT.as("source_account").ID))
                 .join(ACCOUNT.as("target_account")).on(RECURRING_TRANSACTION.TARGET_ACCOUNT_ID.eq(ACCOUNT.as("target_account").ID))

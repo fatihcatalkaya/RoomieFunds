@@ -4,17 +4,17 @@
 
 <script lang="ts">
 	import MdiPencil from '~icons/mdi/pencil';
+	import MdiBank from '~icons/mdi/bank';
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiCheck from '~icons/mdi/check-bold';
 	import MdiClose from '~icons/mdi/close-bold';
 	import { getApiPerson } from '$lib/client';
-	import { error } from '@sveltejs/kit';
 
 	let personQuery = $derived.by(async () => {
 		let query = await getApiPerson();
 
 		if (query.error) {
-			throw error;
+			throw query.error;
 		} else {
 			return query.data;
 		}
@@ -65,9 +65,12 @@
 								<span class="text-error"><MdiClose/></span>
 							{/if}
 						</td>
-						<td class="max-w-4 text-center">
+						<td class="text-center">
 							<a href="/app/persons/edit/{person.id}" title="Person {person.id} bearbeiten" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
 								<MdiPencil />
+							</a>
+							<a href="/app/accounts/transactions/{person.accountId}" title="Person {person.id} bearbeiten" class="btn btn-secondary h-8 w-8 p-0 m-0 text-lg">
+								<MdiBank />
 							</a>
 						</td>
 					</tr>

@@ -1,6 +1,6 @@
 CREATE TABLE "recurring_transaction"
 (
-    "id"                      bigint PRIMARY KEY,
+    "id"                      bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     "amount"                  int    NOT NULL,
     "source_account_id"       bigint NOT NULL,
     "target_account_id"       bigint NOT NULL,
