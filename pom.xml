@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.flur4</groupId>
     <artifactId>roomiefunds</artifactId>
@@ -91,6 +90,10 @@
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest-client-jackson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.github.fatihcatalkaya</groupId>
             <artifactId>java-typst</artifactId>
             <version>1.0.0</version>
@@ -115,19 +118,26 @@
             <artifactId>jooq-meta</artifactId>
             <version>${jooq.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.36</version>
         </dependency>
-
         <dependency>
             <groupId>org.javatuples</groupId>
             <artifactId>javatuples</artifactId>
             <version>1.2</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>4.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.80</version>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
@@ -192,8 +202,7 @@
                 </executions>
                 <configuration>
                     <systemPropertyVariables>
-                        <native.image.path>${project.build.directory}/${project.build.finalName}-runner
-                        </native.image.path>
+                        <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
@@ -218,7 +227,7 @@
             <id>jooq</id>
             <activation>
                 <property>
-                    <name>gen-jooq</name>
+                    <name>jooq</name>
                 </property>
             </activation>
             <build>
@@ -237,8 +246,7 @@
                                     <goal>execute</goal>
                                 </goals>
                                 <configuration>
-                                    <source>
-                                        db = new org.testcontainers.containers.PostgreSQLContainer(
+                                    <source>db = new org.testcontainers.containers.PostgreSQLContainer(
                                                 "${postgresContainerVersion}")
                                                 .withUsername("${jooq.codegen.jdbc.username}")
                                                 .withDatabaseName("${jooq.codegen.jdbc.database}")
@@ -248,8 +256,7 @@
 
                                         // After you've started the container, collect its generated
                                         // JDBC URL (which contains a random port)
-                                        project.properties.setProperty('db.url', db.getJdbcUrl())
-                                    </source>
+                                        project.properties.setProperty('db.url', db.getJdbcUrl())</source>
                                 </configuration>
                             </execution>
                         </executions>
@@ -282,9 +289,7 @@
                                     <user>${jooq.codegen.jdbc.username}</user>
                                     <password>${jooq.codegen.jdbc.password}</password>
                                     <locations>
-                                        <location>
-                                            filesystem:src/main/resources/db/migration
-                                        </location>
+                                        <location>filesystem:src/main/resources/db/migration</location>
                                     </locations>
                                 </configuration>
                             </execution>
@@ -325,9 +330,7 @@
                                         </generate>
                                         <database>
                                             <inputSchema>public</inputSchema>
-                                            <excludes>
-                                                flyway_schema_history|gin.*|gtrgm.*|word.*|strict_word_similarity_.*|similarity.*|strict_word_similarity.*|set_limit|show_limit|show_trgm
-                                            </excludes>
+                                            <excludes>flyway_schema_history|gin.*|gtrgm.*|word.*|strict_word_similarity_.*|similarity.*|strict_word_similarity.*|set_limit|show_limit|show_trgm</excludes>
                                         </database>
                                         <target>
                                             <packageName>de.flur4.roomiefunds.infrastructure.jooq</packageName>
