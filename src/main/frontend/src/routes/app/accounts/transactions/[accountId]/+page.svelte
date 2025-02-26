@@ -1,43 +1,21 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import type { Account, TransactionSaldoDto } from "$lib/client";
-    import { deleteApiTransactionByTransactionId, getApiAccountByAccountId, getApiTransactionAccountByAccountId } from "$lib/client";
+	import type { TransactionSaldoDto } from "$lib/client";
+    import { deleteApiTransactionByTransactionId, getApiTransactionAccountByAccountId } from "$lib/client";
 	import TransactionInsert from "$lib/components/TransactionInsert.svelte";
 	import TransactionDisplayRow from "$lib/components/TransactionDisplayRow.svelte";
     import MdiPencilPlus from '~icons/mdi/pencil';
 	import MdiDelete from '~icons/mdi/delete';
     import MdiScriptText from '~icons/mdi/script-text';
+	import type { PageProps } from "./$types";
+	import ErrorAlert from "$lib/components/ErrorAlert.svelte";
+	import { createFetchQuery } from "./transactionsLoadQuery";
 
-    let lastUpdated = $state(Date.now());
+    const { data }: PageProps = $props();
+    const { fetchQuery } = data;
 
-    let fetchQuery: Promise<{transactions: TransactionSaldoDto[], account: Account}> = $derived.by(async () => {
-        let _ = lastUpdated;
-
-        let transactionQuery = getApiTransactionAccountByAccountId({
-            path: {
-                accountId: Number(page.params.accountId), // if this throws we catch this in the ui
-            }
-        });
-
-        let accountQuery = getApiAccountByAccountId({
-            path: {
-                accountId: Number(page.params.accountId), // if this throws we catch this in the ui
-            }
-        });
-
-        let [ transactions, account ] = await Promise.all([transactionQuery, accountQuery])
-
-        if (transactions.error) {
-            throw transactions.error
-        } else if (account.error) {
-            throw account.error
-        } else {
-            return {
-                transactions: transactions.data!,
-                account: account.data!,
-            }
-        }
-    });
+    let currentQuery = $state.raw(fetchQuery);
+    let updating = $state(false);
 
     let transactionDeleteModal: HTMLDialogElement;
     let transactionDeleteData: TransactionSaldoDto = $state({});
@@ -47,7 +25,16 @@
         transactionDeleteModal.showModal();
     }
 
+    function refreshTransactions() {
+        createFetchQuery(Number(page.params.accountId)).then(loadedData => {
+            currentQuery = new Promise((resolve) => resolve(loadedData))
+            updating = false;
+        });
+    }
+
     async function reallyDeleteTransaction(dto: TransactionSaldoDto) {
+        updating = true;
+
         let query = await deleteApiTransactionByTransactionId({
             path: {
                 transactionId: dto.transaction?.id!
@@ -56,9 +43,9 @@
 
         if (query.error) {
             console.error(query.error)
-        } else {
-            lastUpdated = Date.now()
         }
+
+        refreshTransactions();
     }
 </script>
 
@@ -78,13 +65,11 @@
 	</form>
 </dialog>
 
-
-{#await fetchQuery}
-
-    <span>Loading data...</span>
-
-{:then {transactions, account}}
-
+{#await currentQuery}
+    <div class="flex mt-4">
+        <span class="loading loading-spinner loading-lg mx-auto"></span>
+    </div>
+{:then [transactions, account]}
     <div class="inline-flex items-center w-full my-4 gap-2">
         <h1 class="text-2xl font-bold pr-2">
             {#each account.name!.split(':') as part, i}
@@ -111,7 +96,7 @@
         </button>
     </div>
 
-    <div class="rounded-box border-base-content/5 overflow-x-auto overflow-y-scroll border border-slate-300 text-nowrap">
+    <div class="rounded-box border-base-content/5 overflow-x-auto overflow-y-scroll border border-slate-300 text-nowrap {updating ? "pointer-events-none opacity-40" : ""}">
         <table class="table-zebra table-pin-rows table">
             <thead class="text-neutral">
                 <tr>
@@ -124,24 +109,27 @@
                 </tr>
             </thead>
             <tbody>
-                {#if transactions.length == 0}
-                    <tr>
-                        <td colspan="6" class="text-lg p-6 pl-4">Auf diesem Konto sind keine Buchungen verzeichnet.</td>
-                    </tr>    
-                {:else}
-                    {#each transactions! as dto}
-                        <TransactionDisplayRow {dto} {account} refreshTransaction={() => lastUpdated = Date.now()} tryDelete={() => deleteTransaction(dto)} />
-                    {/each}
-                {/if}
+                {#key transactions}
+                    {#if transactions.length == 0}
+                        <tr>
+                            <td colspan="6" class="text-lg p-6 pl-4">Auf diesem Konto sind keine Buchungen verzeichnet.</td>
+                        </tr>    
+                    {:else}
+                        {#each transactions! as dto}
+                            <TransactionDisplayRow {dto} {account} refreshTransaction={refreshTransactions} tryDelete={() => deleteTransaction(dto)} />
+                        {/each}
+                    {/if}
                 
-                <TransactionInsert parentAccountId={account.id!} refreshTransactions={() => lastUpdated = Date.now()}/>
+                    <TransactionInsert parentAccountId={account.id!} refreshTransactions={refreshTransactions}/>
+                {/key}
             </tbody>
         </table>
     </div>
 {:catch error}
-    Unable to fetch transaction!
-
-    <code>
-        {JSON.stringify(error)}
+    <ErrorAlert>
+        Konnte die Transaktionen für Konto {page.params.accountId} nicht laden!
+    </ErrorAlert>
+    <code class="w-full mt-4">
+        {JSON.stringify(error, null, 2)}
     </code>
 {/await}

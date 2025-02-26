@@ -8,10 +8,13 @@
 	import { getApiPerson, postApiTransaction, type Account, type Person, type Product } from "$lib/client";
 	import { formatEuroCents } from "$lib/formatter";
 	import { error } from "@sveltejs/kit";
+	import type { PageProps } from "./$types";
 
-    const { data }: { data: { products: Product[], mainAccount: Account } } = $props();
-    const products = data.products;
-    const mainAccount = data.mainAccount;
+    const { data }: PageProps = $props();
+    const { flurkontoQuery, productsQuery } = data;
+
+    let products = productsQuery.data!;
+    let mainAccount = flurkontoQuery.data!;
 
     interface TallyData {
         [key: string]: {
@@ -116,6 +119,6 @@
     </div>
     <div class="mt-4 join grid grid-cols-2">
         <button class="btn order-1 btn-primary join-item">Bestätigen</button>
-        <button class="btn order-0 join-item" onclick={event => { event.preventDefault(); goto("../") }}>Abbrechen</button>
+        <a class="btn order-0 join-item" href="../">Abbrechen</a>
     </div>
 </form>

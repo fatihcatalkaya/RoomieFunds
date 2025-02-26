@@ -21,6 +21,11 @@ export type Account = {
     active?: boolean;
 };
 
+export type AmountType = {
+    currency?: string;
+    amount?: string;
+};
+
 export type AuthMethod = {
     name?: string;
     title?: string;
@@ -31,6 +36,17 @@ export type AuthMethod = {
 };
 
 export type AuthenticationApproach = 'REDIRECT' | 'DECOUPLED' | 'EMBEDDED';
+
+export type BalanceResource = {
+    name?: string;
+    balance_amount?: AmountType;
+    balance_type?: BalanceStatus;
+    last_change_date_time?: string;
+    reference_date?: string;
+    last_committed_transaction?: string;
+};
+
+export type BalanceStatus = 'CLAV' | 'CLBD' | 'FWAV' | 'INFO' | 'ITAV' | 'ITBD' | 'OPAV' | 'OPBD' | 'OTHR' | 'PRCD' | 'VALU' | 'XPCD';
 
 export type CreateAccountDto = {
     name: string;
@@ -94,6 +110,10 @@ export type GetRecurringTransactionDto = {
     valueDayOfMonth?: number;
     name?: string;
     transactionDescription?: string;
+};
+
+export type HalBalances = {
+    balances?: Array<BalanceResource>;
 };
 
 export type LocalDate = string;
@@ -986,6 +1006,22 @@ export type GetApiTestEndResponses = {
     200: unknown;
 };
 
+export type GetApiTestStuffData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/test/stuff';
+};
+
+export type GetApiTestStuffResponses = {
+    /**
+     * OK
+     */
+    200: HalBalances;
+};
+
+export type GetApiTestStuffResponse = GetApiTestStuffResponses[keyof GetApiTestStuffResponses];
+
 export type PostApiTransactionData = {
     body: CreateTransactionDto;
     path?: never;
@@ -1146,5 +1182,5 @@ export type GetByFileNameResponses = {
 };
 
 export type ClientOptions = {
-    baseUrl: 'http://100.124.16.54:8080' | (string & {});
+    baseUrl: 'http://localhost:8080' | (string & {});
 };

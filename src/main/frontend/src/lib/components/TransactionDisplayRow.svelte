@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getApiAccount, patchApiTransactionByTransactionId, type Account, type TransactionSaldoDto } from "$lib/client";
 	import { formatEuroCents } from "$lib/formatter";
-	import Dingsbums from "./dingsbums.svelte";
+	import RightArrowMarker from "./RightArrowMarker.svelte";
     import MdiPencil from "~icons/mdi/pencil";
     import MdiDelete from "~icons/mdi/delete";
     import MdiCheck from "~icons/mdi/check-bold";
@@ -97,14 +97,14 @@
                 {#each dto.targetAccountNameParts! as part, i}
                     {part}
                     {#if i < dto.targetAccountNameParts!.length - 1}
-                        <Dingsbums/>  
+                        <RightArrowMarker/>  
                     {/if}
                 {/each}
             {:else}
                 {#each dto.sourceAccountNameParts! as part, i}
                     {part}
                     {#if i < dto.sourceAccountNameParts!.length - 1}
-                        <Dingsbums/>  
+                        <RightArrowMarker/>  
                     {/if}
                 {/each}
             {/if}

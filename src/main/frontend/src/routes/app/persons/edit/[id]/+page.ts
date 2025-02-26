@@ -4,9 +4,13 @@ import type { PageLoad } from "./$types";
 export const prerender = false;
 
 export const load: PageLoad = async ({ params }) => {
-    return await getApiPersonByPersonId({
+    const personQuery = getApiPersonByPersonId({
         path: {
             personId: Number(params.id)
         }
     });
+
+    return {
+        person: await personQuery
+    };
 }

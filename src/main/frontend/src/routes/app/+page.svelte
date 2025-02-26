@@ -15,32 +15,32 @@
 <div class="max-w mx-3 mt-3">
 	<div class="max-w flex flex-wrap items-center justify-center gap-3">
 		<MainMenuButton redirectTo="/app/persons">
-			<MdiAccount class="mx-auto h-10 w-10" />
-			<h3 class="text-center text-2xl text-black">Personen</h3>
+			<MdiAccount class="text-4xl" />
+			Personen
 		</MainMenuButton>
         <MainMenuButton redirectTo="/app/accounts">
-			<MdiBank class="mx-auto h-10 w-10" />
-			<h3 class="text-center text-2xl text-black">Konten</h3>
+			<MdiBank class="text-4xl" />
+			Konten
 		</MainMenuButton>
 		<MainMenuButton redirectTo="/app/recurring-transactions">
-			<MdiCashClock class="mx-auto h-10 w-10" />
-			<h3 class="text-center text-2xl text-black">Aufträge</h3>
+			<MdiCashClock class="text-4xl" />
+			Aufträge
 		</MainMenuButton>
 		<MainMenuButton redirectTo="/app/products">
-			<MdiLiquor class="mx-auto h-10 w-10" />
-			<h3 class="text-center text-2xl text-black">Getränke</h3>
+			<MdiLiquor class="text-4xl" />
+			Getränke
 		</MainMenuButton>
 		<div class="indicator">
 			<span class="indicator-item badge badge-warning text-white font-bold p-0 px-1 mr-2">ToDo</span>
 			<MainMenuButton redirectTo="/app/banking">
-				<MdiCashMultiple class="mx-auto h-10 w-10" />
-				<h3 class="text-center text-2xl text-black">Banking</h3>
+				<MdiCashMultiple class="text-4xl" />
+				Banking
 			</MainMenuButton>
 		</div>
 
 		<MainMenuButton redirectTo="/app/help">
-			<MdiHelp class="mx-auto h-10 w-10" />
-			<h3 class="text-center text-2xl text-black">Anleitung</h3>
+			<MdiHelp class="w-10 h-10" />
+			Anleitung
 		</MainMenuButton>
 	</div>
 </div>

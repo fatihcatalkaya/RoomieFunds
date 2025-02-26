@@ -8,17 +8,10 @@
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiCheck from '~icons/mdi/check-bold';
 	import MdiClose from '~icons/mdi/close-bold';
-	import { getApiPerson } from '$lib/client';
+	import type { PageProps } from './$types';
 
-	let personQuery = $derived.by(async () => {
-		let query = await getApiPerson();
-
-		if (query.error) {
-			throw query.error;
-		} else {
-			return query.data;
-		}
-	})
+	const { data }: PageProps = $props();
+	const { personQuery } = data.streamed
 </script>
 
 <div class="inline-flex items-center w-full my-4">

@@ -4,23 +4,13 @@
 
 <script lang="ts">
 	import MdiPencil from '~icons/mdi/pencil';
-	import MdiBank from '~icons/mdi/bank';
 	import MdiPlus from '~icons/mdi/plus';
-	import MdiCheck from '~icons/mdi/check-bold';
-	import MdiClose from '~icons/mdi/close-bold';
-    import { getApiRecurringTransaction } from "$lib/client";
 	import { formatEuroCents } from '$lib/formatter';
-	import Dingsbums from '$lib/components/dingsbums.svelte';
+	import RightArrowMarker from '$lib/components/RightArrowMarker.svelte';
+	import type { PageProps } from './$types';
 
-    let recurringQuery = $derived.by(async () => {
-		let query = await getApiRecurringTransaction();
-
-		if (query.error) {
-			throw query.error;
-		} else {
-			return query.data;
-		}
-	});
+    let { data }: PageProps = $props();
+	let { recurringQuery } = data;
 </script>
 
 <div class="inline-flex items-center w-full my-4">
@@ -58,7 +48,7 @@
                             {#each recurringTransaction.sourceAccountName!.split(":") as part, i}
                                 {part}
                                 {#if i < recurringTransaction.sourceAccountName!.split(":").length - 1}
-                                    <Dingsbums/>
+                                    <RightArrowMarker/>
                                 {/if}
                             {/each}
                         </td>
@@ -66,7 +56,7 @@
                             {#each recurringTransaction.targetAccountName!.split(":") as part, i}
                                 {part}
                                 {#if i < recurringTransaction.targetAccountName!.split(":").length - 1}
-                                    <Dingsbums/>
+                                    <RightArrowMarker/>
                                 {/if}
                             {/each}
                         </td>

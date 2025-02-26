@@ -1,6 +1,5 @@
 <script lang="ts">
-    import Self from './AccountListSubtree.svelte';	
-    import { goto } from '$app/navigation';
+    import Self from './AccountListSubtree.svelte';
     const { children, name } = $props();
 </script>
 
@@ -9,7 +8,7 @@
     <ul>
         {#each children as child}
             {#if Object.hasOwn(child, "active")}
-                <li><button onclick={() => goto("/app/accounts/transactions/" + child.id)}>{child.name.split(":").pop()}</button></li>
+                <li><a href="{"/app/accounts/transactions/" + child.id}" >{child.name.split(":").pop()}</a></li>
             {:else}
                 <Self {...child}/>
             {/if}
