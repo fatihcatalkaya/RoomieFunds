@@ -103,8 +103,10 @@
     </label>
     {#each Object.entries(tallyData) as [productId, tally]}
         <label class="flex gap-2 items-center mt-2">
-            <span class="flex-2">{tally.product.name}</span>
-            <input type="number" class="input flex-1" bind:value={tallyData[productId].count} min="0" step="1">
+            <span class="flex-4">{tally.product.name}</span>
+            <span class="flex-1 text-right">{formatEuroCents(tally.product.price!)}</span>
+            x
+            <input type="number" class="input flex-2" bind:value={tallyData[productId].count} min="0" step="1">
         </label>
     {/each}
     <hr class="mt-4 text-base-300">

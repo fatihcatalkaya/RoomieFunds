@@ -30,11 +30,13 @@
 			<MdiLiquor class="mx-auto h-10 w-10" />
 			<h3 class="text-center text-2xl text-black">Getränke</h3>
 		</MainMenuButton>
-		<MainMenuButton redirectTo="/app/banking">
-			<MdiCashMultiple class="mx-auto h-10 w-10" />
-			<h3 class="text-center text-2xl text-black">Banking</h3>
-		</MainMenuButton>
-
+		<div class="indicator">
+			<span class="indicator-item badge badge-warning text-white font-bold p-0 px-1 mr-2">ToDo</span>
+			<MainMenuButton redirectTo="/app/banking">
+				<MdiCashMultiple class="mx-auto h-10 w-10" />
+				<h3 class="text-center text-2xl text-black">Banking</h3>
+			</MainMenuButton>
+		</div>
 
 		<MainMenuButton redirectTo="/app/help">
 			<MdiHelp class="mx-auto h-10 w-10" />
