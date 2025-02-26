@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public enum PSUType {
-    BUSINESS, PERSONAL
-}
+public record BalanceResource(
+        String name,
+        AmountType balanceAmount,
+        BalanceStatus balanceType,
+        String lastChangeDateTime,
+        String referenceDate,
+        String lastCommittedTransaction
+) {}

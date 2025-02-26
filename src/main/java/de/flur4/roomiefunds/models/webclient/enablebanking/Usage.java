@@ -4,6 +4,14 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public enum PSUType {
-    BUSINESS, PERSONAL
+public enum Usage {
+    /**
+     * professional account
+     */
+    PRIV,
+
+    /**
+     * private personal account
+     */
+    ORGA
 }

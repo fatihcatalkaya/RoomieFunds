@@ -94,6 +94,10 @@
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-cache</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.github.fatihcatalkaya</groupId>
             <artifactId>java-typst</artifactId>
             <version>1.0.0</version>
