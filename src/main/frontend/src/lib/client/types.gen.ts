@@ -21,11 +21,6 @@ export type Account = {
     active?: boolean;
 };
 
-export type AmountType = {
-    currency?: string;
-    amount?: string;
-};
-
 export type AuthMethod = {
     name?: string;
     title?: string;
@@ -36,17 +31,6 @@ export type AuthMethod = {
 };
 
 export type AuthenticationApproach = 'REDIRECT' | 'DECOUPLED' | 'EMBEDDED';
-
-export type BalanceResource = {
-    name?: string;
-    balance_amount?: AmountType;
-    balance_type?: BalanceStatus;
-    last_change_date_time?: string;
-    reference_date?: string;
-    last_committed_transaction?: string;
-};
-
-export type BalanceStatus = 'CLAV' | 'CLBD' | 'FWAV' | 'INFO' | 'ITAV' | 'ITBD' | 'OPAV' | 'OPBD' | 'OTHR' | 'PRCD' | 'VALU' | 'XPCD';
 
 export type CreateAccountDto = {
     name: string;
@@ -90,6 +74,34 @@ export type Credential = {
     description?: string;
 };
 
+export type EnableBankingAccountDto = {
+    id?: number;
+    uid?: string;
+    iban?: string;
+};
+
+export type EnableBankingSession = {
+    id?: number;
+    validUntil?: OffsetDateTime;
+    bankName?: string;
+    bankAccountIban?: string;
+    bankAccountUid?: string;
+    accountId?: number;
+};
+
+export type EnableBankingUnfinishedSession = {
+    unfinishedSessionId?: number;
+    validUntil?: OffsetDateTime;
+    bankName?: string;
+    accounts?: Array<EnableBankingAccountDto>;
+};
+
+export type FinishSessionRequest = {
+    bankAccountIban: string;
+    bankAccountUid: string;
+    accountId: number;
+};
+
 export type Flurbeitrag = {
     flurbeitrag?: number;
 };
@@ -110,10 +122,6 @@ export type GetRecurringTransactionDto = {
     valueDayOfMonth?: number;
     name?: string;
     transactionDescription?: string;
-};
-
-export type HalBalances = {
-    balances?: Array<BalanceResource>;
 };
 
 export type LocalDate = string;
@@ -268,6 +276,10 @@ export type PostApiAccountData = {
 
 export type PostApiAccountErrors = {
     /**
+     * Bad Request
+     */
+    400: unknown;
+    /**
      * Not Authorized
      */
     401: unknown;
@@ -373,6 +385,198 @@ export type PatchApiAccountByAccountIdResponses = {
 
 export type PatchApiAccountByAccountIdResponse = PatchApiAccountByAccountIdResponses[keyof PatchApiAccountByAccountIdResponses];
 
+export type GetApiEnablebankingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/enablebanking';
+};
+
+export type GetApiEnablebankingErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiEnablebankingResponses = {
+    /**
+     * OK
+     */
+    200: GetAspspResponse;
+};
+
+export type GetApiEnablebankingResponse = GetApiEnablebankingResponses[keyof GetApiEnablebankingResponses];
+
+export type PostApiEnablebankingData = {
+    body: StartAuthorizationDto;
+    path?: never;
+    query?: never;
+    url: '/api/enablebanking';
+};
+
+export type PostApiEnablebankingErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiEnablebankingResponses = {
+    /**
+     * OK
+     */
+    200: StartAuthorizationResponse;
+};
+
+export type PostApiEnablebankingResponse = PostApiEnablebankingResponses[keyof PostApiEnablebankingResponses];
+
+export type GetApiEnablebankingEndData = {
+    body?: never;
+    path?: never;
+    query?: {
+        code?: string;
+    };
+    url: '/api/enablebanking/end';
+};
+
+export type GetApiEnablebankingEndResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiEnablebankingSessionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/enablebanking/session';
+};
+
+export type GetApiEnablebankingSessionErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiEnablebankingSessionResponses = {
+    /**
+     * OK
+     */
+    200: Array<EnableBankingSession>;
+};
+
+export type GetApiEnablebankingSessionResponse = GetApiEnablebankingSessionResponses[keyof GetApiEnablebankingSessionResponses];
+
+export type GetApiEnablebankingSessionUnfinishedBySessionIdData = {
+    body?: never;
+    path: {
+        sessionId: number;
+    };
+    query?: never;
+    url: '/api/enablebanking/session/unfinished/{sessionId}';
+};
+
+export type GetApiEnablebankingSessionUnfinishedBySessionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiEnablebankingSessionUnfinishedBySessionIdResponses = {
+    /**
+     * OK
+     */
+    200: EnableBankingUnfinishedSession;
+};
+
+export type GetApiEnablebankingSessionUnfinishedBySessionIdResponse = GetApiEnablebankingSessionUnfinishedBySessionIdResponses[keyof GetApiEnablebankingSessionUnfinishedBySessionIdResponses];
+
+export type PostApiEnablebankingSessionUnfinishedBySessionIdData = {
+    body: FinishSessionRequest;
+    path: {
+        sessionId: number;
+    };
+    query?: never;
+    url: '/api/enablebanking/session/unfinished/{sessionId}';
+};
+
+export type PostApiEnablebankingSessionUnfinishedBySessionIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiEnablebankingSessionUnfinishedBySessionIdResponses = {
+    /**
+     * OK
+     */
+    200: EnableBankingSession;
+};
+
+export type PostApiEnablebankingSessionUnfinishedBySessionIdResponse = PostApiEnablebankingSessionUnfinishedBySessionIdResponses[keyof PostApiEnablebankingSessionUnfinishedBySessionIdResponses];
+
+export type DeleteApiEnablebankingUnfinishedSessionBySessionIdData = {
+    body?: never;
+    path: {
+        sessionId: number;
+    };
+    query?: never;
+    url: '/api/enablebanking/unfinished-session/{sessionId}';
+};
+
+export type DeleteApiEnablebankingUnfinishedSessionBySessionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiEnablebankingUnfinishedSessionBySessionIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiEnablebankingUnfinishedSessionBySessionIdResponse = DeleteApiEnablebankingUnfinishedSessionBySessionIdResponses[keyof DeleteApiEnablebankingUnfinishedSessionBySessionIdResponses];
+
 export type GetApiFlurbeitragData = {
     body?: never;
     path?: never;
@@ -408,6 +612,10 @@ export type PutApiFlurbeitragData = {
 };
 
 export type PutApiFlurbeitragErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
     /**
      * Not Authorized
      */
@@ -543,6 +751,10 @@ export type PostApiPersonData = {
 };
 
 export type PostApiPersonErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
     /**
      * Not Authorized
      */
@@ -684,6 +896,10 @@ export type PostApiProductData = {
 };
 
 export type PostApiProductErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
     /**
      * Not Authorized
      */
@@ -853,6 +1069,10 @@ export type PostApiRecurringTransactionData = {
 
 export type PostApiRecurringTransactionErrors = {
     /**
+     * Bad Request
+     */
+    400: unknown;
+    /**
      * Not Authorized
      */
     401: unknown;
@@ -958,70 +1178,6 @@ export type PatchApiRecurringTransactionByRecurringTransactionIdResponses = {
 
 export type PatchApiRecurringTransactionByRecurringTransactionIdResponse = PatchApiRecurringTransactionByRecurringTransactionIdResponses[keyof PatchApiRecurringTransactionByRecurringTransactionIdResponses];
 
-export type GetApiTestData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/test';
-};
-
-export type GetApiTestResponses = {
-    /**
-     * OK
-     */
-    200: GetAspspResponse;
-};
-
-export type GetApiTestResponse = GetApiTestResponses[keyof GetApiTestResponses];
-
-export type PostApiTestData = {
-    body: StartAuthorizationDto;
-    path?: never;
-    query?: never;
-    url: '/api/test';
-};
-
-export type PostApiTestResponses = {
-    /**
-     * OK
-     */
-    200: StartAuthorizationResponse;
-};
-
-export type PostApiTestResponse = PostApiTestResponses[keyof PostApiTestResponses];
-
-export type GetApiTestEndData = {
-    body?: never;
-    path?: never;
-    query?: {
-        code?: string;
-    };
-    url: '/api/test/end';
-};
-
-export type GetApiTestEndResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type GetApiTestStuffData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/test/stuff';
-};
-
-export type GetApiTestStuffResponses = {
-    /**
-     * OK
-     */
-    200: HalBalances;
-};
-
-export type GetApiTestStuffResponse = GetApiTestStuffResponses[keyof GetApiTestStuffResponses];
-
 export type PostApiTransactionData = {
     body: CreateTransactionDto;
     path?: never;
@@ -1030,6 +1186,10 @@ export type PostApiTransactionData = {
 };
 
 export type PostApiTransactionErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
     /**
      * Not Authorized
      */
@@ -1182,5 +1342,5 @@ export type GetByFileNameResponses = {
 };
 
 export type ClientOptions = {
-    baseUrl: 'http://localhost:8080' | (string & {});
+    baseUrl: 'http://100.124.17.197:8080' | (string & {});
 };

@@ -3,19 +3,18 @@
 </script>
 
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { type StartAuthorizationDto, type AspspData, type AuthMethod, postApiEnablebanking } from '$lib/client';
+	import type { PageProps } from './$types';
 
-	import { aspsps, type ASPSP, type AuthMethod } from '$lib/aspsps';
-	import { postApiTest, type StartAuthorizationDto } from '$lib/client';
+	const { data }: PageProps = $props();
+	const aspsps = data.aspsps.aspsps!;
 
 	let nameFilter = $state('');
 	let banks = $derived(
 		!nameFilter || nameFilter.trim().length == 0
 			? aspsps
-			: aspsps.filter((aspsp) => aspsp.name.includes(nameFilter))
+			: aspsps.filter((aspsp) => aspsp.name?.includes(nameFilter))
 	);
-
-	console.log(aspsps.filter((aspsp) => aspsp.name === 'Volksbank pur'));
 
 	const countries = [
 		{ id: 'DE', name: 'Deutschland' },
@@ -50,15 +49,15 @@
 	];
 
 	let bankSelectModal: HTMLDialogElement;
-	let selectedAspsp: ASPSP | undefined = $state();
+	let selectedAspsp: AspspData | undefined = $state();
     let selectedAuth: AuthMethod | undefined = $state();
 
-	function selectBank(aspsp: ASPSP) {
+	function selectBank(aspsp: AspspData) {
 		selectedAspsp = aspsp;
 		bankSelectModal.showModal();
 	}
 
-	async function selectBankAndDingsbumd(aspsp: ASPSP, authMethodName: string) {
+	async function selectBankAndDingsbumd(aspsp: AspspData, authMethodName: string) {
         const body: StartAuthorizationDto = {
 			aspsp: {
 				name: aspsp.name,
@@ -67,8 +66,8 @@
 			authMethod: authMethodName,
 			maximumConsentValidity: aspsp.maximum_consent_validity
 		}
-
-		const query = await postApiTest({ body });
+		
+		const query = await postApiEnablebanking({ body });
 
 		if (query.error) {
 			console.error(query.error)
@@ -86,7 +85,7 @@
             Wähle deine bevorzugte Authentifizierungsmethode aus:
             <select class="select" bind:value={selectedAuth}>
                 {#if selectedAspsp}
-                    {#each selectedAspsp!.auth_methods.filter(method => method.psu_type == "PERSONAL") as method}
+                    {#each selectedAspsp?.auth_methods!.filter(method => method.psu_type == "PERSONAL") as method}
                         <option value="{method}">{method.title ?? method.name}</option>
                     {/each}
                 {:else}
@@ -97,7 +96,7 @@
 		<div class="modal-action">
 			<form method="dialog" class="join">
 				<button class="btn join-item">Abbrechen</button>
-				<button class="btn btn-primary join-item" onclick={() => selectBankAndDingsbumd(selectedAspsp!, selectedAuth!.name)}>Auswählen</button>
+				<button class="btn btn-primary join-item" onclick={() => selectBankAndDingsbumd(selectedAspsp!, selectedAuth?.name!)}>Auswählen</button>
 			</form>
 		</div>
 	</div>
@@ -145,7 +144,7 @@
 				<h2 class="card-title">{aspsp.name}</h2>
 				<p>
 					<strong>Unterstützt:</strong>
-					{[...new Set(aspsp.auth_methods.map((method) => method.title ?? method.name))].join(', ')}
+					{[...new Set(aspsp?.auth_methods?.map((method) => method.title ?? method.name))].join(', ')}
 				</p>
 			</div>
 		</button>
