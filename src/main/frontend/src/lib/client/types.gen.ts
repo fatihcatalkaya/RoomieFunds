@@ -182,6 +182,7 @@ export type Transaction = {
     createdAt?: OffsetDateTime;
     valueDate?: LocalDate;
     description?: string;
+    hasReceipt?: boolean;
 };
 
 export type TransactionSaldoDto = {
@@ -1324,6 +1325,93 @@ export type PatchApiTransactionByTransactionIdResponses = {
 };
 
 export type PatchApiTransactionByTransactionIdResponse = PatchApiTransactionByTransactionIdResponses[keyof PatchApiTransactionByTransactionIdResponses];
+
+export type DeleteApiTransactionByTransactionIdReceiptData = {
+    body?: never;
+    path: {
+        transactionId: number;
+    };
+    query?: never;
+    url: '/api/transaction/{transactionId}/receipt';
+};
+
+export type DeleteApiTransactionByTransactionIdReceiptErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiTransactionByTransactionIdReceiptResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiTransactionByTransactionIdReceiptResponse = DeleteApiTransactionByTransactionIdReceiptResponses[keyof DeleteApiTransactionByTransactionIdReceiptResponses];
+
+export type GetApiTransactionByTransactionIdReceiptData = {
+    body?: never;
+    path: {
+        transactionId: number;
+    };
+    query?: never;
+    url: '/api/transaction/{transactionId}/receipt';
+};
+
+export type GetApiTransactionByTransactionIdReceiptErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiTransactionByTransactionIdReceiptResponses = {
+    /**
+     * OK
+     */
+    200: Blob | File;
+};
+
+export type GetApiTransactionByTransactionIdReceiptResponse = GetApiTransactionByTransactionIdReceiptResponses[keyof GetApiTransactionByTransactionIdReceiptResponses];
+
+export type PostApiTransactionByTransactionIdReceiptData = {
+    body: {
+        receipt?: Blob | File;
+    };
+    path: {
+        transactionId: number;
+    };
+    query?: never;
+    url: '/api/transaction/{transactionId}/receipt';
+};
+
+export type PostApiTransactionByTransactionIdReceiptErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiTransactionByTransactionIdReceiptResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
 
 export type GetByFileNameData = {
     body?: never;

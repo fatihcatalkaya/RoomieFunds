@@ -1,22 +1,27 @@
 <script lang="ts">
-	import { getApiAccount, patchApiTransactionByTransactionId, type Account, type TransactionSaldoDto } from "$lib/client";
+	import { deleteApiTransactionByTransactionIdReceipt, getApiAccount, getApiTransactionByTransactionIdReceipt, patchApiTransactionByTransactionId, postApiTransactionByTransactionIdReceipt, type Account, type TransactionSaldoDto } from "$lib/client";
 	import { formatEuroCents } from "$lib/formatter";
 	import RightArrowMarker from "./RightArrowMarker.svelte";
     import MdiPencil from "~icons/mdi/pencil";
     import MdiDelete from "~icons/mdi/delete";
-    import MdiCheck from "~icons/mdi/check-bold";
     import MdiCancel from "~icons/mdi/cancel";
+	import MdiCheck from '~icons/mdi/check-bold';
+	import MdiClose from '~icons/mdi/close-bold';
+	import MdiUpload from '~icons/mdi/upload';
+	import MdiDownload from '~icons/mdi/download';
 
     let {
         dto,
         account,
         refreshTransaction,
         tryDelete,
+        tryDeleteReceipt,
     }: {
         dto: TransactionSaldoDto,
         account: Account,
         refreshTransaction: () => void,
         tryDelete: () => void,
+        tryDeleteReceipt: () => void,
     } = $props();
 
     type BookDirection = "decrease" | "increase";
@@ -27,7 +32,8 @@
     let date: string = $state(dto.transaction?.valueDate!);
     let description: string = $state(dto.transaction?.description!);
     let floatAmount: number = $state(dto.transaction?.amount! / 100.0);
-    
+    let receiptFile: FileList | undefined = $state();
+
     // a $derived(...) would make sense here but we can't bind to that. Value is manually set in allowEdit()
     // svelte-ignore state_referenced_locally
     let bookAccountId: number | undefined = $state(direction === "decrease" ? dto.transaction?.targetAccountId! : dto.transaction?.sourceAccountId!);
@@ -80,12 +86,41 @@
             }
         });
 
+        if (receiptFile && receiptFile.length > 0) {
+            await postApiTransactionByTransactionIdReceipt({
+                path: {
+                    transactionId: dto.transaction?.id!
+                },
+                body: {
+                    receipt: receiptFile[0]
+                }
+            })
+        }
+
         if (query.error) {
             console.error(query.error);
         } else {
             refreshTransaction();
         }
     }
+
+    let receiptDownloadIsLoading = $state(false);
+
+    async function showReceipt() {
+        receiptDownloadIsLoading = true;
+		let query = await getApiTransactionByTransactionIdReceipt({ path: { transactionId: dto.transaction?.id! } });
+		openPDFInNewTab(query.data as Blob)
+        receiptDownloadIsLoading = false;
+	}
+
+	// Assuming arrayBuffer is already available
+	function openPDFInNewTab(blob: Blob) {
+		const url = URL.createObjectURL(blob);
+		const newTab = window.open(url, '_blank')!;
+		newTab.onbeforeunload = () => {
+			URL.revokeObjectURL(url);
+		};
+	}
 </script>
 
 {#if !editToggle}
@@ -107,6 +142,23 @@
                         <RightArrowMarker/>  
                     {/if}
                 {/each}
+            {/if}
+        </td>
+        <td class="text-center">
+            {#if dto.transaction!.hasReceipt}
+                <button class="btn btn-primary text-lg w-8 h-8 p-0" onclick={showReceipt}>
+                    {#if receiptDownloadIsLoading}
+                        <MdiDownload class="text-primary-content/30" />
+                        <span class="absolute inset-auto z-10 loading loading-spinner loading-sm mx-auto"></span>
+                    {:else}
+                        <MdiDownload/>
+                    {/if}
+                </button>
+                <button class="btn btn-error text-lg w-8 h-8 p-0" onclick={tryDeleteReceipt}>
+                    <MdiDelete/>
+                </button>
+            {:else}
+                <MdiClose class="text-error mx-auto" />
             {/if}
         </td>
         {#if doChangeAmountSign && dto.transaction?.amount! > 0}
@@ -142,12 +194,23 @@
                     <option value="" disabled>Loading...</option>
                 {:then accountList}
                     {#each accountList as accountEntry}
-                        <option value={accountEntry.id}>{accountEntry.name}</option>
+                        {#if accountEntry.id !== account.id}
+                            <option value={accountEntry.id}>{accountEntry.name}</option>
+                        {/if}
                     {/each}
                 {:catch error}
                     <option value="" disabled>Error fetching accounts!</option>
                 {/await}
             </select>
+        </td>
+        <td>
+            <label class="btn btn-primary text-lg h-8 w-8 p-0">
+                <MdiUpload/>
+                <input type="file" class="hidden" bind:files={receiptFile} capture="environment" multiple={false} accept="image/*,pdf" />
+            </label>
+            <button class="btn btn-error text-lg w-8 h-8 p-0" disabled={!(receiptFile && receiptFile.length > 0)} onclick={() => (receiptFile = undefined)}>
+                <MdiClose/>
+            </button>
         </td>
         <td>
             <label class="input" lang="de">

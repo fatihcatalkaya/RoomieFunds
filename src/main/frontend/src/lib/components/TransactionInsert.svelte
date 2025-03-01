@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { getApiAccount, postApiTransaction } from '$lib/client';
+	import { getApiAccount, getApiTransactionByTransactionIdReceipt, postApiTransaction, postApiTransactionByTransactionIdReceipt } from '$lib/client';
 	import { error } from '@sveltejs/kit';
     import MdiChequebookRight from '~icons/mdi/chequebook-arrow-left';
+    import MdiUpload from '~icons/mdi/upload';
+    import MdiClose from '~icons/mdi/close-bold';
 
     const accountList = $derived.by(async () => {
         const accountQuery = await getApiAccount();
@@ -26,6 +28,7 @@
     let bookAccountId: number | undefined = $state();
     let floatAmount: number = $state(0.0);
     let direction: BookDirection = $state("decrease");
+    let files: FileList | undefined = $state();
 
     async function submitTransaction(event: SubmitEvent) {
         event.preventDefault();
@@ -42,6 +45,20 @@
 
         if (query.error) {
             console.error(error);
+        } else if (files && files.length > 0) {
+            console.log(files);
+            const receiptQuery = await postApiTransactionByTransactionIdReceipt({
+                path: {
+                    transactionId: query.data?.id!
+                },
+                body: {
+                    receipt: files[0]
+                }
+            });
+
+            if (receiptQuery.error) {
+                console.error(error);
+            }
         }
 
         refreshTransactions()
@@ -61,12 +78,23 @@
                 <option value="" disabled>Loading...</option>
             {:then accountList}
                 {#each accountList as accountEntry}
-                    <option value={accountEntry.id}>{accountEntry.name}</option>
+                    {#if accountEntry.id !== parentAccountId}
+                        <option value={accountEntry.id}>{accountEntry.name}</option>
+                    {/if}
                 {/each}
             {:catch error}
                 <option value="" disabled>Error fetching accounts!</option>
             {/await}
         </select>
+    </td>
+    <td>
+        <label class="btn btn-primary text-lg h-8 w-8 p-0">
+            <MdiUpload/>
+            <input type="file" class="hidden" bind:files={files} capture="environment" multiple={false} accept="image/*,pdf" />
+        </label>
+        <button class="btn btn-error text-lg w-8 h-8 p-0" disabled={!(files && files.length > 0)} onclick={() => (files = undefined)}>
+            <MdiClose/>
+        </button>
     </td>
     <td>
         <label class="input" lang="de">
