@@ -89,3 +89,20 @@ Table recurring_transaction_scheduler_log {
   recurring_transaction_id BIGINT [not null, note: 'no reference to recurring transaction table, because it might get deleted']
   recurring_transaction_name TEXT [not null]
 }
+
+Table enable_banking_session {
+  id bigint [pk]
+  session_id TEXT [not null]
+  valid_until TIMESTAMPTZ [not null]
+  bank_name TEXT [not null]
+  bank_account_iban TEXT
+  bank_account_uid TEXT
+  account_id BIGINT [ref: > account.id, note:'internal active account, to which the transactions from the bank are synced into']
+}
+
+Table enable_banking_session_account {
+  id bigint [pk, increment]
+  session_id bigint [ref: > enable_banking_session.id]
+  account_iban TEXT [not null]
+  account_uid TEXT [not null]
+}

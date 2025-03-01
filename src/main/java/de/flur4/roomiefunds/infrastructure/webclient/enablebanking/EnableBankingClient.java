@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.cfg.EnumFeature;
 import de.flur4.roomiefunds.models.webclient.enablebanking.*;
 import io.quarkus.cache.CacheResult;
@@ -42,6 +41,10 @@ public interface EnableBankingClient {
     @GET
     @Path("/accounts/{account_id}/balances")
     HalBalances getAccountBalancesByAccountId(@PathParam("account_id") String uuid);
+
+    @DELETE
+    @Path("/sessions/{session_id}")
+    SuccessResponse deleteSession(@PathParam("session_id") String sessionId);
 
     @ClientObjectMapper
     static ObjectMapper objectMapper(ObjectMapper defaultObjectMapper) {
