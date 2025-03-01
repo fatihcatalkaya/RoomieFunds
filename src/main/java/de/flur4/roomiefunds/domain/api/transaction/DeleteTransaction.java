@@ -5,4 +5,5 @@ import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 
 public interface DeleteTransaction {
     void deleteTransaction(ModifyingPersonDto modifyingPerson, long transactionId) throws TransactionNotFoundException, JsonProcessingException;
+    void deleteTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId) throws TransactionNotFoundException, JsonProcessingException;
 }

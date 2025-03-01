@@ -30,9 +30,12 @@ public class TypstTallyListRenderer implements ProductTallyListRenderer {
     final ProductRepository productRepository;
 
     @Override
-    public byte[] renderTallyList() {
+    public byte[] renderTallyList() throws EmptyTallyListException {
         List<Person> persons = personRepository.getPersonsToPrintOnTallyList();
         List<Product> products = productRepository.getProductsToPrintOnTallyList();
+        if(persons.isEmpty() || products.isEmpty()) {
+            throw new EmptyTallyListException();
+        }
 
         // The template has 9 columns.
         // The first column is used for the room number of the person

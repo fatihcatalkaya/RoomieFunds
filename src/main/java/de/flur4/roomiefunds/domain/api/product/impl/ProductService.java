@@ -6,6 +6,7 @@ import de.flur4.roomiefunds.domain.spi.LogRepository;
 import de.flur4.roomiefunds.domain.spi.ProductRepository;
 import de.flur4.roomiefunds.domain.spi.ProductTallyListRenderer;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
+import de.flur4.roomiefunds.infrastructure.tallylistrenderer.EmptyTallyListException;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
 import de.flur4.roomiefunds.models.product.CreateProductDto;
@@ -78,7 +79,7 @@ public class ProductService implements CreateProduct, GetProduct, GetProductTall
     }
 
     @Override
-    public byte[] getProductTallySheet() {
+    public byte[] getProductTallySheet() throws EmptyTallyListException {
         return tallyListRenderer.renderTallyList();
     }
 }

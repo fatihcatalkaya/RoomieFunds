@@ -2,6 +2,7 @@ package de.flur4.roomiefunds.infrastructure.web;
 
 import de.flur4.roomiefunds.domain.api.product.*;
 import de.flur4.roomiefunds.infrastructure.Utils;
+import de.flur4.roomiefunds.infrastructure.tallylistrenderer.EmptyTallyListException;
 import de.flur4.roomiefunds.models.product.CreateProductDto;
 import de.flur4.roomiefunds.models.product.Product;
 import de.flur4.roomiefunds.models.product.UpdateProductDto;
@@ -47,6 +48,8 @@ public class ProductController {
     public byte[] getTallyList() {
         try {
             return getProductTallySheet.getProductTallySheet();
+        } catch (EmptyTallyListException ex) {
+            throw new ClientErrorException("Tallylist would be empty", 422);
         } catch (Exception e) {
             log.error("An error occurred while generating product tally list", e);
             throw new InternalServerErrorException("An error occurred while generating product tally list", e);

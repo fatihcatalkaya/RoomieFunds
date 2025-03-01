@@ -9,9 +9,13 @@ import de.flur4.roomiefunds.models.transaction.UpdateTransactionDto;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.jbosslog.JBossLog;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.RestResponse;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.util.List;
 
@@ -79,5 +83,50 @@ public class TransactionController {
             log.error("An error occurred while deleting transaction", e);
             throw new InternalServerErrorException("An error occurred while deleting transaction", e);
         }
+    }
+
+    @GET
+    @Path("/{transactionId:\\d+}/receipt")
+    public RestResponse<byte[]> getReceipt(@PathParam("transactionId") long transactionId) {
+        var fetchResult = getTransaction.getTransactionReceipt(transactionId);
+        if (fetchResult.isEmpty()) {
+            throw new NotFoundException("There is no receipt for transaction %d".formatted(transactionId));
+        }
+        var receipt = fetchResult.get();
+        return RestResponse.ResponseBuilder
+                .ok(receipt.receipt())
+                .header("Content-Type", receipt.receiptMimeType())
+                .build();
+    }
+
+    @POST
+    @Path("/{transactionId:\\d+}/receipt")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public void storeReceipt(@PathParam("transactionId") long transactionId,
+                             @RestForm("receipt") FileUpload fileUpload) {
+        var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
+        try {
+            updateTransaction.setTransactionReceipt(modifyingPerson, transactionId, fileUpload);
+        } catch (TransactionNotFoundException e) {
+            throw new NotFoundException("Transaction with id " + transactionId + "not found");
+        } catch (Exception e) {
+            log.error("An error occurred while deleting transaction receipt", e);
+            throw new InternalServerErrorException("An error occurred while deleting transaction receipt", e);
+        }
+    }
+
+    @DELETE
+    @Path("/{transactionId:\\d+}/receipt")
+    public void deleteReceipt(@PathParam("transactionId") long transactionId) {
+        var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
+        try {
+            deleteTransaction.deleteTransactionReceipt(modifyingPerson, transactionId);
+        } catch (TransactionNotFoundException e) {
+            throw new NotFoundException("Transaction with id " + transactionId + "not found");
+        } catch (Exception e) {
+            log.error("An error occurred while deleting transaction receipt", e);
+            throw new InternalServerErrorException("An error occurred while deleting transaction receipt", e);
+        }
+
     }
 }

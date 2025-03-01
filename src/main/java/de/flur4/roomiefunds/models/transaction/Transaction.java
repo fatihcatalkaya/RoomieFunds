@@ -13,5 +13,6 @@ public record Transaction(long id,
                           int amount,
                           OffsetDateTime createdAt,
                           LocalDate valueDate,
-                          String description) {
+                          String description,
+                          boolean hasReceipt) {
 }

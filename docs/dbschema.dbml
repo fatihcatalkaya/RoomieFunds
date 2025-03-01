@@ -46,6 +46,8 @@ Table transaction {
   created_at timestamptz [not null]
   value_date timestamptz [not null]
   description text [not null, default: '']
+  receipt_mime_type TEXT
+  receipt blob
 }
 
 Enum received_from {

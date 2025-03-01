@@ -7,12 +7,11 @@ import de.flur4.roomiefunds.domain.spi.TransactionRepository;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
-import de.flur4.roomiefunds.models.transaction.CreateTransactionDto;
-import de.flur4.roomiefunds.models.transaction.Transaction;
-import de.flur4.roomiefunds.models.transaction.TransactionSaldoDto;
-import de.flur4.roomiefunds.models.transaction.UpdateTransactionDto;
+import de.flur4.roomiefunds.models.transaction.*;
 import lombok.RequiredArgsConstructor;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +24,11 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
     @Override
     public Optional<Transaction> getTransaction(long transactionId) {
         return transactionRepository.getTransactionById(transactionId);
+    }
+
+    @Override
+    public Optional<ReceiptDto> getTransactionReceipt(long transactionId) {
+        return transactionRepository.getTransactionReceipt(transactionId);
     }
 
     @Override
@@ -83,6 +87,22 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
     }
 
     @Override
+    public void setTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId, FileUpload fileUpload) throws TransactionNotFoundException, IOException {
+        var transaction = transactionRepository.getTransactionById(transactionId);
+        if(transaction.isEmpty()) {
+            throw new TransactionNotFoundException(transactionId);
+        }
+        var transactionBefore = transaction.get();
+        var transactionAfter = transactionRepository.setTransactionReceipt(transactionId, fileUpload);
+        logRepository.insertLogEntry(modifyingPerson, new InsertLogEntryDto(
+                LogOperations.update,
+                "transaction",
+                Optional.of(transactionBefore),
+                Optional.of(transactionAfter)
+        ));
+    }
+
+    @Override
     public void deleteTransaction(ModifyingPersonDto modifyingPerson, long transactionId) throws TransactionNotFoundException, JsonProcessingException {
         var transaction = transactionRepository.getTransactionById(transactionId);
         if(transaction.isEmpty()) {
@@ -95,6 +115,22 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
                 "transaction",
                 Optional.of(transactionBefore),
                 Optional.empty()
+        ));
+    }
+
+    @Override
+    public void deleteTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId) throws TransactionNotFoundException, JsonProcessingException {
+        var transaction = transactionRepository.getTransactionById(transactionId);
+        if(transaction.isEmpty()) {
+            throw new TransactionNotFoundException(transactionId);
+        }
+        var transactionBefore = transaction.get();
+        var transactionAfter = transactionRepository.deleteTransactionReceipt(transactionId);
+        logRepository.insertLogEntry(modifyingPerson, new InsertLogEntryDto(
+                LogOperations.update,
+                "transaction",
+                Optional.of(transactionBefore),
+                Optional.of(transactionAfter)
         ));
     }
 }

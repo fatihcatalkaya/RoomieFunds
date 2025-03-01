@@ -2,12 +2,16 @@ package de.flur4.roomiefunds.infrastructure.repository;
 
 import de.flur4.roomiefunds.domain.spi.TransactionRepository;
 import de.flur4.roomiefunds.models.transaction.CreateTransactionDto;
+import de.flur4.roomiefunds.models.transaction.ReceiptDto;
 import de.flur4.roomiefunds.models.transaction.Transaction;
 import de.flur4.roomiefunds.models.transaction.UpdateTransactionDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.jooq.DSLContext;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +50,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
                         TRANSACTION.AMOUNT,
                         TRANSACTION.CREATED_AT,
                         TRANSACTION.VALUE_DATE,
-                        TRANSACTION.DESCRIPTION
+                        TRANSACTION.DESCRIPTION,
+                        TRANSACTION.RECEIPT.isNull().not()
                 ).from(TRANSACTION)
                 .join(ACCOUNT.as("source_account")).on(ACCOUNT.as("source_account").ID.eq(TRANSACTION.SOURCE_ACCOUNT_ID))
                 .join(ACCOUNT.as("target_account")).on(ACCOUNT.as("target_account").ID.eq(TRANSACTION.TARGET_ACCOUNT_ID))
@@ -67,7 +72,8 @@ public class TransactionRepositoryImpl implements TransactionRepository {
                         TRANSACTION.AMOUNT,
                         TRANSACTION.CREATED_AT,
                         TRANSACTION.VALUE_DATE,
-                        TRANSACTION.DESCRIPTION
+                        TRANSACTION.DESCRIPTION,
+                        TRANSACTION.RECEIPT.isNull().not()
                 ).from(TRANSACTION)
                 .join(ACCOUNT.as("source_account")).on(ACCOUNT.as("source_account").ID.eq(TRANSACTION.SOURCE_ACCOUNT_ID))
                 .join(ACCOUNT.as("target_account")).on(ACCOUNT.as("target_account").ID.eq(TRANSACTION.TARGET_ACCOUNT_ID))
@@ -124,5 +130,49 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         var updatedTransaction = getTransactionById(transactionId);
         assert updatedTransaction.isPresent();
         return updatedTransaction.get();
+    }
+
+    @Override
+    public Optional<ReceiptDto> getTransactionReceipt(long transactionId) {
+        var result = jooq.select(
+                        TRANSACTION.RECEIPT.isNull(),
+                        TRANSACTION.RECEIPT,
+                        TRANSACTION.RECEIPT_MIME_TYPE
+                ).from(TRANSACTION)
+                .where(TRANSACTION.ID.eq(transactionId))
+                .fetchOptional();
+        if (result.isEmpty()) {
+            return Optional.empty();
+        }
+        var row = result.get();
+        if (row.value1()) {
+            // If the value is true, then the receipt itself is null
+            return Optional.empty();
+        }
+        return Optional.of(new ReceiptDto(
+                row.value2(),
+                row.value3()
+        ));
+    }
+
+    @Override
+    public Transaction deleteTransactionReceipt(long transactionId) {
+        jooq.update(TRANSACTION)
+                .setNull(TRANSACTION.RECEIPT)
+                .setNull(TRANSACTION.RECEIPT_MIME_TYPE)
+                .where(TRANSACTION.ID.eq(transactionId))
+                .execute();
+        return getTransactionById(transactionId).get();
+    }
+
+    @Override
+    public Transaction setTransactionReceipt(long transactionId, FileUpload fileUpload) throws IOException {
+        var uploadBytes = Files.readAllBytes(fileUpload.uploadedFile());
+        jooq.update(TRANSACTION)
+                .set(TRANSACTION.RECEIPT, uploadBytes)
+                .set(TRANSACTION.RECEIPT_MIME_TYPE, fileUpload.contentType())
+                .where(TRANSACTION.ID.eq(transactionId))
+                .execute();
+        return getTransactionById(transactionId).get();
     }
 }
