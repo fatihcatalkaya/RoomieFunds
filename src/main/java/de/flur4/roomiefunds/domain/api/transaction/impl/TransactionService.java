@@ -70,7 +70,7 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
     }
 
     @Override
-    public Transaction updateTransaction(ModifyingPersonDto modifyingPerson, long transactionId, UpdateTransactionDto updateTransactionDto) throws TransactionNotFoundException, JsonProcessingException {
+    public Transaction updateTransaction(ModifyingPersonDto modifyingPerson, long transactionId, UpdateTransactionDto updateTransactionDto) throws TransactionNotFoundException, JsonProcessingException, IllegalArgumentException {
         var fetchResult = transactionRepository.getTransactionById(transactionId);
         if(fetchResult.isEmpty()) {
             throw new TransactionNotFoundException(transactionId);

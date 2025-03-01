@@ -13,6 +13,7 @@ import org.jooq.DSLContext;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ACCOUNT;
@@ -112,9 +113,15 @@ public class TransactionRepositoryImpl implements TransactionRepository {
         var account = jooq.selectFrom(TRANSACTION).where(TRANSACTION.ID.eq(transactionId)).fetchOne();
         assert account != null;
         if (updateTransactionDto.sourceAccountId().isPresent()) {
+            if(Objects.equals(account.getTargetAccountId(), updateTransactionDto.sourceAccountId().get())) {
+                throw new IllegalArgumentException("transaction between the same source and target account is not allowed");
+            }
             account.setSourceAccountId(updateTransactionDto.sourceAccountId().get());
         }
         if (updateTransactionDto.targetAccountId().isPresent()) {
+            if(Objects.equals(account.getSourceAccountId(), updateTransactionDto.targetAccountId().get())) {
+                throw new IllegalArgumentException("transaction between the same source and target account is not allowed");
+            }
             account.setTargetAccountId(updateTransactionDto.targetAccountId().get());
         }
         if (updateTransactionDto.amount().isPresent()) {

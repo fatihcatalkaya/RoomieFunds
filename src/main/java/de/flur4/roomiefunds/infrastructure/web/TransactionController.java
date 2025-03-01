@@ -48,6 +48,9 @@ public class TransactionController {
 
     @POST
     public Transaction createTransaction(@Valid CreateTransactionDto createTransactionDto) {
+        if (createTransactionDto.sourceAccountId() == createTransactionDto.targetAccountId()) {
+            throw new BadRequestException("Transaction between the same source and target account is not allowed");
+        }
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
             return createTransaction.createTransaction(modifyingPerson, createTransactionDto);
@@ -65,6 +68,8 @@ public class TransactionController {
             return updateTransaction.updateTransaction(modifyingPerson, transactionId, updateTransactionDto);
         } catch (TransactionNotFoundException e) {
             throw new NotFoundException("Transaction with id " + transactionId + "not found");
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Transaction between the same source and target account is not allowed");
         } catch (Exception e) {
             log.error("An error occurred while updating transaction", e);
             throw new InternalServerErrorException("An error occurred while updating transaction", e);
