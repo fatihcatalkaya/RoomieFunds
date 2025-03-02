@@ -183,13 +183,13 @@
 {:else}
     <tr>
         <td>
-            <input form="transaction-new-form" bind:value={date} type="date" class="input">
+            <input form="transaction-new-form-{dto.transaction?.id}" bind:value={date} type="date" class="input">
         </td>
         <td>
-            <input form="transaction-new-form" bind:value={description} type="text" class="input" placeholder="Beschreibung">
+            <input form="transaction-new-form-{dto.transaction?.id}" bind:value={description} type="text" class="input" placeholder="Beschreibung">
         </td>
         <td>
-            <select form="transaction-new-form" bind:value={bookAccountId} class="select">
+            <select form="transaction-new-form-{dto.transaction?.id}" bind:value={bookAccountId} class="select">
                 {#await accountList}
                     <option value="" disabled>Loading...</option>
                 {:then accountList}
@@ -214,23 +214,23 @@
         </td>
         <td>
             <label class="input" lang="de">
-                <input dir="rtl" lang="de" form="transaction-new-form" bind:value={floatAmount} type="number" min="0.00" step="0.01">
+                <input lang="de" form="transaction-new-form-{dto.transaction?.id}" bind:value={floatAmount} type="number" step="0.01">
                 €
             </label>
         </td>
         <td>
             <label>
-                <input form="transaction-new-form" type="radio" class="radio" bind:group={direction} name="book-dir" value="decrease" defaultChecked>
+                <input form="transaction-new-form-{dto.transaction?.id}" type="radio" class="radio" bind:group={direction} name="book-dir" value="decrease" defaultChecked disabled={dto.transaction?.sourceAccountActive != dto.transaction?.targetAccountActive}>
                 Abnahme
             </label>
             <br/>
             <label>
-                <input form="transaction-new-form" type="radio" class="radio" bind:group={direction} name="book-dir" value="increase">
+                <input form="transaction-new-form-{dto.transaction?.id}" type="radio" class="radio" bind:group={direction} name="book-dir" value="increase" disabled={dto.transaction?.sourceAccountActive != dto.transaction?.targetAccountActive}>
                 Zunahme
             </label>
         </td>
         <td>
-            <form class="p-0 m-0 inline" id="transaction-new-form" onsubmit={submitChange}>
+            <form class="p-0 m-0 inline" id="transaction-new-form-{dto.transaction?.id}-{dto.transaction?.id}" onsubmit={submitChange}>
                 <button title="Speichern" class="btn btn-success h-8 w-8 p-0 m-0 text-lg"><MdiCheck/></button>
             </form>
             <button title="Abbrechen" onclick={() => editToggle = !editToggle} class="btn btn-error btn-error h-8 w-8 p-0 m-0 text-lg"><MdiCancel/></button>

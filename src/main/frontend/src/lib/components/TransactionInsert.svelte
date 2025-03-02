@@ -98,7 +98,7 @@
     </td>
     <td>
         <label class="input" lang="de">
-            <input dir="rtl" lang="de" form="transaction-new-form" bind:value={floatAmount} type="number" min="0.00" step="0.01">
+            <input lang="de" class="min-w-20" form="transaction-new-form" bind:value={floatAmount} type="number" step="0.01">
             €
         </label>
     </td>
