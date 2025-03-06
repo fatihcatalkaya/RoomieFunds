@@ -21,6 +21,11 @@
         <buildHelperPlugin.version>3.5.0</buildHelperPlugin.version>
         <jooq.version>3.20.1</jooq.version>
         <quarkus.jooq.version>2.0.1</quarkus.jooq.version>
+        <java-typst.version>1.0.0</java-typst.version>
+        <lombok.version>1.18.36</lombok.version>
+        <bouncycastle.version>1.80</bouncycastle.version>
+        <java-jwt.version>4.4.0</java-jwt.version>
+        <javatuples.version>1.2</javatuples.version>
 
         <postgresContainerVersion>postgres:17.3-alpine</postgresContainerVersion>
         <jooq.codegen.jdbc.username>postgres</jooq.codegen.jdbc.username>
@@ -100,7 +105,7 @@
         <dependency>
             <groupId>io.github.fatihcatalkaya</groupId>
             <artifactId>java-typst</artifactId>
-            <version>1.0.0</version>
+            <version>${java-typst.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.jooq</groupId>
@@ -125,22 +130,22 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>${lombok.version}</version>
         </dependency>
         <dependency>
             <groupId>org.javatuples</groupId>
             <artifactId>javatuples</artifactId>
-            <version>1.2</version>
+            <version>${javatuples.version}</version>
         </dependency>
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>4.4.0</version>
+            <version>${java-jwt.version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.80</version>
+            <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
