@@ -12,6 +12,8 @@ import jakarta.ws.rs.*;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
+import java.time.LocalDate;
+
 @RegisterRestClient
 @RegisterProvider(EnableBankingAuthenticationInjector.class)
 public interface EnableBankingClient {
@@ -45,6 +47,26 @@ public interface EnableBankingClient {
     @DELETE
     @Path("/sessions/{session_id}")
     SuccessResponse deleteSession(@PathParam("session_id") String sessionId);
+
+    /**
+     * Fetching account transactions from ASPSP for an account by its ID
+     *
+     * @param uuid PSU account ID accessible in the provided session
+     * @param dateFromUtc Date to fetch transactions from (including the date, UTC timezone is assumed)
+     * @param dateToUtc Date to fetch transactions to (including the date, UTC timezone is assumed)
+     * @param continuationKey Key, allowing to iterate over multiple API pages of transactions
+     * @param transactionStatus Filter transactions by provided status
+     * @param fetchStrategy Strategy how transaction are fetched
+     * @return {@link HalTransactions}
+     */
+    @GET
+    @Path("/accounts/{account_id}/transactions")
+    HalTransactions getAccountTransactions(@PathParam("account_id") String uuid,
+                                           LocalDate dateFromUtc,
+                                           LocalDate dateToUtc,
+                                           String continuationKey,
+                                           TransactionStatus transactionStatus,
+                                           TransactionFetchStrategy fetchStrategy);
 
     @ClientObjectMapper
     static ObjectMapper objectMapper(ObjectMapper defaultObjectMapper) {
