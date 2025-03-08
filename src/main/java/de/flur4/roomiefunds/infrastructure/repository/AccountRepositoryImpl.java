@@ -32,7 +32,7 @@ public class AccountRepositoryImpl implements AccountRepository {
     public List<Account> getAllAccounts() {
         return jooq.select(ACCOUNT.ID, ACCOUNT.NAME, ACCOUNT.IS_ACTIVE)
                 .from(ACCOUNT)
-                .orderBy(ACCOUNT.ID)
+                .orderBy(ACCOUNT.NAME)
                 .fetch(mapping(Account::new));
     }
 
