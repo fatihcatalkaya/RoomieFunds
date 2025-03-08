@@ -18,7 +18,7 @@ import java.util.Locale;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.LOG;
 import static org.jooq.Records.mapping;
-import static org.jooq.impl.DSL.nvl;
+import static org.jooq.impl.DSL.*;
 
 @ApplicationScoped
 @JBossLog
@@ -80,6 +80,43 @@ public class LogRepositoryImpl implements LogRepository {
                         nvl(LOG.SUBJECT_BEFORE, JSONB.jsonb("{}")).cast(String.class),
                         nvl(LOG.SUBJECT_AFTER, JSONB.jsonb("{}")).cast(String.class)
                 ).from(LOG)
+                .orderBy(LOG.CREATED_AT.desc())
+                .fetch(mapping(LogEntryDto::new));
+    }
+
+    @Override
+    public List<LogEntryDto> getLogEntriesByTable(String table) {
+        return jooq.select(
+                        LOG.ID,
+                        LOG.CREATED_AT,
+                        LOG.OPERATION,
+                        LOG.MODIFIED_TABLE_NAME,
+                        LOG.MODIFIED_BY,
+                        nvl(LOG.SUBJECT_BEFORE, JSONB.jsonb("{}")).cast(String.class),
+                        nvl(LOG.SUBJECT_AFTER, JSONB.jsonb("{}")).cast(String.class)
+                ).from(LOG)
+                .where(LOG.MODIFIED_TABLE_NAME.eq(table))
+                .orderBy(LOG.CREATED_AT.desc())
+                .fetch(mapping(LogEntryDto::new));
+    }
+
+    @Override
+    public List<LogEntryDto> getLogEntriesByTableAndObjectId(String table, String objectId) {
+        return jooq.select(
+                        LOG.ID,
+                        LOG.CREATED_AT,
+                        LOG.OPERATION,
+                        LOG.MODIFIED_TABLE_NAME,
+                        LOG.MODIFIED_BY,
+                        nvl(LOG.SUBJECT_BEFORE, JSONB.jsonb("{}")).cast(String.class),
+                        nvl(LOG.SUBJECT_AFTER, JSONB.jsonb("{}")).cast(String.class)
+                ).from(LOG)
+                .where(LOG.MODIFIED_TABLE_NAME.eq(table))
+                .and(
+                        jsonbGetAttribute(LOG.SUBJECT_BEFORE, "id").cast(String.class).eq(objectId).or(
+                                jsonbGetAttribute(LOG.SUBJECT_AFTER, "id").cast(String.class).eq(objectId)
+                        )
+                )
                 .orderBy(LOG.CREATED_AT.desc())
                 .fetch(mapping(LogEntryDto::new));
     }

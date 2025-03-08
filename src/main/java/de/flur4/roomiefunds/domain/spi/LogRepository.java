@@ -11,4 +11,8 @@ public interface LogRepository {
     void insertLogEntry(ModifyingPersonDto modifyingPersonDto, InsertLogEntryDto entryDto) throws JsonProcessingException;
 
     List<LogEntryDto> getAllLogEntries();
+
+    List<LogEntryDto> getLogEntriesByTable(String table);
+
+    List<LogEntryDto> getLogEntriesByTableAndObjectId(String table, String objectId);
 }

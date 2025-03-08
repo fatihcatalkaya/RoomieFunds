@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface GetLog {
     List<LogEntryDto> getLogEntries();
+    List<LogEntryDto> getLogEntriesByTable(String table);
+    List<LogEntryDto> getLogEntriesByTableAndObjectId(String table, String objectId);
 }

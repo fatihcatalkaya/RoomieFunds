@@ -15,4 +15,14 @@ public class LogService implements GetLog {
     public List<LogEntryDto> getLogEntries() {
         return logRepository.getAllLogEntries();
     }
+
+    @Override
+    public List<LogEntryDto> getLogEntriesByTable(String table) {
+        return logRepository.getLogEntriesByTable(table);
+    }
+
+    @Override
+    public List<LogEntryDto> getLogEntriesByTableAndObjectId(String table, String objectId) {
+        return logRepository.getLogEntriesByTableAndObjectId(table, objectId);
+    }
 }
