@@ -16,4 +16,6 @@ public interface EnableBankingRepository {
     void deleteSession(long sessionId) throws EnableBankingClientException;
 
     EnableBankingSession finishUnfinishedSession(long sessionId, FinishSessionRequest request);
+
+    List<EnableBankingSession> getActiveFinishedSessions();
 }

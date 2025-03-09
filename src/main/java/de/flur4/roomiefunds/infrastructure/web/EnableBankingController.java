@@ -46,12 +46,13 @@ public class EnableBankingController {
     final GetSession getSession;
     final FinishSession finishSession;
     final DeleteSession deleteSession;
+    final SynchronizeTransactions synchronizeTransactions;
     final JsonWebToken jwt;
 
     @GET
     @RolesAllowed({"roomiefunds-admin"})
     public GetASPSPResponse getASPSPs() {
-        return enableBankingClient.getASPSPs("DE");
+        return enableBankingClient.getASPSPs();
     }
 
     @POST
@@ -143,5 +144,11 @@ public class EnableBankingController {
             log.error(e);
             throw new InternalServerErrorException("An internal server error occurred");
         }
+    }
+
+    @GET
+    @Path("/synchronize-now")
+    public void synchronizeNow() {
+        synchronizeTransactions.synchronizeTransactions();
     }
 }

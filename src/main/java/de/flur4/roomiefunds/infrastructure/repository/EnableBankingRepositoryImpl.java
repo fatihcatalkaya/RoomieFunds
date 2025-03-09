@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ENABLE_BANKING_SESSION;
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ENABLE_BANKING_SESSION_ACCOUNT;
 import static org.jooq.Records.mapping;
+import static org.jooq.impl.DSL.currentOffsetDateTime;
 
 @RequiredArgsConstructor
 @ApplicationScoped
@@ -171,5 +172,22 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
                         ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID,
                         ENABLE_BANKING_SESSION.ACCOUNT_ID
                 ).fetchOne(mapping(EnableBankingSession::new));
+    }
+
+    @Override
+    public List<EnableBankingSession> getActiveFinishedSessions() {
+        return jooq.select(
+                        ENABLE_BANKING_SESSION.ID,
+                        ENABLE_BANKING_SESSION.VALID_UNTIL,
+                        ENABLE_BANKING_SESSION.BANK_NAME,
+                        ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN,
+                        ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID,
+                        ENABLE_BANKING_SESSION.ACCOUNT_ID
+                ).from(ENABLE_BANKING_SESSION)
+                .where(ENABLE_BANKING_SESSION.VALID_UNTIL.gt(currentOffsetDateTime()))
+                .and(ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN.isNotNull())
+                .and(ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID.isNotNull())
+                .and(ENABLE_BANKING_SESSION.ACCOUNT_ID.isNotNull())
+                .fetch(mapping(EnableBankingSession::new));
     }
 }

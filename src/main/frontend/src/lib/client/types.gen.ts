@@ -549,6 +549,22 @@ export type PostApiEnablebankingSessionUnfinishedBySessionIdResponses = {
 
 export type PostApiEnablebankingSessionUnfinishedBySessionIdResponse = PostApiEnablebankingSessionUnfinishedBySessionIdResponses[keyof PostApiEnablebankingSessionUnfinishedBySessionIdResponses];
 
+export type GetApiEnablebankingSynchronizeNowData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/enablebanking/synchronize-now';
+};
+
+export type GetApiEnablebankingSynchronizeNowResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type GetApiEnablebankingSynchronizeNowResponse = GetApiEnablebankingSynchronizeNowResponses[keyof GetApiEnablebankingSynchronizeNowResponses];
+
 export type DeleteApiEnablebankingUnfinishedSessionBySessionIdData = {
     body?: never;
     path: {
@@ -716,6 +732,65 @@ export type GetApiLogResponses = {
 };
 
 export type GetApiLogResponse = GetApiLogResponses[keyof GetApiLogResponses];
+
+export type GetApiLogByTableNameData = {
+    body?: never;
+    path: {
+        table_name: string;
+    };
+    query?: never;
+    url: '/api/log/{table_name}';
+};
+
+export type GetApiLogByTableNameErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiLogByTableNameResponses = {
+    /**
+     * OK
+     */
+    200: Array<LogEntryDto>;
+};
+
+export type GetApiLogByTableNameResponse = GetApiLogByTableNameResponses[keyof GetApiLogByTableNameResponses];
+
+export type GetApiLogByTableNameByObjectIdData = {
+    body?: never;
+    path: {
+        object_id: string;
+        table_name: string;
+    };
+    query?: never;
+    url: '/api/log/{table_name}/{object_id}';
+};
+
+export type GetApiLogByTableNameByObjectIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiLogByTableNameByObjectIdResponses = {
+    /**
+     * OK
+     */
+    200: Array<LogEntryDto>;
+};
+
+export type GetApiLogByTableNameByObjectIdResponse = GetApiLogByTableNameByObjectIdResponses[keyof GetApiLogByTableNameByObjectIdResponses];
 
 export type GetApiPersonData = {
     body?: never;
@@ -1430,5 +1505,5 @@ export type GetByFileNameResponses = {
 };
 
 export type ClientOptions = {
-    baseUrl: 'http://100.124.17.197:8080' | (string & {});
+    baseUrl: 'http://localhost:8080' | (string & {});
 };

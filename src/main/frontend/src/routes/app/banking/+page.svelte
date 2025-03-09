@@ -1,13 +1,18 @@
 <script module lang="ts">
-    export const breadcrumbLabel = "Open Banking";
+	export const breadcrumbLabel = 'Open Banking';
 </script>
 
 <script>
-	import ErrorAlert from "$lib/components/ErrorAlert.svelte";
-    import MdiDelete from "~icons/mdi/delete";
-	import type { PageProps } from "./$types";
-	import { deleteApiEnablebankingUnfinishedSessionBySessionId, getApiEnablebankingSession, type EnableBankingSession } from "$lib/client";
-	import { goto } from "$app/navigation";
+	import ErrorAlert from '$lib/components/ErrorAlert.svelte';
+	import MdiDelete from '~icons/mdi/delete';
+	import type { PageProps } from './$types';
+	import {
+		deleteApiEnablebankingUnfinishedSessionBySessionId,
+		getApiEnablebankingSession,
+		getApiEnablebankingSynchronizeNow,
+		type EnableBankingSession
+	} from '$lib/client';
+	import { goto } from '$app/navigation';
 
 	const { data }: PageProps = $props();
 	const { bankingSessionsQuery } = data.streamed;
@@ -33,24 +38,33 @@
 			deleteErrorState = true;
 			console.error(query.error);
 		} else {
-			realBankingSessionsQuery = getApiEnablebankingSession().then(query => query.error ? [] : query.data!)
+			realBankingSessionsQuery = getApiEnablebankingSession().then((query) =>
+				query.error ? [] : query.data!
+			);
 		}
+	}
+
+	async function syncNow() {
+		getApiEnablebankingSynchronizeNow().then((response) => alert('scheduled'));
 	}
 </script>
 
 {#if deleteErrorState}
-	<ErrorAlert>
-		Die Sitzung konnte nicht widerrufen werden!
-	</ErrorAlert>
+	<ErrorAlert>Die Sitzung konnte nicht widerrufen werden!</ErrorAlert>
 {/if}
 
 <dialog class="modal" bind:this={deleteModal}>
 	<div class="modal-box">
 		<h3 class="text-lg font-bold">Sitzung {deleteSession?.id} widerrufen?</h3>
-		<p class="py-4">Bist du dir sicher, dass du Sitzung {deleteSession?.id} bei {deleteSession?.bankName} widerrufen willst?</p>
+		<p class="py-4">
+			Bist du dir sicher, dass du Sitzung {deleteSession?.id} bei {deleteSession?.bankName} widerrufen
+			willst?
+		</p>
 		<div class="modal-action">
 			<form method="dialog" class="join">
-				<button class="btn btn-error join-item" onclick={() => revokeSession(deleteSession?.id!)}>Widerrufen</button>
+				<button class="btn btn-error join-item" onclick={() => revokeSession(deleteSession?.id!)}
+					>Widerrufen</button
+				>
 				<button class="btn join-item">Abbrechen</button>
 			</form>
 		</div>
@@ -60,14 +74,18 @@
 	</form>
 </dialog>
 
-<div class="inline-flex items-center w-full my-4 gap-2">
-	<h1 class="text-2xl flex-1 font-bold pr-2">
-		Banking
-	</h1>
-    <a href="select-aspsp" title="Hilfe" class="btn btn-primary h-8 py-0 px-2 m-0" onclick={() => newButtonIsLoading = true}>
+<div class="my-4 inline-flex w-full items-center gap-2">
+	<h1 class="flex-1 pr-2 text-2xl font-bold">Banking</h1>
+	<button class="btn btn-primary h-8 px-2 py-0" onclick={syncNow}>Jetzt synchronisieren</button>
+	<a
+		href="select-aspsp"
+		title="Hilfe"
+		class="btn btn-primary m-0 h-8 px-2 py-0"
+		onclick={() => (newButtonIsLoading = true)}
+	>
 		{#if newButtonIsLoading}
 			<span class="text-primary-content/30">Neues Bankkonto Autorisieren</span>
-			<span class="absolute inset-auto z-10 loading loading-spinner loading-sm mx-auto"></span>
+			<span class="loading loading-spinner loading-sm absolute inset-auto z-10 mx-auto"></span>
 		{:else}
 			Neues Bankkonto Autorisieren
 		{/if}
@@ -75,12 +93,14 @@
 </div>
 
 {#await realBankingSessionsQuery}
-	<div class="flex mt-4">
+	<div class="mt-4 flex">
 		<span class="loading loading-spinner loading-lg mx-auto"></span>
-	</div>	
+	</div>
 {:then bankingSessions}
-	<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border border-slate-300 px-0 mx-0">
-		<table class="table table-zebra text-nowrap">
+	<div
+		class="rounded-box border-base-content/5 bg-base-100 mx-0 overflow-x-auto border border-slate-300 px-0"
+	>
+		<table class="table-zebra table text-nowrap">
 			<thead>
 				<tr>
 					<th>ID</th>
@@ -98,7 +118,9 @@
 						<td>{bankingSession.bankName}</td>
 						<td>
 							{#if !bankingSession.bankAccountIban}
-								<a href="complete/{bankingSession.id}" class="btn btn-warning h-8">Vervollständigen</a>
+								<a href="complete/{bankingSession.id}" class="btn btn-warning h-8"
+									>Vervollständigen</a
+								>
 							{:else}
 								{bankingSession.bankAccountIban}
 							{/if}
@@ -106,7 +128,11 @@
 						<td>{new Date(bankingSession.validUntil!).toLocaleString()}</td>
 						<td>{bankingSession.accountId}</td>
 						<td class="text-center">
-							<button title="Sitzung {bankingSession.id} Löschen!" onclick={() => confirmRevokeSession(bankingSession)} class="btn btn-error h-8 w-8 p-0 m-0 text-lg"><MdiDelete/></button>
+							<button
+								title="Sitzung {bankingSession.id} Löschen!"
+								onclick={() => confirmRevokeSession(bankingSession)}
+								class="btn btn-error m-0 h-8 w-8 p-0 text-lg"><MdiDelete /></button
+							>
 						</td>
 					</tr>
 				{/each}
@@ -119,8 +145,7 @@
 				{/if}
 			</tbody>
 		</table>
-	</div>	
-
+	</div>
 {:catch error}
 	<ErrorAlert>Die Online-Banking-Verknüpfungen konnten nicht geladen werden!</ErrorAlert>
 	<pre class="mt-4">{JSON.stringify(error, null, 2)}</pre>
