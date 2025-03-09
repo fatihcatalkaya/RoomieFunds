@@ -101,7 +101,7 @@
         </button>
     </div>
 
-    <div class="rounded-box border-base-content/5 overflow-x-auto overflow-y-scroll border border-slate-300 text-nowrap {updating ? "pointer-events-none opacity-40" : ""}">
+    <div class="rounded-box border-base-content/5 overflow-x-auto overflow-y-scroll border border-slate-300 {updating ? "pointer-events-none opacity-40" : ""}">
         <table class="table-zebra table-pin-rows table">
             <thead class="text-neutral">
                 <tr>

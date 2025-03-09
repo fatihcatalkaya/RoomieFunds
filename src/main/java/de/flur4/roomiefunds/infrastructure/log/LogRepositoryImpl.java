@@ -4,6 +4,7 @@ package de.flur4.roomiefunds.infrastructure.log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
+import de.flur4.roomiefunds.infrastructure.jooq.tables.Transaction;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
 import de.flur4.roomiefunds.models.log.LogEntryDto;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.LOG;
+import static de.flur4.roomiefunds.infrastructure.jooq.Tables.TRANSACTION;
 import static org.jooq.Records.mapping;
 import static org.jooq.impl.DSL.*;
 
@@ -116,6 +118,28 @@ public class LogRepositoryImpl implements LogRepository {
                         jsonbGetAttribute(LOG.SUBJECT_BEFORE, "id").cast(String.class).eq(objectId).or(
                                 jsonbGetAttribute(LOG.SUBJECT_AFTER, "id").cast(String.class).eq(objectId)
                         )
+                )
+                .orderBy(LOG.CREATED_AT.desc())
+                .fetch(mapping(LogEntryDto::new));
+    }
+
+    @Override
+    public List<LogEntryDto> getTransactionLogEntriesByAccountId(String accountId) {
+        return jooq.select(
+                        LOG.ID,
+                        LOG.CREATED_AT,
+                        LOG.OPERATION,
+                        LOG.MODIFIED_TABLE_NAME,
+                        LOG.MODIFIED_BY,
+                        nvl(LOG.SUBJECT_BEFORE, JSONB.jsonb("{}")).cast(String.class),
+                        nvl(LOG.SUBJECT_AFTER, JSONB.jsonb("{}")).cast(String.class)
+                ).from(LOG)
+                .where(LOG.MODIFIED_TABLE_NAME.eq("transaction"))
+                .and(
+                        jsonbGetAttribute(LOG.SUBJECT_BEFORE, "sourceAccountId").cast(String.class).eq(accountId)
+                                .or(jsonbGetAttribute(LOG.SUBJECT_BEFORE, "targetAccountId").cast(String.class).eq(accountId))
+                                .or(jsonbGetAttribute(LOG.SUBJECT_AFTER, "sourceAccountId").cast(String.class).eq(accountId))
+                                .or(jsonbGetAttribute(LOG.SUBJECT_AFTER, "targetAccountId").cast(String.class).eq(accountId))
                 )
                 .orderBy(LOG.CREATED_AT.desc())
                 .fetch(mapping(LogEntryDto::new));

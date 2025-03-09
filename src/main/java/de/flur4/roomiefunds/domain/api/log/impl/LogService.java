@@ -25,4 +25,9 @@ public class LogService implements GetLog {
     public List<LogEntryDto> getLogEntriesByTableAndObjectId(String table, String objectId) {
         return logRepository.getLogEntriesByTableAndObjectId(table, objectId);
     }
+
+    @Override
+    public List<LogEntryDto> getTransactionLogEntriesByAccountId(String accountId) {
+        return logRepository.getTransactionLogEntriesByAccountId(accountId);
+    }
 }

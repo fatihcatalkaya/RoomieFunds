@@ -35,4 +35,10 @@ public class LogController {
                                                        @PathParam("object_id") String objectId) {
         return getLog.getLogEntriesByTableAndObjectId(tableName, objectId);
     }
+
+    @GET
+    @Path("/account-transactions/{account_id:\\w+}")
+    public List<LogEntryDto> getLogForAccountTransactions(@PathParam("account_id") String accountId) {
+        return getLog.getTransactionLogEntriesByAccountId(accountId);
+    }
 }

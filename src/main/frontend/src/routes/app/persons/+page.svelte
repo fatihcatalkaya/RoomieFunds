@@ -8,16 +8,20 @@
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiCheck from '~icons/mdi/check-bold';
 	import MdiClose from '~icons/mdi/close-bold';
+	import MdiScriptText from '~icons/mdi/script-text';
 	import type { PageProps } from './$types';
 
 	const { data }: PageProps = $props();
 	const { personQuery } = data.streamed
 </script>
 
-<div class="inline-flex items-center w-full my-4">
+<div class="inline-flex items-center w-full my-4 gap-1">
 	<h1 class="flex-grow text-2xl font-bold">
 		Personen
 	</h1>
+	<a href="/app/persons/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
+		<MdiScriptText/>
+	</a>
 	<a href="/app/persons/create" title="Person Erstellen" class="btn btn-success h-8 w-8 p-0 m-0 text-lg">
 		<MdiPlus/>
 	</a>

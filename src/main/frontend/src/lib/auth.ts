@@ -32,7 +32,7 @@ if (browser) {
         stateStore: new WebStorageStateStore({ store: window.localStorage }),
         loadUserInfo: true,
         redirect_uri: `${window.location.origin}/auth-callbacks/callback`,
-        //post_logout_redirect_uri: 'https://funds.flur4.de',
+        post_logout_redirect_uri: `${window.location.origin}/app`,
         silent_redirect_uri: '/auth-callbacks/silent-refresh',
         monitorSession: true
     };
@@ -107,6 +107,7 @@ export async function getUsername(): Promise<string | undefined> {
             console.error("request to getUsername() made, but user was null");
             return undefined;
         }
+        console.log(user.profile);
         return user.profile.preferred_username;
     }
 }

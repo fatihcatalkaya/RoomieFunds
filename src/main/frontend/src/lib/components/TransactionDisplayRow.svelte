@@ -127,7 +127,7 @@
     <tr>
         <td>{dto.transaction?.valueDate}</td>
         <td>{dto.transaction?.description}</td>
-        <td>
+        <td class="text-nowrap">
             {#if dto.transaction?.sourceAccountName === account.name}
                 {#each dto.targetAccountNameParts! as part, i}
                     {part}

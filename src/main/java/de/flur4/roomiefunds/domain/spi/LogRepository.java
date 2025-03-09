@@ -15,4 +15,6 @@ public interface LogRepository {
     List<LogEntryDto> getLogEntriesByTable(String table);
 
     List<LogEntryDto> getLogEntriesByTableAndObjectId(String table, String objectId);
+
+    List<LogEntryDto> getTransactionLogEntriesByAccountId(String accountId);
 }

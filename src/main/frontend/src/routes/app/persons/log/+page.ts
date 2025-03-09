@@ -1,12 +1,12 @@
-import { getApiLogByTableName, getApiLogAccountTransactionsByAccountId } from "$lib/client";
+import { getApiLogByTableName } from "$lib/client";
 import type { PageLoad } from "./$types";
 
-const tableName = "transaction"
+const tableName = "person";
 
-export const load: PageLoad = ({ params }) => {
+export const load: PageLoad = () => {
     const logQuery = async () => {
-        let query = await getApiLogAccountTransactionsByAccountId(({
-            path: { account_id: params.accountId }
+        let query = await getApiLogByTableName(({
+            path: { table_name: tableName }
         }));
 
         if (query.error) {
