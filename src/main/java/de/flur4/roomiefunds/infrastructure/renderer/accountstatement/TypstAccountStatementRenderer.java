@@ -9,6 +9,9 @@ import io.quarkus.qute.Template;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -21,6 +24,7 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
 
     @Location("pdf/account_statement.typ")
     Template accountStatement;
+    static final MathContext TWO_DECIMALS = new MathContext(2);
     static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(Locale.GERMANY);
     static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY);
 
@@ -33,7 +37,7 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
             String description = tx.description();
             String[] parts = tx.targetAccountName().split(":");
             String bookingTarget = parts[parts.length - 1];
-            String amount = CURRENCY_FORMATTER.format(tx.amount() / 100);
+            String amount = formatCurrency(tx.amount());
 
             if (tx.sourceAccountActive() != tx.targetAccountActive()) {
                 saldo += tx.amount();
@@ -43,7 +47,7 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
                 saldo += tx.amount();
             }
 
-            String resultingBalance = CURRENCY_FORMATTER.format(saldo / 100);
+            String resultingBalance = formatCurrency(saldo);
             printableTransactions.add(new PrintableTransaction(date, description, bookingTarget, amount, resultingBalance, saldo < 0));
         }
 
@@ -56,5 +60,9 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
                 .render();
 
         return JavaTypst.render(typstTemplate);
+    }
+
+    private String formatCurrency(long amount) {
+        return CURRENCY_FORMATTER.format(BigDecimal.valueOf(amount).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
     }
 }
