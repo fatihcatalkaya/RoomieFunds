@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import type { TransactionSaldoDto } from "$lib/client";
-    import { deleteApiTransactionByTransactionId, deleteApiTransactionByTransactionIdReceipt, getApiTransactionAccountByAccountId } from "$lib/client";
+    import { deleteApiTransactionByTransactionId, deleteApiTransactionByTransactionIdReceipt, getApiAccountByAccountIdStatement, getApiTransactionAccountByAccountId } from "$lib/client";
 	import TransactionInsert from "$lib/components/TransactionInsert.svelte";
 	import TransactionDisplayRow from "$lib/components/TransactionDisplayRow.svelte";
     import MdiPencilPlus from '~icons/mdi/pencil';

@@ -2,6 +2,7 @@ import { getApiLogByTableName, getApiLogAccountTransactionsByAccountId } from "$
 import type { PageLoad } from "./$types";
 
 const tableName = "transaction"
+export const prerender = false;
 
 export const load: PageLoad = ({ params }) => {
     const logQuery = async () => {

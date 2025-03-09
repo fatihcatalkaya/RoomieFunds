@@ -746,6 +746,35 @@ export type GetApiLogResponses = {
 
 export type GetApiLogResponse = GetApiLogResponses[keyof GetApiLogResponses];
 
+export type GetApiLogAccountTransactionsByAccountIdData = {
+    body?: never;
+    path: {
+        account_id: string;
+    };
+    query?: never;
+    url: '/api/log/account-transactions/{account_id}';
+};
+
+export type GetApiLogAccountTransactionsByAccountIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiLogAccountTransactionsByAccountIdResponses = {
+    /**
+     * OK
+     */
+    200: Array<LogEntryDto>;
+};
+
+export type GetApiLogAccountTransactionsByAccountIdResponse = GetApiLogAccountTransactionsByAccountIdResponses[keyof GetApiLogAccountTransactionsByAccountIdResponses];
+
 export type GetApiLogByTableNameData = {
     body?: never;
     path: {
@@ -1518,5 +1547,5 @@ export type GetByFileNameResponses = {
 };
 
 export type ClientOptions = {
-    baseUrl: 'http://100.124.17.197:8080' | (string & {});
+    baseUrl: 'http://localhost:8080' | (string & {});
 };
