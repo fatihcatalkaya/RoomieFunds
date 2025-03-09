@@ -1,4 +1,4 @@
-package de.flur4.roomiefunds.infrastructure.tallylistrenderer;
+package de.flur4.roomiefunds.infrastructure.renderer.tallylistrenderer;
 
 import de.flur4.roomiefunds.domain.spi.PersonRepository;
 import de.flur4.roomiefunds.domain.spi.ProductRepository;

@@ -386,6 +386,35 @@ export type PatchApiAccountByAccountIdResponses = {
 
 export type PatchApiAccountByAccountIdResponse = PatchApiAccountByAccountIdResponses[keyof PatchApiAccountByAccountIdResponses];
 
+export type GetApiAccountByAccountIdStatementData = {
+    body?: never;
+    path: {
+        accountId: number;
+    };
+    query?: never;
+    url: '/api/account/{accountId}/statement';
+};
+
+export type GetApiAccountByAccountIdStatementErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiAccountByAccountIdStatementResponses = {
+    /**
+     * OK
+     */
+    200: Blob | File;
+};
+
+export type GetApiAccountByAccountIdStatementResponse = GetApiAccountByAccountIdStatementResponses[keyof GetApiAccountByAccountIdStatementResponses];
+
 export type GetApiEnablebankingData = {
     body?: never;
     path?: never;
@@ -716,35 +745,6 @@ export type GetApiLogResponses = {
 };
 
 export type GetApiLogResponse = GetApiLogResponses[keyof GetApiLogResponses];
-
-export type GetApiLogAccountTransactionsByAccountIdData = {
-    body?: never;
-    path: {
-        account_id: string;
-    };
-    query?: never;
-    url: '/api/log/account-transactions/{account_id}';
-};
-
-export type GetApiLogAccountTransactionsByAccountIdErrors = {
-    /**
-     * Not Authorized
-     */
-    401: unknown;
-    /**
-     * Not Allowed
-     */
-    403: unknown;
-};
-
-export type GetApiLogAccountTransactionsByAccountIdResponses = {
-    /**
-     * OK
-     */
-    200: Array<LogEntryDto>;
-};
-
-export type GetApiLogAccountTransactionsByAccountIdResponse = GetApiLogAccountTransactionsByAccountIdResponses[keyof GetApiLogAccountTransactionsByAccountIdResponses];
 
 export type GetApiLogByTableNameData = {
     body?: never;
@@ -1518,5 +1518,5 @@ export type GetByFileNameResponses = {
 };
 
 export type ClientOptions = {
-    baseUrl: 'http://localhost:8080' | (string & {});
+    baseUrl: 'http://100.124.17.197:8080' | (string & {});
 };

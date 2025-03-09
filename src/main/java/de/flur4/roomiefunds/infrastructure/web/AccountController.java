@@ -24,6 +24,7 @@ public class AccountController {
     final CreateAccount createAccount;
     final UpdateAccount updateAccount;
     final DeleteAccount deleteAccount;
+    final PrintAccountStatement printAccountStatement;
     final JsonWebToken jwt;
 
     @GET
@@ -35,10 +36,24 @@ public class AccountController {
     @Path("/{accountId:\\d+}")
     public Account getAccount(@PathParam("accountId") long accountId) {
         var result = getAccount.getAccount(accountId);
-        if(result.isEmpty()) {
+        if (result.isEmpty()) {
             throw new NotFoundException("Account with id " + accountId + " not found");
         }
         return result.get();
+    }
+
+    @GET
+    @Path("/{accountId:\\d+}/statement")
+    @Produces(value = "application/pdf")
+    public byte[] getAccountStatement(@PathParam("accountId") long accountId) {
+        try {
+            return printAccountStatement.printAccountStatement(accountId);
+        } catch (AccountNotFoundException ignored) {
+            throw new NotFoundException("Account with id " + accountId + " not found");
+        } catch (Exception ex) {
+            log.error("An error occurred while rendering account statement for account id " + accountId, ex);
+            throw new InternalServerErrorException("An error occurred while creating account", ex);
+        }
     }
 
     @POST

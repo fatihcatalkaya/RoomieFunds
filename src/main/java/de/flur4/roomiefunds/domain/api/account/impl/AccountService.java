@@ -3,6 +3,7 @@ package de.flur4.roomiefunds.domain.api.account.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.flur4.roomiefunds.domain.api.account.*;
 import de.flur4.roomiefunds.domain.spi.AccountRepository;
+import de.flur4.roomiefunds.domain.spi.AccountStatementRenderer;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
 import de.flur4.roomiefunds.domain.spi.TransactionRepository;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
@@ -17,9 +18,10 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount {
+public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount, PrintAccountStatement {
     final AccountRepository accountRepository;
     final TransactionRepository transactionRepository;
+    final AccountStatementRenderer accountStatementRenderer;
     final LogRepository logRepository;
 
     @Override
@@ -78,5 +80,15 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
                 Optional.of(accountAfter)
         ));
         return accountAfter;
+    }
+
+    @Override
+    public byte[] printAccountStatement(long accountId) throws AccountNotFoundException {
+        var account = accountRepository.getAccount(accountId);
+        if(account.isEmpty()){
+            throw new AccountNotFoundException(accountId);
+        }
+        var transactions = transactionRepository.getTransactionsByAccountId(accountId);
+        return accountStatementRenderer.renderAccountStatement(account.get(), transactions);
     }
 }
