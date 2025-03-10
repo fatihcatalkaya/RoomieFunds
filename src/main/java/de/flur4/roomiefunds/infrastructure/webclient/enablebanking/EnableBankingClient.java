@@ -62,11 +62,11 @@ public interface EnableBankingClient {
     @GET
     @Path("/accounts/{account_id}/transactions")
     HalTransactions getAccountTransactions(@PathParam("account_id") String uuid,
-                                           LocalDate dateFromUtc,
-                                           LocalDate dateToUtc,
-                                           String continuationKey,
-                                           TransactionStatus transactionStatus,
-                                           TransactionFetchStrategy fetchStrategy);
+                                           @QueryParam("date_from") LocalDate dateFromUtc,
+                                           @QueryParam("date_to") LocalDate dateToUtc,
+                                           @QueryParam("continuation_key") String continuationKey,
+                                           @QueryParam("transaction_status") TransactionStatus transactionStatus,
+                                           @QueryParam("strategy") TransactionFetchStrategy fetchStrategy);
 
     @ClientObjectMapper
     static ObjectMapper objectMapper(ObjectMapper defaultObjectMapper) {

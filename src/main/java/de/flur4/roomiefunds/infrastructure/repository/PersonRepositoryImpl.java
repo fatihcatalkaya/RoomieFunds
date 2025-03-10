@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.*;
 import static org.jooq.Records.mapping;
+import static org.jooq.impl.DSL.length;
 
 @ApplicationScoped
 @RequiredArgsConstructor
@@ -150,13 +151,13 @@ public class PersonRepositoryImpl implements PersonRepository {
         if (updatePersonDto.paysFloorFees().isPresent()) {
             person.setPaysFloorFees(updatePersonDto.paysFloorFees().get());
         }
-        if(updatePersonDto.printOnProductTallyList().isPresent()) {
+        if (updatePersonDto.printOnProductTallyList().isPresent()) {
             person.setPrintOnProductTallyList(updatePersonDto.printOnProductTallyList().get());
         }
-        if(updatePersonDto.email().isPresent()) {
+        if (updatePersonDto.email().isPresent()) {
             person.setEmail(updatePersonDto.email().get());
         }
-        if(updatePersonDto.emailAccountStatement().isPresent()) {
+        if (updatePersonDto.emailAccountStatement().isPresent()) {
             person.setEmailAccountStatement(updatePersonDto.emailAccountStatement().get());
         }
         person.store();
@@ -192,5 +193,22 @@ public class PersonRepositoryImpl implements PersonRepository {
             jooq.deleteFrom(PERSON).where(PERSON.ID.eq(personId)).execute();
             jooq.deleteFrom(ACCOUNT).where(ACCOUNT.ID.eq(person.accountId())).execute();
         });
+    }
+
+    @Override
+    public List<Person> getPersonsWithValidEmails() {
+        return jooq.select(
+                        PERSON.ID,
+                        PERSON.NAME,
+                        PERSON.ROOM,
+                        PERSON.PAYS_FLOOR_FEES,
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                ).from(PERSON)
+                .where(PERSON.EMAIL_ACCOUNT_STATEMENT.eq(true))
+                .and(length(PERSON.EMAIL).ge(0))
+                .fetch(mapping(Person::new));
     }
 }

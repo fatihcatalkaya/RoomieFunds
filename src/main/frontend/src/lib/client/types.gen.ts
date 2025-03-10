@@ -305,6 +305,31 @@ export type PostApiAccountResponses = {
 
 export type PostApiAccountResponse = PostApiAccountResponses[keyof PostApiAccountResponses];
 
+export type GetApiAccountSendAccountStatementsNowData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/account/send-account-statements-now';
+};
+
+export type GetApiAccountSendAccountStatementsNowErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiAccountSendAccountStatementsNowResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type DeleteApiAccountByAccountIdData = {
     body?: never;
     path: {

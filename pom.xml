@@ -103,6 +103,10 @@
             <artifactId>quarkus-cache</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.github.fatihcatalkaya</groupId>
             <artifactId>java-typst</artifactId>
             <version>${java-typst.version}</version>
