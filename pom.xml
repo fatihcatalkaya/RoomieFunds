@@ -16,7 +16,7 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
         <testcontainers.version>1.20.4</testcontainers.version>
-        <flywayMavenPlugin.version>11.3.1</flywayMavenPlugin.version>
+        <flywayMavenPlugin.version>11.3.4</flywayMavenPlugin.version>
         <groovyMavenPluginVersion>2.1.1</groovyMavenPluginVersion>
         <buildHelperPlugin.version>3.5.0</buildHelperPlugin.version>
         <jooq.version>3.20.1</jooq.version>
