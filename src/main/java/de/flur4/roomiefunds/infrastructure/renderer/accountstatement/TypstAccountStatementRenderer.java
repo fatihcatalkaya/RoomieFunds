@@ -32,23 +32,28 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
     public byte[] renderAccountStatement(Account account, List<Transaction> transactions) {
         var printableTransactions = new ArrayList<>(transactions.size());
         long saldo = 0;
+        StringBuilder sb = new StringBuilder();
         for (var tx : transactions) {
             String date = tx.valueDate().format(DATE_FORMATTER);
             String description = tx.description();
             String[] parts = tx.targetAccountName().split(":");
             String bookingTarget = parts[parts.length - 1];
-            String amount = formatCurrency(tx.amount());
 
             if (tx.sourceAccountActive() != tx.targetAccountActive()) {
                 saldo += tx.amount();
+                sb.append('+');
             } else if (tx.sourceAccountId() == account.id()) {
                 saldo -= tx.amount();
+                sb.append('-');
             } else {
                 saldo += tx.amount();
+                sb.append('+');
             }
 
+            String amount = sb.append(formatCurrency(tx.amount())).toString();
             String resultingBalance = formatCurrency(saldo);
             printableTransactions.add(new PrintableTransaction(date, description, bookingTarget, amount, resultingBalance, saldo < 0));
+            sb.setLength(0);
         }
 
         var parts = account.name().split(":");
@@ -56,7 +61,7 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
 
         String typstTemplate = accountStatement
                 .data("accountName", accountName)
-                .data("transactions", printableTransactions)
+                .data("transactions", printableTransactions.reversed())
                 .render();
 
         return JavaTypst.render(typstTemplate);
