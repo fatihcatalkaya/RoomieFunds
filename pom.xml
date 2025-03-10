@@ -24,7 +24,7 @@
         <java-typst.version>1.0.0</java-typst.version>
         <lombok.version>1.18.36</lombok.version>
         <bouncycastle.version>1.80</bouncycastle.version>
-        <java-jwt.version>4.4.0</java-jwt.version>
+        <java-jwt.version>4.5.0</java-jwt.version>
         <javatuples.version>1.2</javatuples.version>
 
         <postgresContainerVersion>postgres:17.3-alpine</postgresContainerVersion>
