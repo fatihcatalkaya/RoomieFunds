@@ -33,7 +33,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.ID.eq(id))
                 .orderBy(PERSON.ID)
@@ -48,7 +50,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .orderBy(PERSON.NAME)
                 .fetch(mapping(Person::new));
@@ -62,7 +66,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.PRINT_ON_PRODUCT_TALLY_LIST.eq(true))
                 .orderBy(PERSON.ROOM)
@@ -77,7 +83,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.PAYS_FLOOR_FEES.eq(true))
                 .orderBy(PERSON.ROOM)
@@ -102,20 +110,26 @@ public class PersonRepositoryImpl implements PersonRepository {
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
                             PERSON.ACCOUNT_ID,
-                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                            PERSON.EMAIL,
+                            PERSON.EMAIL_ACCOUNT_STATEMENT
                     ).values(
                             createPersonDto.name(),
                             createPersonDto.room(),
                             createPersonDto.paysFloorFees(),
                             account.get().id(),
-                            createPersonDto.printOnProductTallyList()
+                            createPersonDto.printOnProductTallyList(),
+                            createPersonDto.email().orElse(""),
+                            createPersonDto.emailAccountStatement()
                     ).returningResult(
                             PERSON.ID,
                             PERSON.NAME,
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
                             PERSON.ACCOUNT_ID,
-                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                            PERSON.EMAIL,
+                            PERSON.EMAIL_ACCOUNT_STATEMENT
                     ).fetchOne(mapping(Person::new)));
         });
         return new Pair<>(person.get(), account.get());
@@ -139,6 +153,12 @@ public class PersonRepositoryImpl implements PersonRepository {
         if(updatePersonDto.printOnProductTallyList().isPresent()) {
             person.setPrintOnProductTallyList(updatePersonDto.printOnProductTallyList().get());
         }
+        if(updatePersonDto.email().isPresent()) {
+            person.setEmail(updatePersonDto.email().get());
+        }
+        if(updatePersonDto.emailAccountStatement().isPresent()) {
+            person.setEmailAccountStatement(updatePersonDto.emailAccountStatement().get());
+        }
         person.store();
         return new Person(
                 person.getId(),
@@ -146,7 +166,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                 person.getRoom(),
                 person.getPaysFloorFees(),
                 person.getAccountId(),
-                person.getPrintOnProductTallyList()
+                person.getPrintOnProductTallyList(),
+                person.getEmail(),
+                person.getEmailAccountStatement()
         );
     }
 
@@ -158,7 +180,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.ID.eq(personId))
                 .fetchOne(mapping(Person::new));

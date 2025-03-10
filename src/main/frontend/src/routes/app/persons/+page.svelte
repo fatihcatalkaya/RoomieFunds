@@ -36,9 +36,11 @@
 				<tr>
 					<th>ID</th>
 					<td>Name</td>
+					<td>E-Mail</td>
 					<td>Zimmer</td>
 					<td>Zahlt Flurbeitrag</td>
 					<td>Hat Getränkeliste</td>
+					<td>Erhält Konto-Auszug per E-Mail</td>
 					<td class="w-6 text-center">Aktion</td>
 				</tr>
 			</thead>
@@ -47,6 +49,7 @@
 					<tr>
 						<th>{person.id}</th>
 						<td>{person.name}</td>
+						<td>{person.email}</td>
 						<td>{person.room}</td>
 						<td>
 							{#if person.paysFloorFees}
@@ -57,6 +60,13 @@
 						</td>
 						<td>
 							{#if person.printOnProductTallyList}
+								<span class="text-success"><MdiCheck/></span>
+							{:else}
+								<span class="text-error"><MdiClose/></span>
+							{/if}
+						</td>
+						<td>
+							{#if person.emailAccountStatement}
 								<span class="text-success"><MdiCheck/></span>
 							{:else}
 								<span class="text-error"><MdiClose/></span>
