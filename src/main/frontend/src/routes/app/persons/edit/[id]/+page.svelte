@@ -10,16 +10,18 @@
 	if (!person) throw error;
 
 	let name = $state(person.name);
+	let email = $state(person.email);
 	let room = $state(person.room);
 	let paysFloorFees = $state(person.paysFloorFees);
 	let printOnProductTallyList = $state(person.printOnProductTallyList);
+	let emailAccountStatement = $state(person.emailAccountStatement);
 
 	async function updatePerson() {
 		let query = await patchApiPersonByPersonId({
 			path: {
 				personId: person!.id!
 			},
-			body: { name, room, paysFloorFees, printOnProductTallyList }
+			body: { name, room, paysFloorFees, printOnProductTallyList, email, emailAccountStatement }
 		});
 
 		if (query.error) {
@@ -102,6 +104,10 @@
 		<span class="w-1/4">Zimmer</span>
 		<input type="text" class="input w-3/4" placeholder="R400" bind:value={room} />
 	</label>
+	<label class="flex w-full items-center">
+		<span class="w-1/4">E-Mail</span>
+		<input type="text" class="input w-3/4" placeholder="peter@lustig.de" minlength=3 required bind:value={email} />
+	</label>
 	<div class="flex w-full items-center">
 		<span class="w-1/4 text-center"> </span>
 		<label class="flex w-3/4 items-center gap-2">
@@ -114,6 +120,13 @@
 		<label class="flex w-3/4 items-center gap-2">
 			<input type="checkbox" class="checkbox" bind:checked={printOnProductTallyList} />
 			<span class="flex-grow">Darf Getränkeliste</span>
+		</label>
+	</div>
+	<div class="flex w-full items-center">
+		<span class="w-1/4 text-center"> </span>
+		<label class="flex w-3/4 items-center gap-2">
+			<input type="checkbox" class="checkbox" bind:checked={emailAccountStatement} />
+			<span class="flex-grow">Erhält Konto-Auszug per E-Mail</span>
 		</label>
 	</div>
 	<div class="join mt-2 w-full">

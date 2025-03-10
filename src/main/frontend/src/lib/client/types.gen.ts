@@ -40,8 +40,10 @@ export type CreateAccountDto = {
 export type CreatePersonDto = {
     name: string;
     room: string;
+    email?: string | null;
     paysFloorFees: boolean;
     printOnProductTallyList: boolean;
+    emailAccountStatement: boolean;
 };
 
 export type CreateProductDto = {
@@ -149,6 +151,8 @@ export type Person = {
     paysFloorFees?: boolean;
     accountId?: number;
     printOnProductTallyList?: boolean;
+    email?: string;
+    emailAccountStatement?: boolean;
 };
 
 export type Product = {
@@ -202,6 +206,8 @@ export type UpdatePersonDto = {
     room?: string | null;
     paysFloorFees?: boolean | null;
     printOnProductTallyList?: boolean | null;
+    email?: string | null;
+    emailAccountStatement?: boolean | null;
 };
 
 export type UpdateProductDto = {
@@ -298,6 +304,31 @@ export type PostApiAccountResponses = {
 };
 
 export type PostApiAccountResponse = PostApiAccountResponses[keyof PostApiAccountResponses];
+
+export type GetApiAccountSendAccountStatementsNowData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/account/send-account-statements-now';
+};
+
+export type GetApiAccountSendAccountStatementsNowErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiAccountSendAccountStatementsNowResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type DeleteApiAccountByAccountIdData = {
     body?: never;

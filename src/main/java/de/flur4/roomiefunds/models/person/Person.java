@@ -5,5 +5,7 @@ public record Person(long id,
                      String room,
                      boolean paysFloorFees,
                      long accountId,
-                     boolean printOnProductTallyList) {
+                     boolean printOnProductTallyList,
+                     String email,
+                     boolean emailAccountStatement) {
 }

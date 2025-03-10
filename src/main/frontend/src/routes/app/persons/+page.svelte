@@ -8,17 +8,26 @@
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiCheck from '~icons/mdi/check-bold';
 	import MdiClose from '~icons/mdi/close-bold';
+	import MdiEmailFast from '~icons/mdi/email-fast';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import type { PageProps } from './$types';
+	import { getApiAccountSendAccountStatementsNow } from '$lib/client';
 
 	const { data }: PageProps = $props();
 	const { personQuery } = data.streamed
+
+	function sendAccountStatementsNow() {
+		getApiAccountSendAccountStatementsNow();
+	}
 </script>
 
 <div class="inline-flex items-center w-full my-4 gap-1">
 	<h1 class="flex-grow text-2xl font-bold">
 		Personen
 	</h1>
+	<button class="btn btn-warning h-8 w-8 p-0 m-0 text-lg" onclick={sendAccountStatementsNow}>
+		<MdiEmailFast />
+	</button>
 	<a href="/app/persons/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
 		<MdiScriptText/>
 	</a>
@@ -36,9 +45,11 @@
 				<tr>
 					<th>ID</th>
 					<td>Name</td>
+					<td>E-Mail</td>
 					<td>Zimmer</td>
 					<td>Zahlt Flurbeitrag</td>
 					<td>Hat Getränkeliste</td>
+					<td>Konto-Auszug per E-Mail</td>
 					<td class="w-6 text-center">Aktion</td>
 				</tr>
 			</thead>
@@ -47,6 +58,7 @@
 					<tr>
 						<th>{person.id}</th>
 						<td>{person.name}</td>
+						<td>{person.email}</td>
 						<td>{person.room}</td>
 						<td>
 							{#if person.paysFloorFees}
@@ -57,6 +69,13 @@
 						</td>
 						<td>
 							{#if person.printOnProductTallyList}
+								<span class="text-success"><MdiCheck/></span>
+							{:else}
+								<span class="text-error"><MdiClose/></span>
+							{/if}
+						</td>
+						<td>
+							{#if person.emailAccountStatement}
 								<span class="text-success"><MdiCheck/></span>
 							{:else}
 								<span class="text-error"><MdiClose/></span>

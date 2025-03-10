@@ -25,4 +25,6 @@ public interface PersonRepository {
     Person updatePerson(long personId, UpdatePersonDto updatePersonDto);
 
     void deletePerson(long personId) throws DataAccessException;
+
+    List<Person> getPersonsWithValidEmails();
 }

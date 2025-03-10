@@ -2,26 +2,29 @@ package de.flur4.roomiefunds.domain.api.account.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.flur4.roomiefunds.domain.api.account.*;
-import de.flur4.roomiefunds.domain.spi.AccountRepository;
-import de.flur4.roomiefunds.domain.spi.AccountStatementRenderer;
-import de.flur4.roomiefunds.domain.spi.LogRepository;
-import de.flur4.roomiefunds.domain.spi.TransactionRepository;
+import de.flur4.roomiefunds.domain.spi.*;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
 import de.flur4.roomiefunds.models.account.Account;
 import de.flur4.roomiefunds.models.account.CreateAccountDto;
+import de.flur4.roomiefunds.models.account.SendAccountStatementsResult;
 import de.flur4.roomiefunds.models.account.UpdateAccountDto;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
+import de.flur4.roomiefunds.models.person.Person;
 import lombok.RequiredArgsConstructor;
+import org.javatuples.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount, PrintAccountStatement {
+public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount, PrintAccountStatement, SendAccountStatements {
     final AccountRepository accountRepository;
     final TransactionRepository transactionRepository;
     final AccountStatementRenderer accountStatementRenderer;
+    final AccountStatementMailer accountStatementMailer;
+    final PersonRepository personRepository;
     final LogRepository logRepository;
 
     @Override
@@ -85,10 +88,27 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
     @Override
     public byte[] printAccountStatement(long accountId) throws AccountNotFoundException {
         var account = accountRepository.getAccount(accountId);
-        if(account.isEmpty()){
+        if (account.isEmpty()) {
             throw new AccountNotFoundException(accountId);
         }
         var transactions = transactionRepository.getTransactionsByAccountId(accountId);
         return accountStatementRenderer.renderAccountStatement(account.get(), transactions);
+    }
+
+    @Override
+    public SendAccountStatementsResult sendAccountStatements() {
+        var persons = personRepository.getPersonsWithValidEmails();
+        List<Person> successfulSendPersons = new ArrayList<>();
+        List<Pair<Person, Exception>> failedPersons = new ArrayList<>();
+        for (var person : persons) {
+            try {
+                byte[] accountStatement = printAccountStatement(person.accountId());
+                accountStatementMailer.sendAccountStatement(person, accountStatement);
+                successfulSendPersons.add(person);
+            } catch (Exception ex) {
+                failedPersons.add(Pair.with(person, ex));
+            }
+        }
+        return new SendAccountStatementsResult(successfulSendPersons, failedPersons);
     }
 }

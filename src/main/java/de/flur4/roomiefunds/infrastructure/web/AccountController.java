@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.jbosslog.JBossLog;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.resteasy.reactive.RestResponse;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class AccountController {
     final UpdateAccount updateAccount;
     final DeleteAccount deleteAccount;
     final PrintAccountStatement printAccountStatement;
+    final SendAccountStatements sendAccountStatements;
     final JsonWebToken jwt;
 
     @GET
@@ -95,5 +97,12 @@ public class AccountController {
             log.error("An error occurred while creating account", e);
             throw new InternalServerErrorException("An error occurred while deleting account", e);
         }
+    }
+
+    @GET
+    @Path("/send-account-statements-now")
+    public RestResponse<?> sendAccountStatementsNow() {
+        sendAccountStatements.sendAccountStatements();
+        return RestResponse.noContent();
     }
 }

@@ -12,6 +12,8 @@
 		room: "",
 		paysFloorFees: true,
 		printOnProductTallyList: true,
+		email: "",
+		emailAccountStatement: true
 	})
 
     async function createPerson() {
@@ -44,6 +46,10 @@
 		<span class="w-1/4">Zimmer</span>
 		<input type="text" class="input w-3/4" placeholder="R400" minlength=3 required bind:value={newPerson.room} />
 	</label>
+	<label class="flex w-full items-center">
+		<span class="w-1/4">E-Mail</span>
+		<input type="text" class="input w-3/4" placeholder="peter@lustig.de" minlength=3 required bind:value={newPerson.email} />
+	</label>
 	<div class="flex w-full items-center">
 		<span class="w-1/4 text-center"> </span>
 		<label class="flex w-3/4 items-center gap-2">
@@ -56,6 +62,13 @@
 		<label class="flex w-3/4 items-center gap-2">
 			<input type="checkbox" class="checkbox" bind:checked={newPerson.printOnProductTallyList} />
 			<span class="flex-grow">Darf Getränkeliste</span>
+		</label>
+	</div>
+	<div class="flex w-full items-center">
+		<span class="w-1/4 text-center"> </span>
+		<label class="flex w-3/4 items-center gap-2">
+			<input type="checkbox" class="checkbox" bind:checked={newPerson.emailAccountStatement} />
+			<span class="flex-grow">Erhält Konto-Auszug per Email</span>
 		</label>
 	</div>
 	<div class="mt-2 join grid grid-cols-2">

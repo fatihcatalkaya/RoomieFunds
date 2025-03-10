@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.*;
 import static org.jooq.Records.mapping;
+import static org.jooq.impl.DSL.length;
 
 @ApplicationScoped
 @RequiredArgsConstructor
@@ -33,7 +34,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.ID.eq(id))
                 .orderBy(PERSON.ID)
@@ -48,7 +51,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .orderBy(PERSON.NAME)
                 .fetch(mapping(Person::new));
@@ -62,7 +67,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.PRINT_ON_PRODUCT_TALLY_LIST.eq(true))
                 .orderBy(PERSON.ROOM)
@@ -77,7 +84,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.PAYS_FLOOR_FEES.eq(true))
                 .orderBy(PERSON.ROOM)
@@ -102,20 +111,26 @@ public class PersonRepositoryImpl implements PersonRepository {
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
                             PERSON.ACCOUNT_ID,
-                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                            PERSON.EMAIL,
+                            PERSON.EMAIL_ACCOUNT_STATEMENT
                     ).values(
                             createPersonDto.name(),
                             createPersonDto.room(),
                             createPersonDto.paysFloorFees(),
                             account.get().id(),
-                            createPersonDto.printOnProductTallyList()
+                            createPersonDto.printOnProductTallyList(),
+                            createPersonDto.email().orElse(""),
+                            createPersonDto.emailAccountStatement()
                     ).returningResult(
                             PERSON.ID,
                             PERSON.NAME,
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
                             PERSON.ACCOUNT_ID,
-                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                            PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                            PERSON.EMAIL,
+                            PERSON.EMAIL_ACCOUNT_STATEMENT
                     ).fetchOne(mapping(Person::new)));
         });
         return new Pair<>(person.get(), account.get());
@@ -136,8 +151,14 @@ public class PersonRepositoryImpl implements PersonRepository {
         if (updatePersonDto.paysFloorFees().isPresent()) {
             person.setPaysFloorFees(updatePersonDto.paysFloorFees().get());
         }
-        if(updatePersonDto.printOnProductTallyList().isPresent()) {
+        if (updatePersonDto.printOnProductTallyList().isPresent()) {
             person.setPrintOnProductTallyList(updatePersonDto.printOnProductTallyList().get());
+        }
+        if (updatePersonDto.email().isPresent()) {
+            person.setEmail(updatePersonDto.email().get());
+        }
+        if (updatePersonDto.emailAccountStatement().isPresent()) {
+            person.setEmailAccountStatement(updatePersonDto.emailAccountStatement().get());
         }
         person.store();
         return new Person(
@@ -146,7 +167,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                 person.getRoom(),
                 person.getPaysFloorFees(),
                 person.getAccountId(),
-                person.getPrintOnProductTallyList()
+                person.getPrintOnProductTallyList(),
+                person.getEmail(),
+                person.getEmailAccountStatement()
         );
     }
 
@@ -158,7 +181,9 @@ public class PersonRepositoryImpl implements PersonRepository {
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
-                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
                 ).from(PERSON)
                 .where(PERSON.ID.eq(personId))
                 .fetchOne(mapping(Person::new));
@@ -168,5 +193,22 @@ public class PersonRepositoryImpl implements PersonRepository {
             jooq.deleteFrom(PERSON).where(PERSON.ID.eq(personId)).execute();
             jooq.deleteFrom(ACCOUNT).where(ACCOUNT.ID.eq(person.accountId())).execute();
         });
+    }
+
+    @Override
+    public List<Person> getPersonsWithValidEmails() {
+        return jooq.select(
+                        PERSON.ID,
+                        PERSON.NAME,
+                        PERSON.ROOM,
+                        PERSON.PAYS_FLOOR_FEES,
+                        PERSON.ACCOUNT_ID,
+                        PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
+                        PERSON.EMAIL,
+                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                ).from(PERSON)
+                .where(PERSON.EMAIL_ACCOUNT_STATEMENT.eq(true))
+                .and(length(PERSON.EMAIL).ge(0))
+                .fetch(mapping(Person::new));
     }
 }
