@@ -38,15 +38,21 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
             String description = tx.description();
             String[] parts = tx.targetAccountName().split(":");
             String bookingTarget = parts[parts.length - 1];
+            long previousSaldo = saldo;
 
             if (tx.sourceAccountActive() != tx.targetAccountActive()) {
                 saldo += tx.amount();
-                sb.append('+');
             } else if (tx.sourceAccountId() == account.id()) {
                 saldo -= tx.amount();
-                sb.append('-');
             } else {
                 saldo += tx.amount();
+            }
+
+            if(saldo < previousSaldo) {
+                if(!tx.targetAccountActive()) {
+                    sb.append('-');
+                }
+            } else {
                 sb.append('+');
             }
 
