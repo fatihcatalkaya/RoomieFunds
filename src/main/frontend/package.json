@@ -41,7 +41,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"@hey-api/client-fetch": "^0.8.1",
+		"@hey-api/client-fetch": "^0.8.3",
 		"@tailwindcss/typography": "^0.5.16",
 		"oidc-client-ts": "^3.1.0"
 	}
