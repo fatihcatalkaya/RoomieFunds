@@ -24,7 +24,6 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
 
     @Location("pdf/account_statement.typ")
     Template accountStatement;
-    static final MathContext TWO_DECIMALS = new MathContext(2);
     static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(Locale.GERMANY);
     static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY);
 
@@ -36,7 +35,8 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
         for (var tx : transactions) {
             String date = tx.valueDate().format(DATE_FORMATTER);
             String description = tx.description();
-            String[] parts = tx.targetAccountName().split(":");
+            String accountName = tx.targetAccountId() == account.id() ? tx.sourceAccountName() : tx.targetAccountName();
+            String[] parts = accountName.split(":");
             String bookingTarget = parts[parts.length - 1];
             long previousSaldo = saldo;
 
