@@ -13,13 +13,36 @@
 	import type { PageProps } from './$types';
 	import { getApiAccountSendAccountStatementsNow } from '$lib/client';
 
+	let sendAccountStatementsSuccess = $state(false);
+	let emailSendModal: HTMLDialogElement;
 	const { data }: PageProps = $props();
 	const { personQuery } = data.streamed
 
-	function sendAccountStatementsNow() {
-		getApiAccountSendAccountStatementsNow();
+	async function sendAccountStatementsNow() {
+		const response = await getApiAccountSendAccountStatementsNow();
+		sendAccountStatementsSuccess = !response.error;
+		emailSendModal.showModal();
 	}
 </script>
+
+<dialog id="emailSendModal" class="modal" bind:this={emailSendModal}>
+	<div class="modal-box">
+	  <form method="dialog">
+		<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+	  </form>
+	  <h3 class="text-lg font-bold">Nachricht</h3>
+	  <p class="py-4">
+		{#if sendAccountStatementsSuccess}
+			Der E-Mail-Versand wurde erfolgreich gestartet.
+		{:else}
+			Beim Versenden der E-Mails ist ein Fehler aufgetreten!
+		{/if}
+	  </p>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+	  <button>close</button>
+	</form>
+</dialog>
 
 <div class="inline-flex items-center w-full my-4 gap-1">
 	<h1 class="flex-grow text-2xl font-bold">

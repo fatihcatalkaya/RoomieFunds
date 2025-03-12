@@ -5,7 +5,9 @@ import de.flur4.roomiefunds.infrastructure.Utils;
 import de.flur4.roomiefunds.models.account.Account;
 import de.flur4.roomiefunds.models.account.CreateAccountDto;
 import de.flur4.roomiefunds.models.account.UpdateAccountDto;
+import io.vertx.core.eventbus.EventBus;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
@@ -26,8 +28,9 @@ public class AccountController {
     final UpdateAccount updateAccount;
     final DeleteAccount deleteAccount;
     final PrintAccountStatement printAccountStatement;
-    final SendAccountStatements sendAccountStatements;
     final JsonWebToken jwt;
+    @Inject
+    EventBus eventBus;
 
     @GET
     public List<Account> getAccounts() {
@@ -102,7 +105,7 @@ public class AccountController {
     @GET
     @Path("/send-account-statements-now")
     public RestResponse<?> sendAccountStatementsNow() {
-        sendAccountStatements.sendAccountStatements();
+        eventBus.send("send-account-statements-emails", null);
         return RestResponse.noContent();
     }
 }
