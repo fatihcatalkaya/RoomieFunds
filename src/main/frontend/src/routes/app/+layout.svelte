@@ -5,29 +5,16 @@
 	import MdiPerson from '~icons/mdi/person';
 	import MdiExpand from '~icons/mdi/arrow-expand-horizontal';
 	import MdiCollapse from '~icons/mdi/arrow-collapse-horizontal';
-	import { oidcClient, performLogin } from '$lib/oidc';
+	import { oidcClient } from '$lib/oidc';
 	import { onMount } from 'svelte';
-	import { client } from '$lib/client/client.gen';
-	import { AuthStore } from '$lib/stores/auth_store';
 
 	let username: string | null = $state<string | null>(null);
 	let expanded: boolean = $state(false);
 
 	onMount(async () => {
 		if (!oidcClient.isUserLoggedIn) {
-			performLogin();
-		} else {
-			oidcClient.subscribeToTokensChange((tokens) => {
-				client.interceptors.request.use((request) => {
-					request.headers.set('Authorization', `Bearer ${tokens.accessToken}`);
-					return request;
-				});
-			});
-
-			const accessToken = (await oidcClient.getTokens_next()).accessToken;
-			client.interceptors.request.use((request) => {
-				request.headers.set('Authorization', `Bearer ${accessToken}`);
-				return request;
+			oidcClient.login({
+				doesCurrentHrefRequiresAuth: true
 			});
 		}
 	});

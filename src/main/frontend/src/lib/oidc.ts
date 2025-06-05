@@ -7,9 +7,3 @@ const prOidc = createOidc({
 });
 
 export const oidcClient = await prOidc;
-
-export function performLogin() {
-	oidcClient.login({
-		doesCurrentHrefRequiresAuth: true
-	});
-}
