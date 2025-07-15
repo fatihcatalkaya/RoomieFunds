@@ -5,13 +5,18 @@
 	import MdiPerson from '~icons/mdi/person';
 	import MdiExpand from '~icons/mdi/arrow-expand-horizontal';
 	import MdiCollapse from '~icons/mdi/arrow-collapse-horizontal';
-	import { oidcClient } from '$lib/oidc';
+	import { OidcWrapper } from '$lib/oidc';
 	import { onMount } from 'svelte';
+	import type { Oidc } from 'oidc-spa';
 
 	let username: string | null = $state<string | null>(null);
 	let expanded: boolean = $state(false);
-
+	
+	let oidcClient: Oidc.LoggedIn<Record<string, unknown>> | Oidc.NotLoggedIn | null = $state(null);
 	onMount(async () => {
+		const oidcPromise = OidcWrapper.getInstance().getOidcClient();
+		oidcClient = await oidcPromise;
+
 		if (!oidcClient.isUserLoggedIn) {
 			oidcClient.login({
 				doesCurrentHrefRequiresAuth: true
@@ -20,19 +25,22 @@
 	});
 
 	const logout = () => {
+		if (oidcClient === null || !oidcClient.isUserLoggedIn) {
+			return;
+		}
 		oidcClient.logout({ redirectTo: 'specific url', url: '/' });
 	};
 
 	let { children } = $props();
 </script>
 
-{#if oidcClient.isUserLoggedIn}
+{#if oidcClient !== null && oidcClient.isUserLoggedIn}
 	<div class="flex h-screen w-screen flex-col">
 		<div class="h-12 w-screen bg-white/60 shadow-sm">
 			<div class="mx-2 flex h-full flex-row items-center gap-2">
 				<span class="text-xl font-bold">RoomieFunds</span>
 				<label class="swap m-0 h-8 w-8 p-0 text-xl max-md:hidden">
-					<input type="checkbox" bind:checked={expanded} defaultChecked="true" />
+					<input type="checkbox" bind:checked={expanded} defaultChecked={true} />
 					<div class="swap-on m-0 p-0"><MdiCollapse /></div>
 					<div class="swap-off m-0 p-0"><MdiExpand /></div>
 				</label>
