@@ -3,7 +3,7 @@
 	import { OidcWrapper } from '$lib/oidc';
 	import { onMount } from 'svelte';
 
-	onMount(async () => {
+	async function initializeOidc() {
 		const oidcPromise = OidcWrapper.getInstance().getOidcClient();
 		const oidc = await oidcPromise;
 		if (!oidc.isUserLoggedIn) {
@@ -13,5 +13,9 @@
 		} else {
 			goto('/app');
 		}
+	}
+
+	onMount(() => {
+		initializeOidc();
 	});
 </script>
