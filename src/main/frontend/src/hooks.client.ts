@@ -1,8 +1,11 @@
 import { client } from '$lib/client/client.gen';
-import { oidcClient } from '$lib/oidc';
+import { OidcWrapper } from '$lib/oidc';
 import type { ClientInit } from '@sveltejs/kit';
 
 export const init: ClientInit = async () => {
+	const oidcPromise = OidcWrapper.getInstance().getOidcClient();
+	const oidcClient = await oidcPromise;
+
 	if (oidcClient.isUserLoggedIn) {
 		// Tell the OIDC client to update the OpenAPI client bearer token
 		oidcClient.subscribeToTokensChange((tokens) => {
