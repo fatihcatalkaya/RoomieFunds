@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface FlurkontoRepository {
     Optional<Account> getFlurkonto();
     Account setFlurkonto(long accountId);
+    Optional<Account> getGetraenkekonto();
+    Account setGetraenkekonto(long accountId);
 }
