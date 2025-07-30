@@ -2,9 +2,7 @@ name: ci.yml
 on:
   push:
     tags:
-      - '*'
-    branches:
-      - main
+      - '\d+\.\d+\.\d+'
 
 jobs:
   build-frontend:
