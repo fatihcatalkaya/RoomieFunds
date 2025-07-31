@@ -3,7 +3,9 @@ package de.flur4.roomiefunds.domain.api.flurkonto.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.flur4.roomiefunds.domain.api.account.AccountNotFoundException;
 import de.flur4.roomiefunds.domain.api.flurkonto.GetFlurkonto;
+import de.flur4.roomiefunds.domain.api.flurkonto.GetGetraenkekonto;
 import de.flur4.roomiefunds.domain.api.flurkonto.SetFlurkonto;
+import de.flur4.roomiefunds.domain.api.flurkonto.SetGetraenkekonto;
 import de.flur4.roomiefunds.domain.spi.AccountRepository;
 import de.flur4.roomiefunds.domain.spi.FlurkontoRepository;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
@@ -16,9 +18,10 @@ import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class FlurkontoService implements GetFlurkonto, SetFlurkonto {
+public class FlurkontoService implements GetFlurkonto, SetFlurkonto, GetGetraenkekonto, SetGetraenkekonto {
 
     final static String SETTINGS_FLUR_ACCOUNT_ID = "settings.flur_account_id";
+    final static String SETTINGS_GETRAENKEKONTO_ID = "settings.flur_getraenkekonto_id";
     final FlurkontoRepository flurkontoRepository;
     final AccountRepository accountRepository;
     final LogRepository logRepository;
@@ -30,7 +33,7 @@ public class FlurkontoService implements GetFlurkonto, SetFlurkonto {
 
     @Override
     public Account setFlurkontoId(ModifyingPersonDto modifyingPerson, long accountId) throws JsonProcessingException, AccountNotFoundException {
-        if(accountRepository.getAccount(accountId).isEmpty()){
+        if (accountRepository.getAccount(accountId).isEmpty()) {
             throw new AccountNotFoundException(accountId);
         }
 
@@ -43,5 +46,29 @@ public class FlurkontoService implements GetFlurkonto, SetFlurkonto {
                 Optional.of(flurkontoAfter)
         ));
         return flurkontoAfter;
+    }
+
+
+    @Override
+    public Optional<Account> getGetraenkekonto() {
+        return flurkontoRepository.getGetraenkekonto();
+    }
+
+    @Override
+    public Account setGetraenkekonto(ModifyingPersonDto modifyingPerson, long accountId) throws JsonProcessingException, AccountNotFoundException {
+        if (accountRepository.getAccount(accountId).isEmpty()) {
+            throw new AccountNotFoundException(accountId);
+        }
+
+        var getraenkekontoBefore = flurkontoRepository.getGetraenkekonto();
+        var getraenkekontoAfter = flurkontoRepository.setGetraenkekonto(accountId);
+        logRepository.insertLogEntry(modifyingPerson, new InsertLogEntryDto(
+                LogOperations.update,
+                SETTINGS_GETRAENKEKONTO_ID,
+                getraenkekontoBefore.isPresent() ? Optional.of(getraenkekontoBefore) : Optional.empty(),
+                Optional.of(getraenkekontoAfter)
+        ));
+
+        return getraenkekontoAfter;
     }
 }

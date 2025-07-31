@@ -15,6 +15,8 @@ import static de.flur4.roomiefunds.infrastructure.jooq.Tables.SETTINGS;
 @RequiredArgsConstructor
 public class FlurkontoRepositoryImpl implements FlurkontoRepository {
     final static String SETTINGS_FLURKONTO_ID = "flur_account_id";
+    final static String SETTINGS_GETRAENKEKONTO_ID = "flur_getraenkekonto_id";
+
     final DSLContext jooq;
     final AccountRepository accountRepository;
 
@@ -32,6 +34,28 @@ public class FlurkontoRepositoryImpl implements FlurkontoRepository {
         jooq.update(SETTINGS)
                 .set(SETTINGS.VALUE_INT, accountId)
                 .where(SETTINGS.SETTING_KEY.eq(SETTINGS_FLURKONTO_ID))
+                .execute();
+        return accountRepository.getAccount(accountId).get();
+    }
+
+    @Override
+    public Optional<Account> getGetraenkekonto() {
+        var getraenkekontoId = jooq.select(SETTINGS.VALUE_INT)
+                .from(SETTINGS)
+                .where(SETTINGS.SETTING_KEY.eq(SETTINGS_GETRAENKEKONTO_ID))
+                .fetchOptional();
+        if (getraenkekontoId.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return accountRepository.getAccount(getraenkekontoId.get().value1());
+    }
+
+    @Override
+    public Account setGetraenkekonto(long accountId) {
+        jooq.update(SETTINGS)
+                .set(SETTINGS.VALUE_INT, accountId)
+                .where(SETTINGS.SETTING_KEY.eq(SETTINGS_GETRAENKEKONTO_ID))
                 .execute();
         return accountRepository.getAccount(accountId).get();
     }
