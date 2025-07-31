@@ -6,6 +6,7 @@ import de.flur4.roomiefunds.models.transaction.CreateTransactionDto;
 import de.flur4.roomiefunds.models.transaction.Transaction;
 import de.flur4.roomiefunds.models.transaction.TransactionSaldoDto;
 import de.flur4.roomiefunds.models.transaction.UpdateTransactionDto;
+import io.quarkus.cache.CacheInvalidateAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -47,6 +48,7 @@ public class TransactionController {
     }
 
     @POST
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public Transaction createTransaction(@Valid CreateTransactionDto createTransactionDto) {
         if (createTransactionDto.sourceAccountId() == createTransactionDto.targetAccountId()) {
             throw new BadRequestException("Transaction between the same source and target account is not allowed");
@@ -62,6 +64,7 @@ public class TransactionController {
 
     @PATCH
     @Path("/{transactionId:\\d+}")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public Transaction updateTransaction(@PathParam("transactionId") long transactionId, @Valid UpdateTransactionDto updateTransactionDto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -78,6 +81,7 @@ public class TransactionController {
 
     @DELETE
     @Path("/{transactionId:\\d+}")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public void deleteTransaction(@PathParam("transactionId") long transactionId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {

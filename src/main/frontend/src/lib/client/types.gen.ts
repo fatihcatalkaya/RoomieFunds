@@ -21,6 +21,13 @@ export type Account = {
     active?: boolean;
 };
 
+export type AccountWithBalance = {
+    id?: number;
+    name?: string;
+    active?: boolean;
+    balance?: number;
+};
+
 export type AuthMethod = {
     name?: string;
     title?: string;
@@ -329,6 +336,33 @@ export type GetApiAccountSendAccountStatementsNowResponses = {
      */
     200: unknown;
 };
+
+export type GetApiAccountWithBalancesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/account/with-balances';
+};
+
+export type GetApiAccountWithBalancesErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiAccountWithBalancesResponses = {
+    /**
+     * OK
+     */
+    200: Array<AccountWithBalance>;
+};
+
+export type GetApiAccountWithBalancesResponse = GetApiAccountWithBalancesResponses[keyof GetApiAccountWithBalancesResponses];
 
 export type DeleteApiAccountByAccountIdData = {
     body?: never;

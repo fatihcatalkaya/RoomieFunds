@@ -1,6 +1,7 @@
 package de.flur4.roomiefunds.infrastructure.scheduler;
 
 import de.flur4.roomiefunds.domain.api.flurbeitrag.CreateFlurbeitragTransaction;
+import io.quarkus.cache.CacheInvalidateAll;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ public class FlurbeitragScheduler {
     final CreateFlurbeitragTransaction createFlurbeitragTransaction;
 
     @Scheduled(cron = "0 0 1 1 * ?")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     void createScheduledFlurbeitrag() {
         log.info("Starting creation of flurbeitrag transactions");
         try {

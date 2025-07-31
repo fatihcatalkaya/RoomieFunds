@@ -2,22 +2,20 @@ package de.flur4.roomiefunds.domain.api.account.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.flur4.roomiefunds.domain.api.account.*;
+import de.flur4.roomiefunds.domain.api.transaction.GetTransaction;
 import de.flur4.roomiefunds.domain.spi.*;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
-import de.flur4.roomiefunds.models.account.Account;
-import de.flur4.roomiefunds.models.account.CreateAccountDto;
-import de.flur4.roomiefunds.models.account.SendAccountStatementsResult;
-import de.flur4.roomiefunds.models.account.UpdateAccountDto;
+import de.flur4.roomiefunds.models.account.*;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
 import de.flur4.roomiefunds.models.person.Person;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.jbosslog.JBossLog;
 import org.javatuples.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+@JBossLog
 @RequiredArgsConstructor
 public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount, PrintAccountStatement, SendAccountStatements {
     final AccountRepository accountRepository;
@@ -26,6 +24,7 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
     final AccountStatementMailer accountStatementMailer;
     final PersonRepository personRepository;
     final LogRepository logRepository;
+    final GetTransaction getTransaction;
 
     @Override
     public Account createAccount(ModifyingPersonDto modifyingPerson, CreateAccountDto createAccountDto) throws JsonProcessingException {
@@ -66,6 +65,26 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
     @Override
     public List<Account> getAccounts() {
         return accountRepository.getAllAccounts();
+    }
+
+    @Override
+    public List<AccountWithBalance> getAccountsWithBalances() {
+        log.info("Getting accounts with balances");
+        var accounts = accountRepository.getAllAccounts();
+        List<AccountWithBalance> accountsWithBalances = new ArrayList<>(accounts.size());
+
+        for (Account account : accounts) {
+            var transactions = getTransaction.getTransactionsForAccount(account.id());
+
+            double balance = 0;
+            if(!transactions.isEmpty()) {
+                balance = transactions.getLast().saldo();
+            }
+
+            accountsWithBalances.add(new AccountWithBalance(account.id(), account.name(), account.active(), balance));
+        }
+
+        return accountsWithBalances;
     }
 
     @Override

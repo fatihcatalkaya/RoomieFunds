@@ -1,6 +1,7 @@
 package de.flur4.roomiefunds.infrastructure.scheduler;
 
 import de.flur4.roomiefunds.domain.api.recurringtransaction.CreateRecurringTransaction;
+import io.quarkus.cache.CacheInvalidateAll;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ public class RecurringTransactionScheduler {
     final CreateRecurringTransaction createRecurringTransaction;
 
     @Scheduled(cron = "0 30 1 1 * ?")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     void createScheduledTransactions() {
         log.info("Starting creation of scheduled transactions");
         try {

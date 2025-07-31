@@ -2,9 +2,13 @@ package de.flur4.roomiefunds.infrastructure.web;
 
 import de.flur4.roomiefunds.domain.api.account.*;
 import de.flur4.roomiefunds.infrastructure.Utils;
+import de.flur4.roomiefunds.infrastructure.cache.AccountsWithBalancesCacheKeyGenerator;
 import de.flur4.roomiefunds.models.account.Account;
+import de.flur4.roomiefunds.models.account.AccountWithBalance;
 import de.flur4.roomiefunds.models.account.CreateAccountDto;
 import de.flur4.roomiefunds.models.account.UpdateAccountDto;
+import io.quarkus.cache.CacheInvalidateAll;
+import io.quarkus.cache.CacheResult;
 import io.vertx.core.eventbus.EventBus;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -38,6 +42,13 @@ public class AccountController {
     }
 
     @GET
+    @Path("/with-balances")
+    @CacheResult(cacheName = "accounts-with-balances", keyGenerator = AccountsWithBalancesCacheKeyGenerator.class)
+    public List<AccountWithBalance> getAccountsWithBalances() {
+        return getAccount.getAccountsWithBalances();
+    }
+
+    @GET
     @Path("/{accountId:\\d+}")
     public Account getAccount(@PathParam("accountId") long accountId) {
         var result = getAccount.getAccount(accountId);
@@ -62,6 +73,7 @@ public class AccountController {
     }
 
     @POST
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public Account createAccount(@Valid CreateAccountDto dto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -74,6 +86,7 @@ public class AccountController {
 
     @PATCH
     @Path("/{accountId:\\d+}")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public Account patchAccount(@PathParam("accountId") long accountId, @Valid UpdateAccountDto dto) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {
@@ -88,6 +101,7 @@ public class AccountController {
 
     @DELETE
     @Path("/{accountId:\\d+}")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public void deleteAccount(@PathParam("accountId") long accountId) {
         var modifyingPerson = Utils.createModifyingPersonDtoFromJwt(jwt);
         try {

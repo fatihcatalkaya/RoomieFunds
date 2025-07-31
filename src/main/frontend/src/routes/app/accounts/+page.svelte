@@ -3,16 +3,10 @@
 </script>
 
 <script lang="ts">
-	import { type Account } from '$lib/client';
 	import AccountListSubtree from '$lib/components/AccountListSubtree.svelte';
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import type { PageProps } from './$types';
-
-	type TreeNode = {
-		name: string;
-		children: (TreeNode | Account)[];
-	};
 
 	const { data }: PageProps = $props();
 	const { accountsQuery } = data;
