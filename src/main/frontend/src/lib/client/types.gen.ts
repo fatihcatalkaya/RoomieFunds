@@ -730,14 +730,14 @@ export type PutApiFlurbeitragResponses = {
 
 export type PutApiFlurbeitragResponse = PutApiFlurbeitragResponses[keyof PutApiFlurbeitragResponses];
 
-export type GetApiFlurkontoData = {
+export type GetApiKontoFlurkontoData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/flurkonto';
+    url: '/api/konto/flurkonto';
 };
 
-export type GetApiFlurkontoErrors = {
+export type GetApiKontoFlurkontoErrors = {
     /**
      * Not Authorized
      */
@@ -748,23 +748,23 @@ export type GetApiFlurkontoErrors = {
     403: unknown;
 };
 
-export type GetApiFlurkontoResponses = {
+export type GetApiKontoFlurkontoResponses = {
     /**
      * OK
      */
     200: Account | null;
 };
 
-export type GetApiFlurkontoResponse = GetApiFlurkontoResponses[keyof GetApiFlurkontoResponses];
+export type GetApiKontoFlurkontoResponse = GetApiKontoFlurkontoResponses[keyof GetApiKontoFlurkontoResponses];
 
-export type PutApiFlurkontoData = {
+export type PutApiKontoFlurkontoData = {
     body: number;
     path?: never;
     query?: never;
-    url: '/api/flurkonto';
+    url: '/api/konto/flurkonto';
 };
 
-export type PutApiFlurkontoErrors = {
+export type PutApiKontoFlurkontoErrors = {
     /**
      * Not Authorized
      */
@@ -775,14 +775,68 @@ export type PutApiFlurkontoErrors = {
     403: unknown;
 };
 
-export type PutApiFlurkontoResponses = {
+export type PutApiKontoFlurkontoResponses = {
     /**
      * OK
      */
     200: Account;
 };
 
-export type PutApiFlurkontoResponse = PutApiFlurkontoResponses[keyof PutApiFlurkontoResponses];
+export type PutApiKontoFlurkontoResponse = PutApiKontoFlurkontoResponses[keyof PutApiKontoFlurkontoResponses];
+
+export type GetApiKontoGetraenkekontoData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/konto/getraenkekonto';
+};
+
+export type GetApiKontoGetraenkekontoErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiKontoGetraenkekontoResponses = {
+    /**
+     * OK
+     */
+    200: Account | null;
+};
+
+export type GetApiKontoGetraenkekontoResponse = GetApiKontoGetraenkekontoResponses[keyof GetApiKontoGetraenkekontoResponses];
+
+export type PutApiKontoGetraenkekontoData = {
+    body: number;
+    path?: never;
+    query?: never;
+    url: '/api/konto/getraenkekonto';
+};
+
+export type PutApiKontoGetraenkekontoErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PutApiKontoGetraenkekontoResponses = {
+    /**
+     * OK
+     */
+    200: Account;
+};
+
+export type PutApiKontoGetraenkekontoResponse = PutApiKontoGetraenkekontoResponses[keyof PutApiKontoGetraenkekontoResponses];
 
 export type GetApiLogData = {
     body?: never;

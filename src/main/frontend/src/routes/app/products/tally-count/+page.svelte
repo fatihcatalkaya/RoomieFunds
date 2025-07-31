@@ -11,10 +11,10 @@
 	import type { PageProps } from "./$types";
 
     const { data }: PageProps = $props();
-    const { flurkontoQuery, productsQuery } = data;
+    const { getraenkekontoQuery, productsQuery } = data;
 
     let products = productsQuery.data!;
-    let mainAccount = flurkontoQuery.data!;
+    let mainAccount = getraenkekontoQuery.data!;
 
     interface TallyData {
         [key: string]: {
