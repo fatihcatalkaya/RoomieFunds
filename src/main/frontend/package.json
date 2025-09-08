@@ -22,7 +22,7 @@
 		"@sveltejs/adapter-auto": "^6.0.1",
 		"@sveltejs/adapter-static": "^3.0.8",
 		"@sveltejs/kit": "^2.24.0",
-		"@sveltejs/vite-plugin-svelte": "^6.1.0",
+		"@sveltejs/vite-plugin-svelte": "^6.1.4",
 		"@tailwindcss/vite": "^4.0.14",
 		"daisyui": "^5.0.3",
 		"eslint": "^9.28.0",
