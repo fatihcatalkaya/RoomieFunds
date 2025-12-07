@@ -17,8 +17,9 @@ public class AccountContext {
             AccountStatementMailer accountStatementMailer,
             PersonRepository personRepository,
             LogRepository logRepository,
-            GetTransaction getTransaction) {
-        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction);
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
     }
 
     @Produces
@@ -30,8 +31,9 @@ public class AccountContext {
             AccountStatementMailer accountStatementMailer,
             PersonRepository personRepository,
             LogRepository logRepository,
-            GetTransaction getTransaction) {
-        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction);
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
     }
 
     @Produces
@@ -43,8 +45,9 @@ public class AccountContext {
             AccountStatementMailer accountStatementMailer,
             PersonRepository personRepository,
             LogRepository logRepository,
-            GetTransaction getTransaction) {
-        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction);
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
     }
 
     @Produces
@@ -56,8 +59,9 @@ public class AccountContext {
             AccountStatementMailer accountStatementMailer,
             PersonRepository personRepository,
             LogRepository logRepository,
-            GetTransaction getTransaction) {
-        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction);
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
     }
 
     @Produces
@@ -69,8 +73,9 @@ public class AccountContext {
             AccountStatementMailer accountStatementMailer,
             PersonRepository personRepository,
             LogRepository logRepository,
-            GetTransaction getTransaction) {
-        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction);
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
     }
 
     @Produces
@@ -82,7 +87,22 @@ public class AccountContext {
             AccountStatementMailer accountStatementMailer,
             PersonRepository personRepository,
             LogRepository logRepository,
-            GetTransaction getTransaction) {
-        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction);
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public GetAccountReport getAccountReport(
+            AccountRepository accountRepository,
+            TransactionRepository transactionRepository,
+            AccountStatementRenderer accountStatementRenderer,
+            AccountStatementMailer accountStatementMailer,
+            PersonRepository personRepository,
+            LogRepository logRepository,
+            GetTransaction getTransaction,
+            AccountReportRenderer accountReportRenderer) {
+        return new AccountService(accountRepository, transactionRepository, accountStatementRenderer, accountStatementMailer, personRepository, logRepository, getTransaction, accountReportRenderer);
     }
 }

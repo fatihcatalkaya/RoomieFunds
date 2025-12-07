@@ -312,6 +312,33 @@ export type PostApiAccountResponses = {
 
 export type PostApiAccountResponse = PostApiAccountResponses[keyof PostApiAccountResponses];
 
+export type GetApiAccountReportData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/account/report';
+};
+
+export type GetApiAccountReportErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiAccountReportResponses = {
+    /**
+     * OK
+     */
+    200: Blob | File;
+};
+
+export type GetApiAccountReportResponse = GetApiAccountReportResponses[keyof GetApiAccountReportResponses];
+
 export type GetApiAccountSendAccountStatementsNowData = {
     body?: never;
     path?: never;

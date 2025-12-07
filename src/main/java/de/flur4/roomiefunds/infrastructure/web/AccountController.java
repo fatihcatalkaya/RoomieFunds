@@ -3,6 +3,7 @@ package de.flur4.roomiefunds.infrastructure.web;
 import de.flur4.roomiefunds.domain.api.account.*;
 import de.flur4.roomiefunds.infrastructure.Utils;
 import de.flur4.roomiefunds.infrastructure.cache.AccountsWithBalancesCacheKeyGenerator;
+import de.flur4.roomiefunds.infrastructure.renderer.tallylistrenderer.EmptyTallyListException;
 import de.flur4.roomiefunds.models.account.Account;
 import de.flur4.roomiefunds.models.account.AccountWithBalance;
 import de.flur4.roomiefunds.models.account.CreateAccountDto;
@@ -32,6 +33,7 @@ public class AccountController {
     final UpdateAccount updateAccount;
     final DeleteAccount deleteAccount;
     final PrintAccountStatement printAccountStatement;
+    final GetAccountReport getAccountReport;
     final JsonWebToken jwt;
     @Inject
     EventBus eventBus;
@@ -120,5 +122,17 @@ public class AccountController {
     public RestResponse<?> sendAccountStatementsNow() {
         eventBus.send("send-account-statements-emails", null);
         return RestResponse.noContent();
+    }
+
+    @GET
+    @Path("/report")
+    @Produces(value = "application/pdf")
+    public byte[] getAccountsReport() {
+        try {
+            return getAccountReport.getAccountReport();
+        } catch (RuntimeException exception) {
+            log.error("An error occurred while generating account report", exception);
+            throw new InternalServerErrorException("An error occurred while generating the account report", exception);
+        }
     }
 }

@@ -6,8 +6,10 @@
 	import AccountListSubtree from '$lib/components/AccountListSubtree.svelte';
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiScriptText from '~icons/mdi/script-text';
+	import MdiPrinter from '~icons/mdi/printer';
 	import type { PageProps } from './$types';
 	import { createAccountsQuery } from './accountsQuery';
+	import { getApiAccountReport } from '$lib/client/sdk.gen';
 
 	const { data }: PageProps = $props();
 
@@ -18,6 +20,21 @@
 		showInactive = !showInactive;
 		accountsQuery = createAccountsQuery(showInactive);
 	}
+
+	async function printAccountReport() {
+		let query = await getApiAccountReport();
+		openPDFInNewTab(query.data as Blob)
+	}
+
+	// Assuming arrayBuffer is already available
+	function openPDFInNewTab(blob: Blob) {
+		const url = URL.createObjectURL(blob);
+		const newTab = window.open(url, '_blank')!;
+		newTab.onbeforeunload = () => {
+			URL.revokeObjectURL(url);
+		};
+	}
+
 </script>
 
 <div class="my-4 inline-flex w-full items-center">
@@ -30,6 +47,9 @@
 		</span>
 	</label>
 	<div class="flex-2"></div>
+	<button title="Strichliste Drucken" class="btn btn-warning h-8 w-8 p-0 m-0 mr-2 text-lg" onclick={printAccountReport}>
+		<MdiPrinter/>
+	</button>
 	<a href="/app/accounts/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 mr-2 text-lg">
 		<MdiScriptText/>
 	</a>

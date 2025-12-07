@@ -18,7 +18,7 @@ import java.util.*;
 
 @JBossLog
 @RequiredArgsConstructor
-public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount, PrintAccountStatement, SendAccountStatements {
+public class AccountService implements CreateAccount, GetAccount, UpdateAccount, DeleteAccount, PrintAccountStatement, SendAccountStatements, GetAccountReport {
     final AccountRepository accountRepository;
     final TransactionRepository transactionRepository;
     final AccountStatementRenderer accountStatementRenderer;
@@ -26,6 +26,7 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
     final PersonRepository personRepository;
     final LogRepository logRepository;
     final GetTransaction getTransaction;
+    final AccountReportRenderer accountReportRenderer;
 
     @Override
     public Account createAccount(ModifyingPersonDto modifyingPerson, CreateAccountDto createAccountDto) throws JsonProcessingException {
@@ -142,5 +143,10 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
             }
         }
         return new SendAccountStatementsResult(successfulSendPersons, failedPersons);
+    }
+
+    @Override
+    public byte[] getAccountReport() {
+        return accountReportRenderer.getAccountReport();
     }
 }
