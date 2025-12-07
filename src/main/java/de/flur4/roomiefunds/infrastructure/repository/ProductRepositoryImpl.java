@@ -39,7 +39,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                         PRODUCT.PRICE,
                         PRODUCT.PRINT
                 ).from(PRODUCT)
-                .orderBy(PRODUCT.NAME)
+                .orderBy(PRODUCT.NAME, PRODUCT.ID)
                 .fetch(mapping(Product::new));
     }
 
@@ -52,6 +52,7 @@ public class ProductRepositoryImpl implements ProductRepository {
                         PRODUCT.PRINT
                 ).from(PRODUCT)
                 .where(PRODUCT.PRINT.eq(true))
+                .orderBy(PRODUCT.NAME, PRODUCT.ID)
                 .fetch(mapping(Product::new));
     }
 

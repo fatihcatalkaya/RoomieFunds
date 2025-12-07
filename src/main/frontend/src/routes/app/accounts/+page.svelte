@@ -7,16 +7,24 @@
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import type { PageProps } from './$types';
+	import { createAccountsQuery } from './accountsQuery';
 
 	const { data }: PageProps = $props();
-	const { accountsQuery } = data;
+
+	let showInactive = $state(false);
+	let accountsQuery = $state(data.accountsQuery);
+
+	function toggleShowInactive() {
+		showInactive = !showInactive;
+		accountsQuery = createAccountsQuery(showInactive);
+	}
 </script>
 
 <div class="my-4 inline-flex w-full items-center">
 	<h1 class="pr-6 text-2xl font-bold">Konten</h1>
 	<div class="flex-1 md:flex-0"></div>
 	<label class="inline-flex items-center gap-2">
-		<input type="checkbox" class="toggle" />
+		<input type="checkbox" class="toggle" onchange={toggleShowInactive} />
 		<span>
 			Inaktiv<span class="hidden md:inline">e Konten anzeigen</span>
 		</span>

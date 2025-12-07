@@ -340,7 +340,9 @@ export type GetApiAccountSendAccountStatementsNowResponses = {
 export type GetApiAccountWithBalancesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        'include-disabled'?: boolean;
+    };
     url: '/api/account/with-balances';
 };
 

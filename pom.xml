@@ -15,7 +15,6 @@
         <quarkus.platform.version>3.20.2</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.3</surefire-plugin.version>
-        <testcontainers.version>1.21.3</testcontainers.version>
         <flywayMavenPlugin.version>11.10.4</flywayMavenPlugin.version>
         <groovyMavenPluginVersion>2.1.1</groovyMavenPluginVersion>
         <buildHelperPlugin.version>3.6.1</buildHelperPlugin.version>
@@ -28,9 +27,11 @@
         <javatuples.version>1.2</javatuples.version>
 
         <postgresContainerVersion>postgres:17.3-alpine</postgresContainerVersion>
-        <jooq.codegen.jdbc.username>postgres</jooq.codegen.jdbc.username>
-        <jooq.codegen.jdbc.password>postgres</jooq.codegen.jdbc.password>
-        <jooq.codegen.jdbc.database>postgres</jooq.codegen.jdbc.database>
+        <jooq.codegen.jdbc.username>app</jooq.codegen.jdbc.username>
+        <jooq.codegen.jdbc.password>app</jooq.codegen.jdbc.password>
+        <jooq.codegen.jdbc.database>app</jooq.codegen.jdbc.database>
+        <!-- Für jooq-local Profil: Standard-URL für lokale PostgreSQL -->
+        <jooq.codegen.jdbc.url>jdbc:postgresql://localhost:5432/app</jooq.codegen.jdbc.url>
     </properties>
 
     <dependencyManagement>
@@ -251,6 +252,9 @@
                     <name>jooq</name>
                 </property>
             </activation>
+            <properties>
+                <testcontainers.version>1.21.3</testcontainers.version>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -430,6 +434,116 @@
                                     <workingDirectory>${project.build.sourceDirectory}/../frontend</workingDirectory>
                                 </configuration>
                                 <phase>generate-resources</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!--
+            jooq-local Profil: Verwendet eine bereits laufende PostgreSQL-Datenbank
+            statt Testcontainers. Nützlich für IDEs ohne Container-Runtime.
+
+            Verwendung: mvn generate-sources -Djooq-local
+
+            Optional können die JDBC-Verbindungsparameter überschrieben werden:
+            mvn generate-sources -Djooq-local \
+                -Djooq.codegen.jdbc.url=jdbc:postgresql://localhost:5432/mydb \
+                -Djooq.codegen.jdbc.username=myuser \
+                -Djooq.codegen.jdbc.password=mypassword
+
+            Voraussetzung: Eine PostgreSQL-Datenbank muss laufen und erreichbar sein.
+            Die Flyway-Migrationen werden automatisch ausgeführt.
+        -->
+        <profile>
+            <id>jooq-local</id>
+            <activation>
+                <property>
+                    <name>jooq-local</name>
+                </property>
+            </activation>
+            <properties>
+                <db.url>${jooq.codegen.jdbc.url}</db.url>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-maven-plugin</artifactId>
+                        <version>${flywayMavenPlugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>migrate</goal>
+                                </goals>
+                                <configuration>
+                                    <url>${jooq.codegen.jdbc.url}</url>
+                                    <user>${jooq.codegen.jdbc.username}</user>
+                                    <password>${jooq.codegen.jdbc.password}</password>
+                                    <locations>
+                                        <location>filesystem:src/main/resources/db/migration</location>
+                                    </locations>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.flywaydb</groupId>
+                                <artifactId>flyway-database-postgresql</artifactId>
+                                <version>${flywayMavenPlugin.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-codegen-maven</artifactId>
+                        <version>${jooq.version}</version>
+                        <executions>
+                            <execution>
+                                <id>java-generator</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                                <configuration>
+                                    <jdbc>
+                                        <url>${jooq.codegen.jdbc.url}</url>
+                                        <user>${jooq.codegen.jdbc.username}</user>
+                                        <password>${jooq.codegen.jdbc.password}</password>
+                                    </jdbc>
+                                    <generator>
+                                        <generate>
+                                            <implicitJoinPathsToMany>false</implicitJoinPathsToMany>
+                                        </generate>
+                                        <database>
+                                            <inputSchema>public</inputSchema>
+                                            <excludes>flyway_schema_history|gin.*|gtrgm.*|word.*|strict_word_similarity_.*|similarity.*|strict_word_similarity.*|set_limit|show_limit|show_trgm</excludes>
+                                        </database>
+                                        <target>
+                                            <packageName>de.flur4.roomiefunds.infrastructure.jooq</packageName>
+                                            <directory>${project.build.directory}/generated-sources/jooq</directory>
+                                        </target>
+                                    </generator>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>${buildHelperPlugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>${project.build.directory}/generated-sources/jooq</source>
+                                    </sources>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

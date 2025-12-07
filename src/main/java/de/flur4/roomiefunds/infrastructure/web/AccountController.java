@@ -43,9 +43,8 @@ public class AccountController {
 
     @GET
     @Path("/with-balances")
-    @CacheResult(cacheName = "accounts-with-balances", keyGenerator = AccountsWithBalancesCacheKeyGenerator.class)
-    public List<AccountWithBalance> getAccountsWithBalances() {
-        return getAccount.getAccountsWithBalances();
+    public List<AccountWithBalance> getAccountsWithBalances(@QueryParam("include-disabled") boolean includeDisabled) {
+        return getAccount.getAccountsWithBalances(includeDisabled);
     }
 
     @GET

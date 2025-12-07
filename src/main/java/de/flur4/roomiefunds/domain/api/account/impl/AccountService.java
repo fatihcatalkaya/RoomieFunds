@@ -9,6 +9,7 @@ import de.flur4.roomiefunds.models.account.*;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
 import de.flur4.roomiefunds.models.person.Person;
+import de.flur4.roomiefunds.models.transaction.TransactionSaldoDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.jbosslog.JBossLog;
 import org.javatuples.Pair;
@@ -68,13 +69,25 @@ public class AccountService implements CreateAccount, GetAccount, UpdateAccount,
     }
 
     @Override
-    public List<AccountWithBalance> getAccountsWithBalances() {
+    public List<AccountWithBalance> getAccountsWithBalances(boolean includeDisabled) {
         log.info("Getting accounts with balances");
-        var accounts = accountRepository.getAllAccounts();
+        List<Account> accounts = accountRepository.getAllAccounts();
+
+        List<Person> inactivePeople = personRepository.getAllPersons();
+        inactivePeople.removeAll(personRepository.getPersonsThatPayFlurbeitrag());
+        inactivePeople.removeAll(personRepository.getPersonsToPrintOnTallyList());
+
         List<AccountWithBalance> accountsWithBalances = new ArrayList<>(accounts.size());
 
         for (Account account : accounts) {
-            var transactions = getTransaction.getTransactionsForAccount(account.id());
+            List<TransactionSaldoDto> transactions = getTransaction.getTransactionsForAccount(account.id());
+
+            if (!includeDisabled) {
+                boolean isConnectedToInactivePerson = inactivePeople.stream().anyMatch(person -> person.accountId() == account.id());
+                if (isConnectedToInactivePerson) {
+                    continue;
+                }
+            }
 
             double balance = 0;
             if(!transactions.isEmpty()) {

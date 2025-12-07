@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface GetAccount {
     Optional<Account> getAccount(long accountId);
     List<Account> getAccounts();
-    List<AccountWithBalance> getAccountsWithBalances();
+    List<AccountWithBalance> getAccountsWithBalances(boolean includeDisabled);
 }
