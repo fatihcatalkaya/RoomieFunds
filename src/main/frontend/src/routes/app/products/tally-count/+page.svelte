@@ -16,15 +16,15 @@
     let products = productsQuery.data!;
     let mainAccount = getraenkekontoQuery.data!;
 
-    interface TallyData {
-        [key: string]: {
-            product: Product,
-            count: number,
-        }
+    interface TallyEntry {
+        product: Product;
+        count: number;
     }
 
-    let tallyData: TallyData = $state(Object.fromEntries(products.map(product => [product.id, { product, count: 0 }])));
-    let sum = $derived(Object.entries(tallyData).map(entry => entry[1].count * entry[1].product.price!).reduce((acc, value) => acc + value, 0))
+    // Use an array to preserve API order, with a Map for quick lookups by ID
+    let tallyData: TallyEntry[] = $state(products.map(product => ({ product, count: 0 })));
+    let tallyCountById = $derived(new Map(tallyData.map((entry, index) => [entry.product.id!, index])));
+    let sum = $derived(tallyData.reduce((acc, entry) => acc + entry.count * entry.product.price!, 0));
 
     let personQuery = $derived.by(async () => {
         const query = await getApiPerson();
@@ -104,12 +104,12 @@
             {/await}
         </select>
     </label>
-    {#each Object.entries(tallyData) as [productId, tally]}
+    {#each tallyData as tally, index}
         <label class="flex gap-2 items-center mt-2">
             <span class="flex-4">{tally.product.name}</span>
             <span class="flex-1 text-right">{formatEuroCents(tally.product.price!)}</span>
             x
-            <input type="number" class="input flex-2" bind:value={tallyData[productId].count} min="0" step="1">
+            <input type="number" class="input flex-2" bind:value={tallyData[index].count} min="0" step="1">
         </label>
     {/each}
     <hr class="mt-4 text-base-300">
