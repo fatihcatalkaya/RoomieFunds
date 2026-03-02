@@ -3,15 +3,18 @@
 </script>
 
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { formatEuroCents } from '$lib/formatter';
+	import MdiArrowUp from '~icons/mdi/arrow-up';
+	import MdiArrowDown from '~icons/mdi/arrow-down';
 	import MdiPencil from '~icons/mdi/pencil';
 	import MdiPlus from '~icons/mdi/plus';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import MdiPrinter from '~icons/mdi/printer';
 	import MdiTallyMarkFive from '~icons/mdi/tally-mark-5';
-	
+
 	import type { PageProps } from './$types';
-	import { getApiProductTallylist } from '$lib/client';
+	import { getApiProductTallylist, postApiProductByProductIdMoveUp, postApiProductByProductIdMoveDown } from '$lib/client';
 
 	let { data }: PageProps = $props();
 
@@ -27,6 +30,16 @@
 		newTab.onbeforeunload = () => {
 			URL.revokeObjectURL(url);
 		};
+	}
+
+	async function moveUp(productId: number) {
+		await postApiProductByProductIdMoveUp({ path: { productId } });
+		await invalidateAll();
+	}
+
+	async function moveDown(productId: number) {
+		await postApiProductByProductIdMoveDown({ path: { productId } });
+		await invalidateAll();
 	}
 </script>
 
@@ -55,15 +68,36 @@
 				<th>ID</th>
 				<th>Name</th>
 				<th class="text-right">Preis</th>
+				<th class="w-20 text-center">Sortierung</th>
 				<th class="w-6 text-center">Action</th>
 			</tr>
 		</thead>
 		<tbody>
-			{#each data.products ?? [] as product}
+			{#each data.products ?? [] as product, index}
 				<tr>
 					<th>{product.id}</th>
 					<td>{product.name}</td>
 					<td class="text-right">{formatEuroCents(product.price!)}</td>
+					<td class="text-center">
+						<div class="inline-flex gap-1">
+							<button
+								title="Nach oben"
+								class="btn btn-ghost btn-xs"
+								disabled={index === 0}
+								onclick={() => moveUp(product.id!)}
+							>
+								<MdiArrowUp />
+							</button>
+							<button
+								title="Nach unten"
+								class="btn btn-ghost btn-xs"
+								disabled={index === (data.products?.length ?? 0) - 1}
+								onclick={() => moveDown(product.id!)}
+							>
+								<MdiArrowDown />
+							</button>
+						</div>
+					</td>
 					<td class="max-w-4 text-center">
 						<a href="/app/products/edit/{product.id}" title="Produkt {product.id} bearbeiten" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
 							<MdiPencil />

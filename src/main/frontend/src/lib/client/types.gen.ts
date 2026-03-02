@@ -185,6 +185,7 @@ export type Product = {
     name?: string;
     price?: number;
     print?: boolean;
+    sortOrder?: number;
 };
 
 export type StartAuthorizationDto = {
@@ -1638,6 +1639,60 @@ export type PatchApiProductByProductIdResponses = {
 };
 
 export type PatchApiProductByProductIdResponse = PatchApiProductByProductIdResponses[keyof PatchApiProductByProductIdResponses];
+
+export type PostApiProductByProductIdMoveDownData = {
+    body?: never;
+    path: {
+        productId: number;
+    };
+    query?: never;
+    url: '/api/product/{productId}/move-down';
+};
+
+export type PostApiProductByProductIdMoveDownErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiProductByProductIdMoveDownResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
+
+export type PostApiProductByProductIdMoveUpData = {
+    body?: never;
+    path: {
+        productId: number;
+    };
+    query?: never;
+    url: '/api/product/{productId}/move-up';
+};
+
+export type PostApiProductByProductIdMoveUpErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiProductByProductIdMoveUpResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
 
 export type GetApiRecurringTransactionData = {
     body?: never;

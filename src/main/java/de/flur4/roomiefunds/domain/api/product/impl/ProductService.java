@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class ProductService implements CreateProduct, GetProduct, GetProductTallySheet, UpdateProduct, DeleteProduct {
+public class ProductService implements CreateProduct, GetProduct, GetProductTallySheet, UpdateProduct, DeleteProduct, ReorderProduct {
 
     final ProductRepository productRepository;
     final LogRepository logRepository;
@@ -81,5 +81,31 @@ public class ProductService implements CreateProduct, GetProduct, GetProductTall
     @Override
     public byte[] getProductTallySheet() throws EmptyTallyListException {
         return tallyListRenderer.renderTallyList();
+    }
+
+    @Override
+    public void moveProductUp(long productId) throws ProductNotFoundException {
+        List<Product> products = productRepository.getAllProducts();
+        for (int i = 0; i < products.size(); i++) {
+            if (products.get(i).id() == productId) {
+                if (i == 0) return;
+                productRepository.swapProductSortOrder(productId, products.get(i - 1).id());
+                return;
+            }
+        }
+        throw new ProductNotFoundException(productId);
+    }
+
+    @Override
+    public void moveProductDown(long productId) throws ProductNotFoundException {
+        List<Product> products = productRepository.getAllProducts();
+        for (int i = 0; i < products.size(); i++) {
+            if (products.get(i).id() == productId) {
+                if (i == products.size() - 1) return;
+                productRepository.swapProductSortOrder(productId, products.get(i + 1).id());
+                return;
+            }
+        }
+        throw new ProductNotFoundException(productId);
     }
 }

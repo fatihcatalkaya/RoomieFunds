@@ -1,6 +1,7 @@
 package de.flur4.roomiefunds.infrastructure.web;
 
 import de.flur4.roomiefunds.domain.api.product.*;
+import de.flur4.roomiefunds.domain.api.product.ReorderProduct;
 import de.flur4.roomiefunds.infrastructure.Utils;
 import de.flur4.roomiefunds.infrastructure.renderer.tallylistrenderer.EmptyTallyListException;
 import de.flur4.roomiefunds.models.product.CreateProductDto;
@@ -25,6 +26,7 @@ public class ProductController {
     final UpdateProduct updateProduct;
     final DeleteProduct deleteProduct;
     final GetProductTallySheet getProductTallySheet;
+    final ReorderProduct reorderProduct;
     final JsonWebToken jwt;
 
     @GET
@@ -78,6 +80,26 @@ public class ProductController {
         } catch (Exception e) {
             log.error("An error occurred while updating product", e);
             throw new InternalServerErrorException("An error occurred while updating product", e);
+        }
+    }
+
+    @POST
+    @Path("/{productId:\\d+}/move-up")
+    public void moveProductUp(@PathParam("productId") long productId) {
+        try {
+            reorderProduct.moveProductUp(productId);
+        } catch (ProductNotFoundException e) {
+            throw new NotFoundException("Product with id " + productId + " not found");
+        }
+    }
+
+    @POST
+    @Path("/{productId:\\d+}/move-down")
+    public void moveProductDown(@PathParam("productId") long productId) {
+        try {
+            reorderProduct.moveProductDown(productId);
+        } catch (ProductNotFoundException e) {
+            throw new NotFoundException("Product with id " + productId + " not found");
         }
     }
 

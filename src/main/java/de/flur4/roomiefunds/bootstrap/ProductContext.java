@@ -38,4 +38,10 @@ public class ProductContext {
     public GetProduct getProduct(ProductRepository productRepository, LogRepository logRepository, ProductTallyListRenderer tallyListRenderer) {
         return new ProductService(productRepository, logRepository, tallyListRenderer);
     }
+
+    @Produces
+    @ApplicationScoped
+    public ReorderProduct reorderProduct(ProductRepository productRepository, LogRepository logRepository, ProductTallyListRenderer tallyListRenderer) {
+        return new ProductService(productRepository, logRepository, tallyListRenderer);
+    }
 }
