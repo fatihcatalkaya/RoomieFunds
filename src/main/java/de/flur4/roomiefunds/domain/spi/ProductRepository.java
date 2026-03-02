@@ -21,4 +21,6 @@ public interface ProductRepository {
     Product updateProduct(long productId, UpdateProductDto updateProductDto) throws ProductNotFoundException;
 
     void deleteProduct(long productId) throws DataAccessException;
+
+    void swapProductSortOrder(long productId1, long productId2);
 }
