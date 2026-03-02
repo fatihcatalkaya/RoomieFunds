@@ -24,19 +24,21 @@ import static org.jooq.impl.DSL.length;
 public class PersonRepositoryImpl implements PersonRepository {
 
     final DSLContext jooq;
-    private static final String DEFAULT_PERSON_ACCOUNT_NAME = "Passiv:Bewohner:%s %s";
+    private static final String DEFAULT_PERSON_ACCOUNT_NAME = "Passiv:Bewohner:%s %s %s";
 
     @Override
     public Optional<Person> getPersonById(long id) {
         return jooq.select(
                         PERSON.ID,
-                        PERSON.NAME,
+                        PERSON.FIRST_NAME,
+                        PERSON.LAST_NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                         PERSON.EMAIL,
-                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                        PERSON.EMAIL_ACCOUNT_STATEMENT,
+                        PERSON.KEYCLOAK_USER_ID
                 ).from(PERSON)
                 .where(PERSON.ID.eq(id))
                 .orderBy(PERSON.ID)
@@ -47,15 +49,17 @@ public class PersonRepositoryImpl implements PersonRepository {
     public List<Person> getAllPersons() {
         return jooq.select(
                         PERSON.ID,
-                        PERSON.NAME,
+                        PERSON.FIRST_NAME,
+                        PERSON.LAST_NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                         PERSON.EMAIL,
-                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                        PERSON.EMAIL_ACCOUNT_STATEMENT,
+                        PERSON.KEYCLOAK_USER_ID
                 ).from(PERSON)
-                .orderBy(PERSON.NAME)
+                .orderBy(PERSON.FIRST_NAME)
                 .fetch(mapping(Person::new));
     }
 
@@ -63,13 +67,15 @@ public class PersonRepositoryImpl implements PersonRepository {
     public List<Person> getPersonsToPrintOnTallyList() {
         return jooq.select(
                         PERSON.ID,
-                        PERSON.NAME,
+                        PERSON.FIRST_NAME,
+                        PERSON.LAST_NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                         PERSON.EMAIL,
-                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                        PERSON.EMAIL_ACCOUNT_STATEMENT,
+                        PERSON.KEYCLOAK_USER_ID
                 ).from(PERSON)
                 .where(PERSON.PRINT_ON_PRODUCT_TALLY_LIST.eq(true))
                 .orderBy(PERSON.ROOM)
@@ -80,13 +86,15 @@ public class PersonRepositoryImpl implements PersonRepository {
     public List<Person> getPersonsThatPayFlurbeitrag() {
         return jooq.select(
                         PERSON.ID,
-                        PERSON.NAME,
+                        PERSON.FIRST_NAME,
+                        PERSON.LAST_NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                         PERSON.EMAIL,
-                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                        PERSON.EMAIL_ACCOUNT_STATEMENT,
+                        PERSON.KEYCLOAK_USER_ID
                 ).from(PERSON)
                 .where(PERSON.PAYS_FLOOR_FEES.eq(true))
                 .orderBy(PERSON.ROOM)
@@ -95,7 +103,7 @@ public class PersonRepositoryImpl implements PersonRepository {
 
     @Override
     public Pair<Person, Account> createPerson(CreatePersonDto createPersonDto) {
-        final String accountName = DEFAULT_PERSON_ACCOUNT_NAME.formatted(createPersonDto.name(), createPersonDto.room());
+        final String accountName = DEFAULT_PERSON_ACCOUNT_NAME.formatted(createPersonDto.firstName(), createPersonDto.lastName(), createPersonDto.room());
         AtomicReference<Account> account = new AtomicReference<>();
         AtomicReference<Person> person = new AtomicReference<>();
         // Since we have to create both, Account and Person, we are going to use a DB transaction for that
@@ -107,7 +115,8 @@ public class PersonRepositoryImpl implements PersonRepository {
                     .fetchOne(mapping(Account::new)));
             person.set(tx.dsl().insertInto(PERSON)
                     .columns(
-                            PERSON.NAME,
+                            PERSON.FIRST_NAME,
+                            PERSON.LAST_NAME,
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
                             PERSON.ACCOUNT_ID,
@@ -115,7 +124,8 @@ public class PersonRepositoryImpl implements PersonRepository {
                             PERSON.EMAIL,
                             PERSON.EMAIL_ACCOUNT_STATEMENT
                     ).values(
-                            createPersonDto.name(),
+                            createPersonDto.firstName(),
+                            createPersonDto.lastName(),
                             createPersonDto.room(),
                             createPersonDto.paysFloorFees(),
                             account.get().id(),
@@ -124,13 +134,15 @@ public class PersonRepositoryImpl implements PersonRepository {
                             createPersonDto.emailAccountStatement()
                     ).returningResult(
                             PERSON.ID,
-                            PERSON.NAME,
+                            PERSON.FIRST_NAME,
+                            PERSON.LAST_NAME,
                             PERSON.ROOM,
                             PERSON.PAYS_FLOOR_FEES,
                             PERSON.ACCOUNT_ID,
                             PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                             PERSON.EMAIL,
-                            PERSON.EMAIL_ACCOUNT_STATEMENT
+                            PERSON.EMAIL_ACCOUNT_STATEMENT,
+                            PERSON.KEYCLOAK_USER_ID
                     ).fetchOne(mapping(Person::new)));
         });
         return new Pair<>(person.get(), account.get());
@@ -142,8 +154,11 @@ public class PersonRepositoryImpl implements PersonRepository {
                 .where(PERSON.ID.eq(personId))
                 .fetchOne();
         assert person != null;
-        if (updatePersonDto.name().isPresent()) {
-            person.setName(updatePersonDto.name().get());
+        if (updatePersonDto.firstName().isPresent()) {
+            person.setFirstName(updatePersonDto.firstName().get());
+        }
+        if (updatePersonDto.lastName().isPresent()) {
+            person.setLastName(updatePersonDto.lastName().get());
         }
         if (updatePersonDto.room().isPresent()) {
             person.setRoom(updatePersonDto.room().get());
@@ -163,13 +178,15 @@ public class PersonRepositoryImpl implements PersonRepository {
         person.store();
         return new Person(
                 person.getId(),
-                person.getName(),
+                person.getFirstName(),
+                person.getLastName(),
                 person.getRoom(),
                 person.getPaysFloorFees(),
                 person.getAccountId(),
                 person.getPrintOnProductTallyList(),
                 person.getEmail(),
-                person.getEmailAccountStatement()
+                person.getEmailAccountStatement(),
+                person.getKeycloakUserId()
         );
     }
 
@@ -177,13 +194,15 @@ public class PersonRepositoryImpl implements PersonRepository {
     public void deletePerson(long personId) throws DataAccessException {
         var person = jooq.select(
                         PERSON.ID,
-                        PERSON.NAME,
+                        PERSON.FIRST_NAME,
+                        PERSON.LAST_NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                         PERSON.EMAIL,
-                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                        PERSON.EMAIL_ACCOUNT_STATEMENT,
+                        PERSON.KEYCLOAK_USER_ID
                 ).from(PERSON)
                 .where(PERSON.ID.eq(personId))
                 .fetchOne(mapping(Person::new));
@@ -196,16 +215,26 @@ public class PersonRepositoryImpl implements PersonRepository {
     }
 
     @Override
+    public void updatePersonKeycloakUserId(long personId, String keycloakUserId) {
+        jooq.update(PERSON)
+                .set(PERSON.KEYCLOAK_USER_ID, keycloakUserId)
+                .where(PERSON.ID.eq(personId))
+                .execute();
+    }
+
+    @Override
     public List<Person> getPersonsWithValidEmails() {
         return jooq.select(
                         PERSON.ID,
-                        PERSON.NAME,
+                        PERSON.FIRST_NAME,
+                        PERSON.LAST_NAME,
                         PERSON.ROOM,
                         PERSON.PAYS_FLOOR_FEES,
                         PERSON.ACCOUNT_ID,
                         PERSON.PRINT_ON_PRODUCT_TALLY_LIST,
                         PERSON.EMAIL,
-                        PERSON.EMAIL_ACCOUNT_STATEMENT
+                        PERSON.EMAIL_ACCOUNT_STATEMENT,
+                        PERSON.KEYCLOAK_USER_ID
                 ).from(PERSON)
                 .where(PERSON.EMAIL_ACCOUNT_STATEMENT.eq(true))
                 .and(length(PERSON.EMAIL).ge(0))

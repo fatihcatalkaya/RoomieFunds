@@ -97,7 +97,7 @@
                 <option value="" disabled>Loading persons...</option>
             {:then personList}
                 {#each personList! as person}
-                    <option value="{person}">{person.name} {person.room}</option>
+                    <option value="{person}">{person.firstName} {person.lastName} {person.room}</option>
                 {/each}
             {:catch}
                 <option value="" disabled>Error fetching persons</option>

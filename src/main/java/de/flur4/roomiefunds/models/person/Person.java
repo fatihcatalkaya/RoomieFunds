@@ -1,11 +1,13 @@
 package de.flur4.roomiefunds.models.person;
 
 public record Person(long id,
-                     String name,
+                     String firstName,
+                     String lastName,
                      String room,
                      boolean paysFloorFees,
                      long accountId,
                      boolean printOnProductTallyList,
                      String email,
-                     boolean emailAccountStatement) {
+                     boolean emailAccountStatement,
+                     String keycloakUserId) {
 }

@@ -28,6 +28,10 @@ export type AccountWithBalance = {
     balance?: number;
 };
 
+export type AddPersonToGroupRequest = {
+    personId?: number;
+};
+
 export type AuthMethod = {
     name?: string;
     title?: string;
@@ -44,8 +48,14 @@ export type CreateAccountDto = {
     active: boolean;
 };
 
-export type CreatePersonDto = {
+export type CreateGroupDto = {
     name: string;
+    keycloakGroupId?: string;
+};
+
+export type CreatePersonDto = {
+    firstName: string;
+    lastName: string;
     room: string;
     email?: string | null;
     paysFloorFees: boolean;
@@ -133,6 +143,12 @@ export type GetRecurringTransactionDto = {
     transactionDescription?: string;
 };
 
+export type Group = {
+    id?: number;
+    name?: string;
+    keycloakGroupId?: string;
+};
+
 export type LocalDate = string;
 
 export type LogEntryDto = {
@@ -153,13 +169,15 @@ export type PsuType = 'BUSINESS' | 'PERSONAL';
 
 export type Person = {
     id?: number;
-    name?: string;
+    firstName?: string;
+    lastName?: string;
     room?: string;
     paysFloorFees?: boolean;
     accountId?: number;
     printOnProductTallyList?: boolean;
     email?: string;
     emailAccountStatement?: boolean;
+    keycloakUserId?: string;
 };
 
 export type Product = {
@@ -208,8 +226,14 @@ export type UpdateAccountDto = {
     active?: boolean | null;
 };
 
-export type UpdatePersonDto = {
+export type UpdateGroupDto = {
     name?: string | null;
+    keycloakGroupId?: string | null;
+};
+
+export type UpdatePersonDto = {
+    firstName?: string | null;
+    lastName?: string | null;
     room?: string | null;
     paysFloorFees?: boolean | null;
     printOnProductTallyList?: boolean | null;
@@ -759,6 +783,266 @@ export type PutApiFlurbeitragResponses = {
 
 export type PutApiFlurbeitragResponse = PutApiFlurbeitragResponses[keyof PutApiFlurbeitragResponses];
 
+export type GetApiGroupData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/group';
+};
+
+export type GetApiGroupErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiGroupResponses = {
+    /**
+     * OK
+     */
+    200: Array<Group>;
+};
+
+export type GetApiGroupResponse = GetApiGroupResponses[keyof GetApiGroupResponses];
+
+export type PostApiGroupData = {
+    body: CreateGroupDto;
+    path?: never;
+    query?: never;
+    url: '/api/group';
+};
+
+export type PostApiGroupErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiGroupResponses = {
+    /**
+     * OK
+     */
+    200: Group;
+};
+
+export type PostApiGroupResponse = PostApiGroupResponses[keyof PostApiGroupResponses];
+
+export type DeleteApiGroupByGroupIdData = {
+    body?: never;
+    path: {
+        groupId: number;
+    };
+    query?: never;
+    url: '/api/group/{groupId}';
+};
+
+export type DeleteApiGroupByGroupIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiGroupByGroupIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiGroupByGroupIdResponse = DeleteApiGroupByGroupIdResponses[keyof DeleteApiGroupByGroupIdResponses];
+
+export type GetApiGroupByGroupIdData = {
+    body?: never;
+    path: {
+        groupId: number;
+    };
+    query?: never;
+    url: '/api/group/{groupId}';
+};
+
+export type GetApiGroupByGroupIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiGroupByGroupIdResponses = {
+    /**
+     * OK
+     */
+    200: Group;
+};
+
+export type GetApiGroupByGroupIdResponse = GetApiGroupByGroupIdResponses[keyof GetApiGroupByGroupIdResponses];
+
+export type PatchApiGroupByGroupIdData = {
+    body: UpdateGroupDto;
+    path: {
+        groupId: number;
+    };
+    query?: never;
+    url: '/api/group/{groupId}';
+};
+
+export type PatchApiGroupByGroupIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PatchApiGroupByGroupIdResponses = {
+    /**
+     * OK
+     */
+    200: Group;
+};
+
+export type PatchApiGroupByGroupIdResponse = PatchApiGroupByGroupIdResponses[keyof PatchApiGroupByGroupIdResponses];
+
+export type GetApiGroupByGroupIdPersonsData = {
+    body?: never;
+    path: {
+        groupId: number;
+    };
+    query?: never;
+    url: '/api/group/{groupId}/persons';
+};
+
+export type GetApiGroupByGroupIdPersonsErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiGroupByGroupIdPersonsResponses = {
+    /**
+     * OK
+     */
+    200: Array<Person>;
+};
+
+export type GetApiGroupByGroupIdPersonsResponse = GetApiGroupByGroupIdPersonsResponses[keyof GetApiGroupByGroupIdPersonsResponses];
+
+export type PostApiGroupByGroupIdPersonsData = {
+    body: AddPersonToGroupRequest;
+    path: {
+        groupId: number;
+    };
+    query?: never;
+    url: '/api/group/{groupId}/persons';
+};
+
+export type PostApiGroupByGroupIdPersonsErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiGroupByGroupIdPersonsResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
+
+export type DeleteApiGroupByGroupIdPersonsByPersonIdData = {
+    body?: never;
+    path: {
+        groupId: number;
+        personId: number;
+    };
+    query?: never;
+    url: '/api/group/{groupId}/persons/{personId}';
+};
+
+export type DeleteApiGroupByGroupIdPersonsByPersonIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type DeleteApiGroupByGroupIdPersonsByPersonIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiGroupByGroupIdPersonsByPersonIdResponse = DeleteApiGroupByGroupIdPersonsByPersonIdResponses[keyof DeleteApiGroupByGroupIdPersonsByPersonIdResponses];
+
+export type PostApiKeycloakSyncFullData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/keycloak-sync/full';
+};
+
+export type PostApiKeycloakSyncFullErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiKeycloakSyncFullResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
+
 export type GetApiKontoFlurkontoData = {
     body?: never;
     path?: never;
@@ -1126,6 +1410,62 @@ export type PatchApiPersonByPersonIdResponses = {
 };
 
 export type PatchApiPersonByPersonIdResponse = PatchApiPersonByPersonIdResponses[keyof PatchApiPersonByPersonIdResponses];
+
+export type GetApiPersonByPersonIdGroupsData = {
+    body?: never;
+    path: {
+        personId: number;
+    };
+    query?: never;
+    url: '/api/person/{personId}/groups';
+};
+
+export type GetApiPersonByPersonIdGroupsErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiPersonByPersonIdGroupsResponses = {
+    /**
+     * OK
+     */
+    200: Array<Group>;
+};
+
+export type GetApiPersonByPersonIdGroupsResponse = GetApiPersonByPersonIdGroupsResponses[keyof GetApiPersonByPersonIdGroupsResponses];
+
+export type PostApiPersonByPersonIdSyncKeycloakData = {
+    body?: never;
+    path: {
+        personId: number;
+    };
+    query?: never;
+    url: '/api/person/{personId}/sync-keycloak';
+};
+
+export type PostApiPersonByPersonIdSyncKeycloakErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiPersonByPersonIdSyncKeycloakResponses = {
+    /**
+     * Created
+     */
+    201: unknown;
+};
 
 export type GetApiProductData = {
     body?: never;

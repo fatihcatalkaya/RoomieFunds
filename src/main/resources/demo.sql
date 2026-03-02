@@ -3,12 +3,12 @@ INSERT INTO account (name, is_active) VALUES
     ('Aktiv:Bankkonto', true),
     ('Aktiv:PayPal', true),
     ('Passiv:Flurkasse', false),
-    ('Passiv:Bewohner:Anna R420', false),
-    ('Passiv:Bewohner:Peter R469', false);
+    ('Passiv:Bewohner:Anna Müller R420', false),
+    ('Passiv:Bewohner:Peter Schmidt R469', false);
 
-INSERT INTO person (name, room, pays_floor_fees, account_id) VALUES
-    ('Anna', 'R420', true, 5),
-    ('Peter', 'R469', true, 6);
+INSERT INTO person (first_name, last_name, room, pays_floor_fees, account_id) VALUES
+    ('Anna', 'Müller', 'R420', true, 5),
+    ('Peter', 'Schmidt', 'R469', true, 6);
 
 INSERT INTO transaction (value_date, source_account_id, target_account_id, amount, description) VALUES
     ('2025-01-01', 5, 4, 800, 'Flurbeitrag 01/25'),
@@ -24,6 +24,9 @@ INSERT INTO product (name, price, print) VALUES
     ('Paulaner Spezi', 83, true),
     ('Club Mate', 76, true),
     ('Coca Cola 1,0L', 108, true);
+
+INSERT INTO "group" (name, keycloak_group_id) VALUES
+    ('roomiefunds-admin', null);
 
 UPDATE settings
     SET value_int = (SELECT id from account WHERE name = 'Passiv:Flurkasse')

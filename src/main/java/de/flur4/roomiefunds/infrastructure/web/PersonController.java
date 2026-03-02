@@ -1,8 +1,11 @@
 package de.flur4.roomiefunds.infrastructure.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import de.flur4.roomiefunds.domain.api.group.ManagePersonGroups;
+import de.flur4.roomiefunds.domain.api.keycloaksync.SyncPersonToKeycloak;
 import de.flur4.roomiefunds.domain.api.person.*;
 import de.flur4.roomiefunds.infrastructure.Utils;
+import de.flur4.roomiefunds.models.group.Group;
 import de.flur4.roomiefunds.models.person.CreatePersonDto;
 import de.flur4.roomiefunds.models.person.Person;
 import de.flur4.roomiefunds.models.person.UpdatePersonDto;
@@ -25,6 +28,8 @@ public class PersonController {
     final CreatePerson createPerson;
     final UpdatePerson updatePerson;
     final DeletePerson deletePerson;
+    final ManagePersonGroups managePersonGroups;
+    final SyncPersonToKeycloak syncPersonToKeycloak;
     final JsonWebToken jwt;
 
     @GET
@@ -80,6 +85,23 @@ public class PersonController {
         } catch (JsonProcessingException e) {
             log.error("An error occurred while delete person", e);
             throw new InternalServerErrorException("An error occurred while delete person", e);
+        }
+    }
+
+    @GET
+    @Path("/{personId:\\d+}/groups")
+    public List<Group> getPersonGroups(@PathParam("personId") long personId) {
+        return managePersonGroups.getGroupsForPerson(personId);
+    }
+
+    @POST
+    @Path("/{personId:\\d+}/sync-keycloak")
+    public void syncPersonToKeycloak(@PathParam("personId") long personId) {
+        try {
+            syncPersonToKeycloak.syncPerson(personId);
+        } catch (Exception e) {
+            log.error("An error occurred while syncing person to Keycloak", e);
+            throw new InternalServerErrorException("An error occurred while syncing person to Keycloak", e);
         }
     }
 }

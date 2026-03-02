@@ -27,4 +27,6 @@ public interface PersonRepository {
     void deletePerson(long personId) throws DataAccessException;
 
     List<Person> getPersonsWithValidEmails();
+
+    void updatePersonKeycloakUserId(long personId, String keycloakUserId);
 }

@@ -6,7 +6,8 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Optional;
 
-public record CreatePersonDto(@NotBlank String name,
+public record CreatePersonDto(@NotBlank String firstName,
+                              @NotBlank String lastName,
                               @NotBlank String room,
                               Optional<@Email String> email,
                               @NotNull boolean paysFloorFees,

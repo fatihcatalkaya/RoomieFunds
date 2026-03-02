@@ -7,6 +7,7 @@
 	import MdiBank from '~icons/mdi/bank';
 	import MdiCashClock from '~icons/mdi/cash-clock';
 	import MdiAccount from '~icons/mdi/account';
+	import MdiAccountGroup from '~icons/mdi/account-group';
 	import MdiCashMultiple from '~icons/mdi/cash-multiple';
 	import MdiHelp from '~icons/mdi/help';
 	import MainMenuButton from '$lib/components/MainMenuButton.svelte';
@@ -17,6 +18,10 @@
 		<MainMenuButton redirectTo="/app/persons">
 			<MdiAccount class="text-4xl" />
 			Personen
+		</MainMenuButton>
+		<MainMenuButton redirectTo="/app/groups">
+			<MdiAccountGroup class="text-4xl" />
+			Gruppen
 		</MainMenuButton>
         <MainMenuButton redirectTo="/app/accounts">
 			<MdiBank class="text-4xl" />

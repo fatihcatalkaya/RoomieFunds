@@ -67,7 +67,8 @@
 			<thead>
 				<tr>
 					<th>ID</th>
-					<td>Name</td>
+					<td>Vorname</td>
+					<td>Nachname</td>
 					<td>E-Mail</td>
 					<td>Zimmer</td>
 					<td>Zahlt Flurbeitrag</td>
@@ -80,7 +81,8 @@
 				{#each persons! as person}
 					<tr>
 						<th>{person.id}</th>
-						<td>{person.name}</td>
+						<td>{person.firstName}</td>
+						<td>{person.lastName}</td>
 						<td>{person.email}</td>
 						<td>{person.room}</td>
 						<td>

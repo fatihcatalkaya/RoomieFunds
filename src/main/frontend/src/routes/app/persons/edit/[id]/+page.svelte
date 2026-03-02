@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { deleteApiPersonByPersonId, patchApiPersonByPersonId } from '$lib/client';
+	import { deleteApiPersonByPersonId, patchApiPersonByPersonId, getApiPersonByPersonIdGroups, postApiPersonByPersonIdSyncKeycloak, getApiGroup, deleteApiGroupByGroupIdPersonsByPersonId, postApiGroupByGroupIdPersons } from '$lib/client';
     import MdiDelete from '~icons/mdi/delete';
 	import type { PageProps } from './$types';
 
@@ -9,7 +9,8 @@
 	let { data: person, error } = data.person;
 	if (!person) throw error;
 
-	let name = $state(person.name);
+	let firstName = $state(person.firstName);
+	let lastName = $state(person.lastName);
 	let email = $state(person.email);
 	let room = $state(person.room);
 	let paysFloorFees = $state(person.paysFloorFees);
@@ -21,7 +22,7 @@
 			path: {
 				personId: person!.id!
 			},
-			body: { name, room, paysFloorFees, printOnProductTallyList, email, emailAccountStatement }
+			body: { firstName, lastName, room, paysFloorFees, printOnProductTallyList, email, emailAccountStatement }
 		});
 
 		if (query.error) {
@@ -35,6 +36,45 @@
 
     let deleteConfirmModal: HTMLDialogElement;
     let showConflictError = $state(false);
+
+	let groupsPromise = $state(loadGroups());
+	let allGroupsPromise = $state(loadAllGroups());
+	let selectedGroupId = $state(0);
+	let syncLoading = $state(false);
+	let syncSuccess = $state(false);
+	let syncModal: HTMLDialogElement;
+
+	async function loadGroups() {
+		const res = await getApiPersonByPersonIdGroups({ path: { personId: person!.id! } });
+		if (res.error) throw res.error;
+		return res.data!;
+	}
+
+	async function loadAllGroups() {
+		const res = await getApiGroup();
+		if (res.error) throw res.error;
+		return res.data!;
+	}
+
+	async function addGroup() {
+		if (selectedGroupId === 0) return;
+		await postApiGroupByGroupIdPersons({ path: { groupId: selectedGroupId }, body: { personId: person!.id! } });
+		selectedGroupId = 0;
+		groupsPromise = loadGroups();
+	}
+
+	async function removeGroup(groupId: number) {
+		await deleteApiGroupByGroupIdPersonsByPersonId({ path: { groupId, personId: person!.id! } });
+		groupsPromise = loadGroups();
+	}
+
+	async function syncKeycloak() {
+		syncLoading = true;
+		const res = await postApiPersonByPersonIdSyncKeycloak({ path: { personId: person!.id! } });
+		syncSuccess = !res.error;
+		syncLoading = false;
+		syncModal.showModal();
+	}
 
 	async function deletePerson() {
         deleteConfirmModal.showModal();
@@ -59,7 +99,7 @@
 
 <dialog class="modal" bind:this={deleteConfirmModal}>
 	<div class="modal-box">
-		<h3 class="text-lg font-bold">{name} löschen</h3>
+		<h3 class="text-lg font-bold">{firstName} {lastName} löschen</h3>
 		<p class="py-4">Bist du dir sicher, dass du Person {person.id} löschen willst?</p>
 		<div class="modal-action">
 			<form method="dialog" class="join">
@@ -97,8 +137,12 @@
 		<input type="text" class="input w-3/4" value={person.id} disabled />
 	</label>
 	<label class="flex w-full items-center">
-		<span class="w-1/4">Name</span>
-		<input type="text" class="input w-3/4" placeholder="Peter Lustig" bind:value={name} />
+		<span class="w-1/4">Vorname</span>
+		<input type="text" class="input w-3/4" placeholder="Peter" bind:value={firstName} />
+	</label>
+	<label class="flex w-full items-center">
+		<span class="w-1/4">Nachname</span>
+		<input type="text" class="input w-3/4" placeholder="Lustig" bind:value={lastName} />
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Zimmer</span>
@@ -129,8 +173,77 @@
 			<span class="flex-grow">Erhält Konto-Auszug per E-Mail</span>
 		</label>
 	</div>
+	{#if person.keycloakUserId}
+	<label class="flex w-full items-center mt-2">
+		<span class="w-1/4">KC User</span>
+		<input type="text" class="input w-3/4" value={person.keycloakUserId} disabled />
+	</label>
+	{/if}
 	<div class="join mt-2 w-full">
 		<a href="/app/persons" class="join-item btn btn-warn w-1/2"> Zurück </a>
 		<button class="join-item btn btn-success w-1/2" onclick={updatePerson}> Speichern </button>
 	</div>
 </form>
+
+<div class="mx-auto max-w-md mt-6">
+	<h2 class="text-xl font-bold mb-2">Gruppen</h2>
+	{#await groupsPromise}
+		<span class="loading loading-spinner"></span>
+	{:then groups}
+		<div class="flex flex-wrap gap-2 mb-4">
+			{#if person.paysFloorFees}
+				<div class="badge badge-info gap-1 tooltip" data-tip="Automatisch durch Flurbeitrag">
+					floor-members
+				</div>
+			{/if}
+			{#each groups as group}
+				<div class="badge badge-outline gap-1">
+					{group.name}
+					<button class="btn btn-ghost btn-xs p-0" onclick={() => removeGroup(group.id)}>✕</button>
+				</div>
+			{/each}
+		</div>
+		{#await allGroupsPromise then allGroups}
+			{@const availableGroups = allGroups.filter(g => !groups.some(pg => pg.id === g.id))}
+			{#if availableGroups.length > 0}
+				<div class="flex gap-2">
+					<select class="select select-bordered flex-grow" bind:value={selectedGroupId}>
+						<option value={0} disabled>Gruppe hinzufügen...</option>
+						{#each availableGroups as group}
+							<option value={group.id}>{group.name}</option>
+						{/each}
+					</select>
+					<button class="btn btn-primary" onclick={addGroup} disabled={selectedGroupId === 0}>+</button>
+				</div>
+			{/if}
+		{/await}
+	{:catch}
+		<p class="text-error">Fehler beim Laden der Gruppen</p>
+	{/await}
+</div>
+
+<div class="mx-auto max-w-md mt-6">
+	<button class="btn btn-warning w-full" onclick={syncKeycloak} disabled={syncLoading}>
+		{#if syncLoading}
+			<span class="loading loading-spinner loading-sm"></span>
+		{/if}
+		Keycloak synchronisieren
+	</button>
+</div>
+
+<dialog class="modal" bind:this={syncModal}>
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Keycloak Sync</h3>
+		<p class="py-4">
+			{#if syncSuccess}
+				Synchronisation erfolgreich.
+			{:else}
+				Fehler bei der Synchronisation!
+			{/if}
+		</p>
+		<div class="modal-action">
+			<form method="dialog"><button class="btn">OK</button></form>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>

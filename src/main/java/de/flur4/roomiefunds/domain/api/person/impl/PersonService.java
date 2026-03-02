@@ -43,7 +43,7 @@ public class PersonService implements CreatePerson, GetPerson, UpdatePerson, Del
         }
         var person = personResult.get();
         if (transactionRepository.accountHasTransactions(person.accountId())) {
-            throw new PersonUndeletableException(person.id(), person.name());
+            throw new PersonUndeletableException(person.id(), person.firstName() + " " + person.lastName());
         }
         var account = accountRepository.getAccount(person.accountId()).get();
         personRepository.deletePerson(personId);

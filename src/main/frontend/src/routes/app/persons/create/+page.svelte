@@ -8,7 +8,8 @@
 	import { postApiPerson, type CreatePersonDto } from "$lib/client";
 
 	let newPerson: CreatePersonDto = $state({
-		name: "",
+		firstName: "",
+		lastName: "",
 		room: "",
 		paysFloorFees: true,
 		printOnProductTallyList: true,
@@ -39,8 +40,12 @@
 
 <form class="mx-auto grid max-w-md grid-cols-1 gap-2" onsubmit={createPerson}>
 	<label class="flex w-full items-center">
-		<span class="w-1/4">Name</span>
-		<input type="text" class="input w-3/4" placeholder="Peter Lustig" minlength=1 required bind:value={newPerson.name} />
+		<span class="w-1/4">Vorname</span>
+		<input type="text" class="input w-3/4" placeholder="Peter" minlength=1 required bind:value={newPerson.firstName} />
+	</label>
+	<label class="flex w-full items-center">
+		<span class="w-1/4">Nachname</span>
+		<input type="text" class="input w-3/4" placeholder="Lustig" minlength=1 required bind:value={newPerson.lastName} />
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Zimmer</span>
