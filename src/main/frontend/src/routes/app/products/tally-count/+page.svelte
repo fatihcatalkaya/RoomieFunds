@@ -32,7 +32,9 @@
         if (query.error) {
             throw error;
         } else {
-            return query.data?.filter(person => person.printOnProductTallyList)
+            return query.data
+                ?.filter(person => person.printOnProductTallyList)
+                .sort((a, b) => (a.room ?? '').localeCompare(b.room ?? '', undefined, { numeric: true }))
         }
     });
 
