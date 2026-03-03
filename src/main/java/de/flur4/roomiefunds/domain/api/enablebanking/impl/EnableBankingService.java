@@ -3,11 +3,9 @@ package de.flur4.roomiefunds.domain.api.enablebanking.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import de.flur4.roomiefunds.domain.api.enablebanking.*;
 import de.flur4.roomiefunds.domain.spi.EnableBankingRepository;
-import de.flur4.roomiefunds.domain.spi.EnableBankingTransactionFetcher;
 import de.flur4.roomiefunds.domain.spi.LogRepository;
 import de.flur4.roomiefunds.infrastructure.jooq.enums.LogOperations;
 import de.flur4.roomiefunds.models.common.ModifyingPersonDto;
-import de.flur4.roomiefunds.models.enablebanking.BankTransactionsResult;
 import de.flur4.roomiefunds.models.enablebanking.EnableBankingSession;
 import de.flur4.roomiefunds.models.enablebanking.EnableBankingUnfinishedSession;
 import de.flur4.roomiefunds.models.enablebanking.FinishSessionRequest;
@@ -16,16 +14,13 @@ import de.flur4.roomiefunds.models.webclient.enablebanking.AuthorizeSessionRespo
 import lombok.RequiredArgsConstructor;
 import org.jooq.tools.StringUtils;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class EnableBankingService implements GetSession, FinishSession, DeleteSession, StartAuthorization, GetBankTransactions {
+public class EnableBankingService implements GetSession, FinishSession, DeleteSession, StartAuthorization {
     final EnableBankingRepository enableBankingRepository;
     final LogRepository logRepository;
-    final EnableBankingTransactionFetcher transactionFetcher;
 
     @Override
     public Optional<EnableBankingUnfinishedSession> getUnfinishedSession(long sessionId) {
@@ -78,23 +73,4 @@ public class EnableBankingService implements GetSession, FinishSession, DeleteSe
         enableBankingRepository.storeNewSession(response);
     }
 
-    @Override
-    public BankTransactionsResult getBankTransactions(long sessionId, LocalDate dateFrom, LocalDate dateTo) throws SessionNotFoundException, SessionExpiredException {
-        var session = enableBankingRepository.getSession(sessionId);
-        if (session.isEmpty()) {
-            throw new SessionNotFoundException(sessionId);
-        }
-        var s = session.get();
-
-        if (s.validUntil() != null && s.validUntil().isBefore(OffsetDateTime.now())) {
-            throw new SessionExpiredException(sessionId);
-        }
-
-        if (StringUtils.isEmpty(s.bankAccountUid())) {
-            throw new SessionNotFoundException(sessionId);
-        }
-
-        var transactions = transactionFetcher.fetchTransactions(s.bankAccountUid(), dateFrom, dateTo);
-        return new BankTransactionsResult(transactions, s.bankName(), s.bankAccountIban(), s.accountId());
-    }
 }

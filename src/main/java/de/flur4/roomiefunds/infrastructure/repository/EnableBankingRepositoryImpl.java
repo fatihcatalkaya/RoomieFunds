@@ -7,6 +7,7 @@ import de.flur4.roomiefunds.models.enablebanking.EnableBankingAccountDto;
 import de.flur4.roomiefunds.models.enablebanking.EnableBankingSession;
 import de.flur4.roomiefunds.models.enablebanking.EnableBankingUnfinishedSession;
 import de.flur4.roomiefunds.models.enablebanking.FinishSessionRequest;
+import de.flur4.roomiefunds.models.enablebanking.SessionSyncStatus;
 import de.flur4.roomiefunds.models.webclient.enablebanking.AuthorizeSessionResponse;
 import de.flur4.roomiefunds.models.webclient.enablebanking.CashAccountType;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,8 +15,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.jbosslog.JBossLog;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
 import org.jooq.tools.StringUtils;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -173,5 +178,114 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
                 .where(ENABLE_BANKING_SESSION.ID.eq(sessionId))
                 .execute();
         return getSession(sessionId).orElseThrow();
+    }
+
+    // Sync status field references (new columns not yet in generated jOOQ code)
+    private static final Field<OffsetDateTime> LAST_SYNCED_AT = DSL.field("last_synced_at", OffsetDateTime.class);
+    private static final Field<LocalDate> LAST_SYNCED_DATE = DSL.field("last_synced_date", LocalDate.class);
+    private static final Field<String> LAST_SYNC_STATUS = DSL.field("last_sync_status", String.class);
+    private static final Field<String> LAST_SYNC_ERROR_MESSAGE = DSL.field("last_sync_error_message", String.class);
+    private static final Field<Long> API_BALANCE_CENTS = DSL.field("api_balance_cents", Long.class);
+    private static final Field<String> API_BALANCE_CURRENCY = DSL.field("api_balance_currency", String.class);
+    private static final Field<Long> COMPUTED_BALANCE_CENTS = DSL.field("computed_balance_cents", Long.class);
+    private static final Field<Boolean> BALANCE_MATCH = DSL.field("balance_match", Boolean.class);
+    private static final Field<Long> OPENING_BALANCE_CENTS = DSL.field("opening_balance_cents", Long.class);
+
+    @Override
+    public List<EnableBankingSession> getActiveSessions() {
+        return jooq.select(
+                        ENABLE_BANKING_SESSION.ID,
+                        ENABLE_BANKING_SESSION.VALID_UNTIL,
+                        ENABLE_BANKING_SESSION.BANK_NAME,
+                        ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN,
+                        ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID,
+                        ENABLE_BANKING_SESSION.ACCOUNT_ID,
+                        ACCOUNT.NAME
+                )
+                .from(ENABLE_BANKING_SESSION)
+                .leftJoin(ACCOUNT).on(ENABLE_BANKING_SESSION.ACCOUNT_ID.eq(ACCOUNT.ID))
+                .where(ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID.isNotNull())
+                .and(ENABLE_BANKING_SESSION.VALID_UNTIL.gt(OffsetDateTime.now()))
+                .orderBy(ENABLE_BANKING_SESSION.ID.desc())
+                .fetch(mapping(EnableBankingSession::new));
+    }
+
+    @Override
+    public void updateSyncStatus(long sessionId, OffsetDateTime lastSyncedAt, LocalDate lastSyncedDate,
+                                  String lastSyncStatus, String lastSyncErrorMessage,
+                                  Long apiBalanceCents, String apiBalanceCurrency,
+                                  Long computedBalanceCents, Boolean balanceMatch) {
+        jooq.update(ENABLE_BANKING_SESSION)
+                .set(LAST_SYNCED_AT, lastSyncedAt)
+                .set(LAST_SYNCED_DATE, lastSyncedDate)
+                .set(LAST_SYNC_STATUS, lastSyncStatus)
+                .set(LAST_SYNC_ERROR_MESSAGE, lastSyncErrorMessage)
+                .set(API_BALANCE_CENTS, apiBalanceCents)
+                .set(API_BALANCE_CURRENCY, apiBalanceCurrency)
+                .set(COMPUTED_BALANCE_CENTS, computedBalanceCents)
+                .set(BALANCE_MATCH, balanceMatch)
+                .where(ENABLE_BANKING_SESSION.ID.eq(sessionId))
+                .execute();
+    }
+
+    @Override
+    public void setOpeningBalance(long sessionId, long openingBalanceCents) {
+        jooq.update(ENABLE_BANKING_SESSION)
+                .set(OPENING_BALANCE_CENTS, openingBalanceCents)
+                .where(ENABLE_BANKING_SESSION.ID.eq(sessionId))
+                .execute();
+    }
+
+    @Override
+    public Optional<Long> getOpeningBalance(long sessionId) {
+        return jooq.select(OPENING_BALANCE_CENTS)
+                .from(ENABLE_BANKING_SESSION)
+                .where(ENABLE_BANKING_SESSION.ID.eq(sessionId))
+                .fetchOptional(OPENING_BALANCE_CENTS);
+    }
+
+    @Override
+    public List<SessionSyncStatus> getAllSyncStatuses() {
+        return jooq.select(
+                        ENABLE_BANKING_SESSION.ID,
+                        LAST_SYNCED_AT, LAST_SYNCED_DATE, LAST_SYNC_STATUS, LAST_SYNC_ERROR_MESSAGE,
+                        API_BALANCE_CENTS, API_BALANCE_CURRENCY, COMPUTED_BALANCE_CENTS, BALANCE_MATCH
+                )
+                .from(ENABLE_BANKING_SESSION)
+                .where(ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID.isNotNull())
+                .orderBy(ENABLE_BANKING_SESSION.ID.desc())
+                .fetch(r -> new SessionSyncStatus(
+                        r.get(ENABLE_BANKING_SESSION.ID),
+                        r.get(LAST_SYNCED_AT),
+                        r.get(LAST_SYNCED_DATE),
+                        r.get(LAST_SYNC_STATUS),
+                        r.get(LAST_SYNC_ERROR_MESSAGE),
+                        r.get(API_BALANCE_CENTS),
+                        r.get(API_BALANCE_CURRENCY),
+                        r.get(COMPUTED_BALANCE_CENTS),
+                        r.get(BALANCE_MATCH)
+                ));
+    }
+
+    @Override
+    public Optional<SessionSyncStatus> getSyncStatus(long sessionId) {
+        return jooq.select(
+                        ENABLE_BANKING_SESSION.ID,
+                        LAST_SYNCED_AT, LAST_SYNCED_DATE, LAST_SYNC_STATUS, LAST_SYNC_ERROR_MESSAGE,
+                        API_BALANCE_CENTS, API_BALANCE_CURRENCY, COMPUTED_BALANCE_CENTS, BALANCE_MATCH
+                )
+                .from(ENABLE_BANKING_SESSION)
+                .where(ENABLE_BANKING_SESSION.ID.eq(sessionId))
+                .fetchOptional(r -> new SessionSyncStatus(
+                        r.get(ENABLE_BANKING_SESSION.ID),
+                        r.get(LAST_SYNCED_AT),
+                        r.get(LAST_SYNCED_DATE),
+                        r.get(LAST_SYNC_STATUS),
+                        r.get(LAST_SYNC_ERROR_MESSAGE),
+                        r.get(API_BALANCE_CENTS),
+                        r.get(API_BALANCE_CURRENCY),
+                        r.get(COMPUTED_BALANCE_CENTS),
+                        r.get(BALANCE_MATCH)
+                ));
     }
 }

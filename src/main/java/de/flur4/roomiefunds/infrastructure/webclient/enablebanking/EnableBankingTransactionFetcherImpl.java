@@ -1,14 +1,18 @@
 package de.flur4.roomiefunds.infrastructure.webclient.enablebanking;
 
+import de.flur4.roomiefunds.domain.api.enablebanking.EnableBankingAuthenticationRequiredRuntimeException;
 import de.flur4.roomiefunds.domain.spi.EnableBankingTransactionFetcher;
 import de.flur4.roomiefunds.models.enablebanking.BankTransactionDto;
 import de.flur4.roomiefunds.models.webclient.enablebanking.AccountIdentification;
 import de.flur4.roomiefunds.models.webclient.enablebanking.Transaction;
 import de.flur4.roomiefunds.models.webclient.enablebanking.TransactionStatus;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.WebApplicationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.jbosslog.JBossLog;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import de.flur4.roomiefunds.models.webclient.enablebanking.TransactionFetchStrategy;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,19 +33,59 @@ public class EnableBankingTransactionFetcherImpl implements EnableBankingTransac
         List<BankTransactionDto> allTransactions = new ArrayList<>();
         String continuationKey = null;
 
-        do {
-            var response = enableBankingClient.getAccountTransactions(
-                    bankAccountUid, dateFrom, dateTo, continuationKey, TransactionStatus.BOOK, null
-            );
+        try {
+            do {
+                var response = enableBankingClient.getAccountTransactions(
+                        bankAccountUid, dateFrom, dateTo, continuationKey, null, null
+                );
 
-            if (response.transactions() != null) {
-                for (var tx : response.transactions()) {
-                    allTransactions.add(mapTransaction(tx));
+                if (response.transactions() != null) {
+                    for (var tx : response.transactions()) {
+                        if (tx.status() == TransactionStatus.BOOK) {
+                            allTransactions.add(mapTransaction(tx));
+                        }
+                    }
                 }
-            }
 
-            continuationKey = response.continuationKey();
-        } while (continuationKey != null && !continuationKey.isBlank());
+                continuationKey = response.continuationKey();
+            } while (continuationKey != null && !continuationKey.isBlank());
+        } catch (WebApplicationException e) {
+            if (e.getResponse() != null && e.getResponse().getStatus() == 401) {
+                throw new EnableBankingAuthenticationRequiredRuntimeException(bankAccountUid, e);
+            }
+            throw e;
+        }
+
+        return allTransactions;
+    }
+
+    @Override
+    public List<BankTransactionDto> fetchTransactionsLongest(String bankAccountUid, LocalDate dateFrom) {
+        List<BankTransactionDto> allTransactions = new ArrayList<>();
+        String continuationKey = null;
+
+        try {
+            do {
+                var response = enableBankingClient.getAccountTransactions(
+                        bankAccountUid, dateFrom, null, continuationKey, null, TransactionFetchStrategy.LONGEST
+                );
+
+                if (response.transactions() != null) {
+                    for (var tx : response.transactions()) {
+                        if (tx.status() == TransactionStatus.BOOK) {
+                            allTransactions.add(mapTransaction(tx));
+                        }
+                    }
+                }
+
+                continuationKey = response.continuationKey();
+            } while (continuationKey != null && !continuationKey.isBlank());
+        } catch (WebApplicationException e) {
+            if (e.getResponse() != null && e.getResponse().getStatus() == 401) {
+                throw new EnableBankingAuthenticationRequiredRuntimeException(bankAccountUid, e);
+            }
+            throw e;
+        }
 
         return allTransactions;
     }

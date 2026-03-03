@@ -49,14 +49,33 @@ export type BankTransactionDto = {
     amountCents?: number;
     currency?: string;
     creditDebitIndicator?: string;
-    bookingDate?: OffsetDateTime;
-    valueDate?: OffsetDateTime;
+    bookingDate?: LocalDate;
+    valueDate?: LocalDate;
     creditorName?: string;
     debtorName?: string;
     creditorIban?: string;
     debtorIban?: string;
     remittanceInformation?: Array<string>;
     status?: string;
+};
+
+export type BankTransactionEntity = {
+    id?: number;
+    sessionId?: number;
+    entryReference?: string;
+    transactionId?: string;
+    amountCents?: number;
+    currency?: string;
+    creditDebitIndicator?: string;
+    bookingDate?: LocalDate;
+    valueDate?: LocalDate;
+    creditorName?: string;
+    debtorName?: string;
+    creditorIban?: string;
+    debtorIban?: string;
+    remittanceInformation?: Array<string>;
+    status?: string;
+    createdAt?: OffsetDateTime;
 };
 
 export type BankTransactionsResult = {
@@ -212,6 +231,18 @@ export type Product = {
     sortOrder?: number;
 };
 
+export type SessionSyncStatus = {
+    sessionId?: number;
+    lastSyncedAt?: OffsetDateTime;
+    lastSyncedDate?: LocalDate;
+    lastSyncStatus?: string;
+    lastSyncErrorMessage?: string;
+    apiBalanceCents?: number;
+    apiBalanceCurrency?: string;
+    computedBalanceCents?: number;
+    balanceMatch?: boolean;
+};
+
 export type StartAuthorizationDto = {
     aspsp?: Aspsp;
     maximumConsentValidity?: number;
@@ -222,6 +253,18 @@ export type StartAuthorizationResponse = {
     url?: string;
     authorization_id?: string;
     psu_id_hash?: string;
+};
+
+export type SyncResult = {
+    sessionId?: number;
+    transactionsFetched?: number;
+    transactionsInserted?: number;
+    transactionsDeleted?: number;
+    balanceMatch?: boolean;
+    apiBalanceCents?: number;
+    computedBalanceCents?: number;
+    status?: string;
+    errorMessage?: string;
 };
 
 export type Transaction = {
@@ -724,6 +767,35 @@ export type PostApiEnablebankingSessionUnfinishedBySessionIdResponses = {
 
 export type PostApiEnablebankingSessionUnfinishedBySessionIdResponse = PostApiEnablebankingSessionUnfinishedBySessionIdResponses[keyof PostApiEnablebankingSessionUnfinishedBySessionIdResponses];
 
+export type GetApiEnablebankingSessionBySessionIdStoredTransactionsData = {
+    body?: never;
+    path: {
+        sessionId: number;
+    };
+    query?: never;
+    url: '/api/enablebanking/session/{sessionId}/stored-transactions';
+};
+
+export type GetApiEnablebankingSessionBySessionIdStoredTransactionsErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiEnablebankingSessionBySessionIdStoredTransactionsResponses = {
+    /**
+     * OK
+     */
+    200: Array<BankTransactionEntity>;
+};
+
+export type GetApiEnablebankingSessionBySessionIdStoredTransactionsResponse = GetApiEnablebankingSessionBySessionIdStoredTransactionsResponses[keyof GetApiEnablebankingSessionBySessionIdStoredTransactionsResponses];
+
 export type GetApiEnablebankingSessionBySessionIdTransactionsData = {
     body?: never;
     path: {
@@ -755,6 +827,89 @@ export type GetApiEnablebankingSessionBySessionIdTransactionsResponses = {
 };
 
 export type GetApiEnablebankingSessionBySessionIdTransactionsResponse = GetApiEnablebankingSessionBySessionIdTransactionsResponses[keyof GetApiEnablebankingSessionBySessionIdTransactionsResponses];
+
+export type PostApiEnablebankingSyncData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/enablebanking/sync';
+};
+
+export type PostApiEnablebankingSyncErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiEnablebankingSyncResponses = {
+    /**
+     * OK
+     */
+    200: Array<SyncResult>;
+};
+
+export type PostApiEnablebankingSyncResponse = PostApiEnablebankingSyncResponses[keyof PostApiEnablebankingSyncResponses];
+
+export type GetApiEnablebankingSyncStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/enablebanking/sync/status';
+};
+
+export type GetApiEnablebankingSyncStatusErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiEnablebankingSyncStatusResponses = {
+    /**
+     * OK
+     */
+    200: Array<SessionSyncStatus>;
+};
+
+export type GetApiEnablebankingSyncStatusResponse = GetApiEnablebankingSyncStatusResponses[keyof GetApiEnablebankingSyncStatusResponses];
+
+export type PostApiEnablebankingSyncBySessionIdData = {
+    body?: never;
+    path: {
+        sessionId: number;
+    };
+    query?: never;
+    url: '/api/enablebanking/sync/{sessionId}';
+};
+
+export type PostApiEnablebankingSyncBySessionIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostApiEnablebankingSyncBySessionIdResponses = {
+    /**
+     * OK
+     */
+    200: SyncResult;
+};
+
+export type PostApiEnablebankingSyncBySessionIdResponse = PostApiEnablebankingSyncBySessionIdResponses[keyof PostApiEnablebankingSyncBySessionIdResponses];
 
 export type DeleteApiEnablebankingUnfinishedSessionBySessionIdData = {
     body?: never;

@@ -1,13 +1,12 @@
 package de.flur4.roomiefunds.infrastructure.web;
 
 import de.flur4.roomiefunds.domain.api.enablebanking.*;
+import de.flur4.roomiefunds.domain.spi.BankTransactionRepository;
+import de.flur4.roomiefunds.domain.spi.EnableBankingRepository;
 import de.flur4.roomiefunds.infrastructure.Utils;
 import de.flur4.roomiefunds.infrastructure.webclient.enablebanking.EnableBankingClient;
 import de.flur4.roomiefunds.models.banking.StartAuthorizationDto;
-import de.flur4.roomiefunds.models.enablebanking.BankTransactionsResult;
-import de.flur4.roomiefunds.models.enablebanking.EnableBankingSession;
-import de.flur4.roomiefunds.models.enablebanking.EnableBankingUnfinishedSession;
-import de.flur4.roomiefunds.models.enablebanking.FinishSessionRequest;
+import de.flur4.roomiefunds.models.enablebanking.*;
 import de.flur4.roomiefunds.models.webclient.enablebanking.*;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -51,7 +50,9 @@ public class EnableBankingController {
     final GetSession getSession;
     final FinishSession finishSession;
     final DeleteSession deleteSession;
-    final GetBankTransactions getBankTransactions;
+    final SyncBankTransactions syncBankTransactions;
+    final BankTransactionRepository bankTransactionRepository;
+    final EnableBankingRepository enableBankingRepository;
     final JsonWebToken jwt;
 
     @GET
@@ -162,19 +163,31 @@ public class EnableBankingController {
     }
 
     @GET
-    @Path("/session/{sessionId:\\d+}/transactions")
+    @Path("/sync/status")
     @RolesAllowed({"roomiefunds-admin"})
-    public BankTransactionsResult getTransactions(
-            @PathParam("sessionId") long sessionId,
-            @QueryParam("dateFrom") LocalDate dateFrom,
-            @QueryParam("dateTo") LocalDate dateTo) {
-        try {
-            return getBankTransactions.getBankTransactions(sessionId, dateFrom, dateTo);
-        } catch (SessionNotFoundException e) {
-            throw new NotFoundException("Could not find session with id " + sessionId);
-        } catch (SessionExpiredException e) {
-            throw new BadRequestException(e.getMessage());
-        }
+    public List<SessionSyncStatus> getSyncStatus() {
+        return enableBankingRepository.getAllSyncStatuses();
+    }
+
+    @POST
+    @Path("/sync")
+    @RolesAllowed({"roomiefunds-admin"})
+    public List<SyncResult> syncAll() {
+        return syncBankTransactions.syncAllSessions();
+    }
+
+    @POST
+    @Path("/sync/{sessionId:\\d+}")
+    @RolesAllowed({"roomiefunds-admin"})
+    public SyncResult syncSession(@PathParam("sessionId") long sessionId) {
+        return syncBankTransactions.syncSession(sessionId);
+    }
+
+    @GET
+    @Path("/session/{sessionId:\\d+}/stored-transactions")
+    @RolesAllowed({"roomiefunds-admin"})
+    public List<BankTransactionEntity> getStoredTransactions(@PathParam("sessionId") long sessionId) {
+        return bankTransactionRepository.getTransactionsBySession(sessionId);
     }
 
     private void cleanExpiredStateTokens() {
