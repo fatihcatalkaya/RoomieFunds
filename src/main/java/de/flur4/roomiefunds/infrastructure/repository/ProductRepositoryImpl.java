@@ -8,9 +8,11 @@ import de.flur4.roomiefunds.models.product.UpdateProductDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
+import org.jooq.RowCountQuery;
 import org.jooq.impl.DSL;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.PRODUCT;
@@ -62,15 +64,21 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Product createProduct(CreateProductDto createProductDto) {
-        var maxSortOrder = jooq.select(DSL.coalesce(DSL.max(PRODUCT.SORT_ORDER), 0))
-                .from(PRODUCT)
-                .fetchOne(0, int.class);
+        return jooq.transactionResult(tx -> {
+            Integer maxSortOrder = tx.dsl().select(DSL.coalesce(DSL.max(PRODUCT.SORT_ORDER), 0))
+                    .from(PRODUCT)
+                    .fetchOne(0, int.class);
 
-        return jooq.insertInto(PRODUCT)
-                .columns(PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT, PRODUCT.SORT_ORDER)
-                .values(createProductDto.name(), createProductDto.price(), createProductDto.print(), maxSortOrder + 1)
-                .returningResult(PRODUCT.ID, PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT, PRODUCT.SORT_ORDER)
-                .fetchOne(mapping(Product::new));
+            if (Objects.isNull(maxSortOrder)) {
+                maxSortOrder = 0;
+            }
+
+            return tx.dsl().insertInto(PRODUCT)
+                    .columns(PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT, PRODUCT.SORT_ORDER)
+                    .values(createProductDto.name(), createProductDto.price(), createProductDto.print(), maxSortOrder + 1)
+                    .returningResult(PRODUCT.ID, PRODUCT.NAME, PRODUCT.PRICE, PRODUCT.PRINT, PRODUCT.SORT_ORDER)
+                    .fetchOne(mapping(Product::new));
+        });
     }
 
     @Override
