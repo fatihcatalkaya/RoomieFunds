@@ -8,10 +8,12 @@
 	import { OidcWrapper } from '$lib/oidc';
 	import { onMount } from 'svelte';
 	import type { Oidc } from 'oidc-spa';
+	import { getApiPerson } from '$lib/client';
 
 	let username: string | null = $state<string | null>(null);
 	let expanded: boolean = $state(false);
-	
+	let hasAccess: boolean | null = $state(null);
+
 	let oidcClient: Oidc.LoggedIn<Record<string, unknown>> | Oidc.NotLoggedIn | null = $state(null);
 	onMount(async () => {
 		const oidcPromise = OidcWrapper.getInstance().getOidcClient();
@@ -21,6 +23,9 @@
 			oidcClient.login({
 				doesCurrentHrefRequiresAuth: true
 			});
+		} else {
+			const result = await getApiPerson();
+			hasAccess = !result.error || result.response.status !== 403;
 		}
 	});
 
@@ -34,7 +39,24 @@
 	let { children } = $props();
 </script>
 
-{#if oidcClient !== null && oidcClient.isUserLoggedIn}
+{#if oidcClient !== null && oidcClient.isUserLoggedIn && hasAccess === false}
+	<div class="flex h-screen w-screen items-center justify-center bg-base-200">
+		<div class="flex flex-col items-center gap-6 rounded-2xl bg-base-100 p-10 shadow-lg">
+			<span class="text-2xl font-bold">RoomieFunds</span>
+			<p class="text-center text-base-content/70">
+				Du hast keinen Zugriff auf diese Anwendung.<br />
+				Bitte wende dich an einen Administrator.
+			</p>
+			<button
+				type="button"
+				onclick={logout}
+				class="btn btn-error text-white"
+			>
+				<MdiLogout /> Abmelden
+			</button>
+		</div>
+	</div>
+{:else if oidcClient !== null && oidcClient.isUserLoggedIn && hasAccess}
 	<div class="flex h-screen w-screen flex-col">
 		<div class="h-12 w-screen bg-white/60 shadow-sm">
 			<div class="mx-2 flex h-full flex-row items-center gap-2">
