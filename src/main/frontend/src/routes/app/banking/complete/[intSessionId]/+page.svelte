@@ -60,7 +60,7 @@
                 <legend class="fieldset-legend">Bankkonto</legend>
                 <select class="select" bind:value={bankAccount} required>
                     {#each unfinishedSession.accounts! as account}
-                        <option value="{account}">{account.iban}</option>
+                        <option value={account}>{account.iban}</option>
                     {/each}
                 </select>
             </fieldset>
@@ -68,13 +68,13 @@
                 <legend class="fieldset-legend">Verknüpftes Konto</legend>
                 <select class="select" bind:value={roomieFundsAccount} required>
                     {#each roomieFundsAccounts as account}
-                        <option value="{account}">{account.name}</option>
+                        <option value={account}>{account.name}</option>
                     {/each}
                 </select>
             </fieldset>
             <div class="grid grid-cols-2 mt-4">
-                <button class="btn btn-primary order-1">JUP</button>
-                <a href="/app/banking" class="btn order-0">nö</a>
+                <button class="btn btn-primary order-1">Verknüpfen</button>
+                <a href="/app/banking" class="btn order-0">Abbrechen</a>
             </div>
         </form>
     {/await}

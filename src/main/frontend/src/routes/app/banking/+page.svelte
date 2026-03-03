@@ -36,6 +36,20 @@
 			realBankingSessionsQuery = getApiEnablebankingSession().then(query => query.error ? [] : query.data!)
 		}
 	}
+
+	function isExpired(validUntil: string): boolean {
+		return new Date(validUntil) < new Date();
+	}
+
+	function isExpiringSoon(validUntil: string): boolean {
+		const sevenDaysFromNow = new Date();
+		sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+		return !isExpired(validUntil) && new Date(validUntil) < sevenDaysFromNow;
+	}
+
+	function isFinished(session: EnableBankingSession): boolean {
+		return !!session.bankAccountIban && !!session.bankAccountUid && session.accountId != null;
+	}
 </script>
 
 {#if deleteErrorState}
@@ -77,7 +91,7 @@
 {#await realBankingSessionsQuery}
 	<div class="flex mt-4">
 		<span class="loading loading-spinner loading-lg mx-auto"></span>
-	</div>	
+	</div>
 {:then bankingSessions}
 	<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border border-slate-300 px-0 mx-0">
 		<table class="table table-zebra text-nowrap">
@@ -98,14 +112,28 @@
 						<td>{bankingSession.bankName}</td>
 						<td>
 							{#if !bankingSession.bankAccountIban}
-								<a href="complete/{bankingSession.id}" class="btn btn-warning h-8">Vervollständigen</a>
+								{#if bankingSession.validUntil && isExpired(bankingSession.validUntil)}
+									<span class="badge badge-error">Abgelaufen</span>
+								{:else}
+									<a href="complete/{bankingSession.id}" class="btn btn-warning h-8">Vervollständigen</a>
+								{/if}
 							{:else}
 								{bankingSession.bankAccountIban}
 							{/if}
 						</td>
-						<td>{new Date(bankingSession.validUntil!).toLocaleString()}</td>
-						<td>{bankingSession.accountId}</td>
-						<td class="text-center">
+						<td>
+							<span>{new Date(bankingSession.validUntil!).toLocaleString()}</span>
+							{#if bankingSession.validUntil && isExpired(bankingSession.validUntil)}
+								<span class="badge badge-error badge-sm ml-1">Abgelaufen</span>
+							{:else if bankingSession.validUntil && isExpiringSoon(bankingSession.validUntil)}
+								<span class="badge badge-warning badge-sm ml-1">Läuft bald ab</span>
+							{/if}
+						</td>
+						<td>{bankingSession.accountName ?? bankingSession.accountId ?? '–'}</td>
+						<td class="text-center flex gap-1 justify-center">
+							{#if isFinished(bankingSession) && bankingSession.validUntil && !isExpired(bankingSession.validUntil)}
+								<a href="transactions/{bankingSession.id}" class="btn btn-info h-8 px-2" title="Transaktionen anzeigen">Transaktionen</a>
+							{/if}
 							<button title="Sitzung {bankingSession.id} Löschen!" onclick={() => confirmRevokeSession(bankingSession)} class="btn btn-error h-8 w-8 p-0 m-0 text-lg"><MdiDelete/></button>
 						</td>
 					</tr>
@@ -119,7 +147,7 @@
 				{/if}
 			</tbody>
 		</table>
-	</div>	
+	</div>
 
 {:catch error}
 	<ErrorAlert>Die Online-Banking-Verknüpfungen konnten nicht geladen werden!</ErrorAlert>

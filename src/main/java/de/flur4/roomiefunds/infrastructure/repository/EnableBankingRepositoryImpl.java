@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ACCOUNT;
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ENABLE_BANKING_SESSION;
 import static de.flur4.roomiefunds.infrastructure.jooq.Tables.ENABLE_BANKING_SESSION_ACCOUNT;
 import static org.jooq.Records.mapping;
@@ -59,9 +60,12 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
                     continue;
                 }
                 String accountUid = accountResource.uid();
-                String accountIban = accountResource.accountId().iban();
-                if (StringUtils.isEmpty(accountIban)) {
-                    accountIban = accountResource.accountId().other().identification();
+                String accountIban = null;
+                if (accountResource.accountId() != null) {
+                    accountIban = accountResource.accountId().iban();
+                    if (StringUtils.isEmpty(accountIban) && accountResource.accountId().other() != null) {
+                        accountIban = accountResource.accountId().other().identification();
+                    }
                 }
 
                 tx.dsl().insertInto(ENABLE_BANKING_SESSION_ACCOUNT)
@@ -92,7 +96,7 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
                             ENABLE_BANKING_SESSION_ACCOUNT.ACCOUNT_UID,
                             ENABLE_BANKING_SESSION_ACCOUNT.ACCOUNT_IBAN
                     ).from(ENABLE_BANKING_SESSION_ACCOUNT)
-                    .where(ENABLE_BANKING_SESSION_ACCOUNT.ID.eq(sessionId))
+                    .where(ENABLE_BANKING_SESSION_ACCOUNT.SESSION_ID.eq(sessionId))
                     .fetch(mapping(EnableBankingAccountDto::new));
 
             stuff.set(Optional.of(new EnableBankingUnfinishedSession(
@@ -113,9 +117,11 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
                         ENABLE_BANKING_SESSION.BANK_NAME,
                         ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN,
                         ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID,
-                        ENABLE_BANKING_SESSION.ACCOUNT_ID
+                        ENABLE_BANKING_SESSION.ACCOUNT_ID,
+                        ACCOUNT.NAME
                 )
                 .from(ENABLE_BANKING_SESSION)
+                .leftJoin(ACCOUNT).on(ENABLE_BANKING_SESSION.ACCOUNT_ID.eq(ACCOUNT.ID))
                 .orderBy(ENABLE_BANKING_SESSION.ID.desc())
                 .fetch(mapping(EnableBankingSession::new));
     }
@@ -128,9 +134,11 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
                         ENABLE_BANKING_SESSION.BANK_NAME,
                         ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN,
                         ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID,
-                        ENABLE_BANKING_SESSION.ACCOUNT_ID
+                        ENABLE_BANKING_SESSION.ACCOUNT_ID,
+                        ACCOUNT.NAME
                 )
                 .from(ENABLE_BANKING_SESSION)
+                .leftJoin(ACCOUNT).on(ENABLE_BANKING_SESSION.ACCOUNT_ID.eq(ACCOUNT.ID))
                 .where(ENABLE_BANKING_SESSION.ID.eq(id))
                 .fetchOptional(mapping(EnableBankingSession::new));
     }
@@ -158,18 +166,12 @@ public class EnableBankingRepositoryImpl implements EnableBankingRepository {
 
     @Override
     public EnableBankingSession finishUnfinishedSession(long sessionId, FinishSessionRequest request) {
-        return jooq.update(ENABLE_BANKING_SESSION)
+        jooq.update(ENABLE_BANKING_SESSION)
                 .set(ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID, request.bankAccountUid())
                 .set(ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN, request.bankAccountIban())
                 .set(ENABLE_BANKING_SESSION.ACCOUNT_ID, request.accountId())
                 .where(ENABLE_BANKING_SESSION.ID.eq(sessionId))
-                .returningResult(
-                        ENABLE_BANKING_SESSION.ID,
-                        ENABLE_BANKING_SESSION.VALID_UNTIL,
-                        ENABLE_BANKING_SESSION.BANK_NAME,
-                        ENABLE_BANKING_SESSION.BANK_ACCOUNT_IBAN,
-                        ENABLE_BANKING_SESSION.BANK_ACCOUNT_UID,
-                        ENABLE_BANKING_SESSION.ACCOUNT_ID
-                ).fetchOne(mapping(EnableBankingSession::new));
+                .execute();
+        return getSession(sessionId).orElseThrow();
     }
 }

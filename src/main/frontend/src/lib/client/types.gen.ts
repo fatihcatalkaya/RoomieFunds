@@ -43,6 +43,29 @@ export type AuthMethod = {
 
 export type AuthenticationApproach = 'REDIRECT' | 'DECOUPLED' | 'EMBEDDED';
 
+export type BankTransactionDto = {
+    entryReference?: string;
+    transactionId?: string;
+    amountCents?: number;
+    currency?: string;
+    creditDebitIndicator?: string;
+    bookingDate?: OffsetDateTime;
+    valueDate?: OffsetDateTime;
+    creditorName?: string;
+    debtorName?: string;
+    creditorIban?: string;
+    debtorIban?: string;
+    remittanceInformation?: Array<string>;
+    status?: string;
+};
+
+export type BankTransactionsResult = {
+    transactions?: Array<BankTransactionDto>;
+    bankName?: string;
+    iban?: string;
+    linkedAccountId?: number;
+};
+
 export type CreateAccountDto = {
     name: string;
     active: boolean;
@@ -106,6 +129,7 @@ export type EnableBankingSession = {
     bankAccountIban?: string;
     bankAccountUid?: string;
     accountId?: number;
+    accountName?: string;
 };
 
 export type EnableBankingUnfinishedSession = {
@@ -537,7 +561,9 @@ export type GetApiAccountByAccountIdStatementResponse = GetApiAccountByAccountId
 export type GetApiEnablebankingData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        country?: string;
+    };
     url: '/api/enablebanking';
 };
 
@@ -597,6 +623,7 @@ export type GetApiEnablebankingEndData = {
     path?: never;
     query?: {
         code?: string;
+        state?: string;
     };
     url: '/api/enablebanking/end';
 };
@@ -696,6 +723,38 @@ export type PostApiEnablebankingSessionUnfinishedBySessionIdResponses = {
 };
 
 export type PostApiEnablebankingSessionUnfinishedBySessionIdResponse = PostApiEnablebankingSessionUnfinishedBySessionIdResponses[keyof PostApiEnablebankingSessionUnfinishedBySessionIdResponses];
+
+export type GetApiEnablebankingSessionBySessionIdTransactionsData = {
+    body?: never;
+    path: {
+        sessionId: number;
+    };
+    query?: {
+        dateFrom?: LocalDate;
+        dateTo?: LocalDate;
+    };
+    url: '/api/enablebanking/session/{sessionId}/transactions';
+};
+
+export type GetApiEnablebankingSessionBySessionIdTransactionsErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type GetApiEnablebankingSessionBySessionIdTransactionsResponses = {
+    /**
+     * OK
+     */
+    200: BankTransactionsResult;
+};
+
+export type GetApiEnablebankingSessionBySessionIdTransactionsResponse = GetApiEnablebankingSessionBySessionIdTransactionsResponses[keyof GetApiEnablebankingSessionBySessionIdTransactionsResponses];
 
 export type DeleteApiEnablebankingUnfinishedSessionBySessionIdData = {
     body?: never;

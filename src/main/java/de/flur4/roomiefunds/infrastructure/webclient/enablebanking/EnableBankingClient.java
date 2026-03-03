@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.cfg.EnumFeature;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import de.flur4.roomiefunds.models.webclient.enablebanking.*;
 import io.quarkus.cache.CacheResult;
 import io.quarkus.rest.client.reactive.jackson.ClientObjectMapper;
@@ -73,6 +74,7 @@ public interface EnableBankingClient {
         return defaultObjectMapper.copy()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
                 .configure(EnumFeature.WRITE_ENUMS_TO_LOWERCASE, true)
                 .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
     }
