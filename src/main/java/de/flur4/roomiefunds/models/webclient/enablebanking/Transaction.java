@@ -1,6 +1,6 @@
 package de.flur4.roomiefunds.models.webclient.enablebanking;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public record Transaction(
@@ -16,9 +16,9 @@ public record Transaction(
         BankTransactionCode bankTransactionCode,
         CreditDebitIndicator creditDebitIndicator,
         TransactionStatus status,
-        OffsetDateTime bookingDate,
-        OffsetDateTime valueDate,
-        OffsetDateTime transactionDate,
+        LocalDate bookingDate,
+        LocalDate valueDate,
+        LocalDate transactionDate,
         AmountType balanceAfterTransaction,
         String referenceNumber,
         List<String> remittanceInformation,

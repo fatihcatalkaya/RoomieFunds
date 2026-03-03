@@ -7,5 +7,6 @@ public record EnableBankingSession(long id,
                                    String bankName,
                                    String bankAccountIban,
                                    String bankAccountUid,
-                                   Long accountId) {
+                                   Long accountId,
+                                   String accountName) {
 }

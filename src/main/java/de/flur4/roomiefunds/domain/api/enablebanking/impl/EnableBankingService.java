@@ -10,6 +10,7 @@ import de.flur4.roomiefunds.models.enablebanking.EnableBankingSession;
 import de.flur4.roomiefunds.models.enablebanking.EnableBankingUnfinishedSession;
 import de.flur4.roomiefunds.models.enablebanking.FinishSessionRequest;
 import de.flur4.roomiefunds.models.log.InsertLogEntryDto;
+import de.flur4.roomiefunds.models.webclient.enablebanking.AuthorizeSessionResponse;
 import lombok.RequiredArgsConstructor;
 import org.jooq.tools.StringUtils;
 
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class EnableBankingService implements GetSession, FinishSession, DeleteSession {
+public class EnableBankingService implements GetSession, FinishSession, DeleteSession, StartAuthorization {
     final EnableBankingRepository enableBankingRepository;
     final LogRepository logRepository;
 
@@ -66,4 +67,10 @@ public class EnableBankingService implements GetSession, FinishSession, DeleteSe
                 Optional.empty()
         ));
     }
+
+    @Override
+    public void completeAuthorization(AuthorizeSessionResponse response) {
+        enableBankingRepository.storeNewSession(response);
+    }
+
 }

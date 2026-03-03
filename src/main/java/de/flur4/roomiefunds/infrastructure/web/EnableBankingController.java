@@ -1,13 +1,12 @@
 package de.flur4.roomiefunds.infrastructure.web;
 
 import de.flur4.roomiefunds.domain.api.enablebanking.*;
+import de.flur4.roomiefunds.domain.spi.BankTransactionRepository;
+import de.flur4.roomiefunds.domain.spi.EnableBankingRepository;
 import de.flur4.roomiefunds.infrastructure.Utils;
-import de.flur4.roomiefunds.infrastructure.repository.EnableBankingRepositoryImpl;
 import de.flur4.roomiefunds.infrastructure.webclient.enablebanking.EnableBankingClient;
 import de.flur4.roomiefunds.models.banking.StartAuthorizationDto;
-import de.flur4.roomiefunds.models.enablebanking.EnableBankingSession;
-import de.flur4.roomiefunds.models.enablebanking.EnableBankingUnfinishedSession;
-import de.flur4.roomiefunds.models.enablebanking.FinishSessionRequest;
+import de.flur4.roomiefunds.models.enablebanking.*;
 import de.flur4.roomiefunds.models.webclient.enablebanking.*;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -23,13 +22,20 @@ import org.jooq.tools.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Path("/api/enablebanking")
 @JBossLog
 @RequiredArgsConstructor
 public class EnableBankingController {
+
+    private static final Map<String, OffsetDateTime> stateTokens = new ConcurrentHashMap<>();
 
     @ConfigProperty(name = "app.backend.baseurl")
     String backendBaseUrl;
@@ -40,23 +46,28 @@ public class EnableBankingController {
     @RestClient
     EnableBankingClient enableBankingClient;
 
-    @Inject
-    EnableBankingRepositoryImpl enableBankingRepository;
-
+    final StartAuthorization startAuthorization;
     final GetSession getSession;
     final FinishSession finishSession;
     final DeleteSession deleteSession;
+    final SyncBankTransactions syncBankTransactions;
+    final BankTransactionRepository bankTransactionRepository;
+    final EnableBankingRepository enableBankingRepository;
     final JsonWebToken jwt;
 
     @GET
     @RolesAllowed({"roomiefunds-admin"})
-    public GetASPSPResponse getASPSPs() {
-        return enableBankingClient.getASPSPs("DE");
+    public GetASPSPResponse getASPSPs(@QueryParam("country") @DefaultValue("DE") String country) {
+        return enableBankingClient.getASPSPs(country);
     }
 
     @POST
     @RolesAllowed({"roomiefunds-admin"})
     public StartAuthorizationResponse startAuthorization(StartAuthorizationDto dto) {
+        cleanExpiredStateTokens();
+        var stateToken = UUID.randomUUID().toString();
+        stateTokens.put(stateToken, OffsetDateTime.now().plusMinutes(15));
+
         var accessValidUntil = OffsetDateTime.now().plusSeconds(dto.maximumConsentValidity());
         StartAuthorizationRequest request = new StartAuthorizationRequest(
                 new Access(null, null, null, accessValidUntil),
@@ -64,7 +75,7 @@ public class EnableBankingController {
                 PSUType.PERSONAL,
                 dto.authMethod(),
                 "de",
-                "",
+                stateToken,
                 backendBaseUrl + "/api/enablebanking/end",
                 ""
         );
@@ -73,19 +84,25 @@ public class EnableBankingController {
 
     @GET
     @Path("/end")
-    public RestResponse<Object> endAuthorization(@QueryParam("code") String code) throws URISyntaxException {
+    public RestResponse<Object> endAuthorization(@QueryParam("code") String code, @QueryParam("state") String state) throws URISyntaxException {
+        cleanExpiredStateTokens();
+
+        if (StringUtils.isEmpty(state) || !stateTokens.containsKey(state)) {
+            log.warn("Invalid or missing state token in OAuth callback");
+            return RestResponse.ResponseBuilder
+                    .temporaryRedirect(new URI(frontendBaseUrl + "/app/banking/post-auth/?state=failed"))
+                    .build();
+        }
+        stateTokens.remove(state);
+
         if (StringUtils.isEmpty(code)) {
-            // Authorization failed, we redirect the client to the post page with status code failed
             return RestResponse.ResponseBuilder
                     .temporaryRedirect(new URI(frontendBaseUrl + "/app/banking/post-auth/?state=failed"))
                     .build();
         }
 
-        // Authorization was successful, try to acquire a session token from EnableBanking
         var response = enableBankingClient.authorizeSessionSessionsPost(new AuthorizeSessionRequest(code));
-
-        // Got session token, now we have to store it in our DB
-        enableBankingRepository.storeNewSession(response);
+        startAuthorization.completeAuthorization(response);
 
         return RestResponse.ResponseBuilder
                 .temporaryRedirect(new URI(frontendBaseUrl + "/app/banking/post-auth/?state=success"))
@@ -142,6 +159,44 @@ public class EnableBankingController {
         } catch (Exception e) {
             log.error(e);
             throw new InternalServerErrorException("An internal server error occurred");
+        }
+    }
+
+    @GET
+    @Path("/sync/status")
+    @RolesAllowed({"roomiefunds-admin"})
+    public List<SessionSyncStatus> getSyncStatus() {
+        return enableBankingRepository.getAllSyncStatuses();
+    }
+
+    @POST
+    @Path("/sync")
+    @RolesAllowed({"roomiefunds-admin"})
+    public List<SyncResult> syncAll() {
+        return syncBankTransactions.syncAllSessions();
+    }
+
+    @POST
+    @Path("/sync/{sessionId:\\d+}")
+    @RolesAllowed({"roomiefunds-admin"})
+    public SyncResult syncSession(@PathParam("sessionId") long sessionId) {
+        return syncBankTransactions.syncSession(sessionId);
+    }
+
+    @GET
+    @Path("/session/{sessionId:\\d+}/stored-transactions")
+    @RolesAllowed({"roomiefunds-admin"})
+    public List<BankTransactionEntity> getStoredTransactions(@PathParam("sessionId") long sessionId) {
+        return bankTransactionRepository.getTransactionsBySession(sessionId);
+    }
+
+    private void cleanExpiredStateTokens() {
+        var now = OffsetDateTime.now();
+        Iterator<Map.Entry<String, OffsetDateTime>> it = stateTokens.entrySet().iterator();
+        while (it.hasNext()) {
+            if (it.next().getValue().isBefore(now)) {
+                it.remove();
+            }
         }
     }
 }

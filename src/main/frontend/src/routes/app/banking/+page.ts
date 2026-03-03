@@ -1,4 +1,4 @@
-import { getApiEnablebankingSession, type EnableBankingSession } from "$lib/client";
+import { getApiEnablebankingSession, getApiEnablebankingSyncStatus, type EnableBankingSession, type SessionSyncStatus } from "$lib/client";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = () => {
@@ -12,9 +12,20 @@ export const load: PageLoad = () => {
         }
     }
 
+    const createSyncStatusQuery: () => Promise<SessionSyncStatus[]> = async () => {
+        const query = await getApiEnablebankingSyncStatus();
+
+        if (query.error) {
+            return [];
+        } else {
+            return query.data!;
+        }
+    }
+
     return {
         streamed: {
-            bankingSessionsQuery: createBankingSessionsQuery()
+            bankingSessionsQuery: createBankingSessionsQuery(),
+            syncStatusQuery: createSyncStatusQuery()
         }
     }
 }
