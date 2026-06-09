@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Import incoming bank payments automatically via HBCI/FinTS into RoomieFunds when an admin triggers a sync and approves the pushTAN on their phone. Multiple HBCI configurations (one per bank account) are supported.
+**Goal:** Import incoming bank payments automatically via HBCI/FinTS into RoomieFunds when an admin triggers a sync and approves the pushTAN on their phone. Multiple HBCI configurations are supported; the public identifier for all config endpoints is the `account_id` (UNIQUE on `hbci_config`).
 
-**Architecture:** Admin-triggered long-poll REST endpoint calls `HbciSyncService.sync(configId)`, which fetches transactions via `HbciClientImpl` (hbci4java), matches counterparty IBANs to internal accounts, and inserts transactions with CAMT IDs for deduplication. Credentials and passport state are stored AES-256-GCM encrypted in the database per config row.
+**Architecture:** Admin-triggered long-poll REST endpoint calls `HbciSyncService.sync(accountId)`, which fetches transactions via `HbciClientImpl` (hbci4java), matches counterparty IBANs to internal accounts, and inserts transactions with CAMT IDs for deduplication. Credentials and passport state are stored AES-256-GCM encrypted in the database per config row.
 
 **Tech Stack:** Quarkus 3.20.2, Java 21, jOOQ 3.20.4, Flyway, PostgreSQL, hbci4java 4.1.11 (already in pom.xml)
 
@@ -29,7 +29,7 @@ src/main/java/de/flur4/roomiefunds/
     HbciSyncResult.java
     HbciTransactionEntry.java
     HbciCredentials.java
-    DateRange.java
+    HbciDateRange.java
     HbciFetchResult.java
     HbciSyncException.java
   domain/spi/
@@ -81,7 +81,8 @@ CREATE TABLE hbci_config (
     encrypted_pin       TEXT NOT NULL,
     encrypted_passport  TEXT,
     account_id          BIGINT NOT NULL,
-    last_synced_at      TIMESTAMPTZ
+    last_synced_at      TIMESTAMPTZ,
+    UNIQUE (account_id)
 );
 ALTER TABLE hbci_config ADD FOREIGN KEY (account_id) REFERENCES account (id);
 
@@ -94,15 +95,15 @@ CREATE TABLE account_iban (
 ALTER TABLE account_iban ADD FOREIGN KEY (account_id) REFERENCES account (id);
 
 CREATE TABLE hbci_sync_log (
-    id               BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    hbci_config_id   BIGINT NOT NULL,
-    synced_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    imported_count   INT NOT NULL,
-    skipped_count    INT NOT NULL,
-    success          BOOLEAN NOT NULL,
-    error_message    TEXT
+    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    account_id      BIGINT NOT NULL,
+    synced_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    imported_count  INT NOT NULL,
+    skipped_count   INT NOT NULL,
+    success         BOOLEAN NOT NULL,
+    error_message   TEXT
 );
-ALTER TABLE hbci_sync_log ADD FOREIGN KEY (hbci_config_id) REFERENCES hbci_config (id);
+ALTER TABLE hbci_sync_log ADD FOREIGN KEY (account_id) REFERENCES account (id);
 ```
 
 - [ ] **Step 2: Create V0017**
@@ -115,7 +116,7 @@ ALTER TABLE transaction ADD COLUMN camt_id TEXT UNIQUE;
 
 Run: `mvn generate-sources -Djooq-local`
 
-Expected: BUILD SUCCESS. New jOOQ classes appear in `target/generated-sources/jooq/de/flur4/roomiefunds/infrastructure/jooq/tables/`: `HbciConfig.java`, `AccountIban.java`, `HbciSyncLog.java`. `Transaction.java` gains a `CAMT_ID` field.
+Expected: BUILD SUCCESS. New jOOQ classes appear for `HbciConfig`, `AccountIban`, `HbciSyncLog`. `Transaction` gains a `CAMT_ID` field.
 
 - [ ] **Step 4: Compile**
 
@@ -295,6 +296,8 @@ git commit -m "feat: add HBCI domain model records"
 
 - [ ] **Step 1: Create HbciConfigRepository**
 
+All methods are keyed by `accountId` — the surrogate PK is never used outside the repository.
+
 ```java
 package de.flur4.roomiefunds.domain.spi;
 
@@ -308,13 +311,13 @@ import java.util.Optional;
 
 public interface HbciConfigRepository {
     List<HbciConfig> findAll();
-    Optional<HbciConfig> findById(long id);
-    Optional<HbciCredentials> loadCredentials(long configId);
+    Optional<HbciConfig> findByAccountId(long accountId);
+    Optional<HbciCredentials> loadCredentials(long accountId);
     HbciConfig createConfig(SaveHbciConfigDto dto);
-    void updateConfig(long id, SaveHbciConfigDto dto);
-    void deleteById(long id);
-    void savePassportBytes(long configId, byte[] passportBytes);
-    void updateLastSyncedAt(long configId, OffsetDateTime syncedAt);
+    void updateConfig(long accountId, SaveHbciConfigDto dto);
+    void deleteByAccountId(long accountId);
+    void savePassportBytes(long accountId, byte[] passportBytes);
+    void updateLastSyncedAt(long accountId, OffsetDateTime syncedAt);
 }
 ```
 
@@ -343,7 +346,7 @@ public interface AccountIbanRepository {
 package de.flur4.roomiefunds.domain.spi;
 
 public interface HbciSyncLogRepository {
-    void saveLog(long configId, int importedCount, int skippedCount, boolean success, String errorMessage);
+    void saveLog(long accountId, int importedCount, int skippedCount, boolean success, String errorMessage);
 }
 ```
 
@@ -398,7 +401,7 @@ import java.util.Optional;
 
 public interface GetHbciConfig {
     List<HbciConfig> getConfigs();
-    Optional<HbciConfig> getConfigById(long id);
+    Optional<HbciConfig> getConfigByAccountId(long accountId);
     List<AccountIban> getIbans();
 }
 ```
@@ -415,8 +418,8 @@ import de.flur4.roomiefunds.models.hbci.SaveHbciConfigDto;
 
 public interface SaveHbciConfig {
     HbciConfig createConfig(SaveHbciConfigDto dto);
-    void updateConfig(long id, SaveHbciConfigDto dto);
-    void deleteConfig(long id);
+    void updateConfig(long accountId, SaveHbciConfigDto dto);
+    void deleteConfig(long accountId);
     AccountIban addIban(CreateAccountIbanDto dto);
     void deleteIban(long id);
 }
@@ -430,7 +433,7 @@ package de.flur4.roomiefunds.domain.api.hbcisync;
 import de.flur4.roomiefunds.models.hbci.HbciSyncResult;
 
 public interface SyncBankTransactions {
-    HbciSyncResult sync(long configId);
+    HbciSyncResult sync(long accountId);
 }
 ```
 
@@ -506,7 +509,7 @@ public interface TransactionRepository {
 
 - [ ] **Step 2: Implement both methods in TransactionRepositoryImpl**
 
-Add after the existing `createTransaction` method in `TransactionRepositoryImpl.java`:
+Add after the existing `createTransaction` method:
 
 ```java
 @Override
@@ -519,7 +522,7 @@ public boolean camtIdExists(String camtId) {
 }
 
 @Override
-public Transaction createTransactionWithCamtId(CreateTransactionDto createTransactionDto, String camtId) {
+public Transaction createTransactionWithCamtId(CreateTransactionDto dto, String camtId) {
     long newTransactionId = jooq.insertInto(TRANSACTION).columns(
             TRANSACTION.SOURCE_ACCOUNT_ID,
             TRANSACTION.TARGET_ACCOUNT_ID,
@@ -528,16 +531,14 @@ public Transaction createTransactionWithCamtId(CreateTransactionDto createTransa
             TRANSACTION.DESCRIPTION,
             TRANSACTION.CAMT_ID
     ).values(
-            createTransactionDto.sourceAccountId(),
-            createTransactionDto.targetAccountId(),
-            createTransactionDto.amount(),
-            createTransactionDto.valueDate(),
-            createTransactionDto.description(),
+            dto.sourceAccountId(),
+            dto.targetAccountId(),
+            dto.amount(),
+            dto.valueDate(),
+            dto.description(),
             camtId
     ).returningResult(TRANSACTION.ID).fetchOne().value1();
-    var transaction = getTransactionById(newTransactionId);
-    assert transaction.isPresent();
-    return transaction.get();
+    return getTransactionById(newTransactionId).orElseThrow();
 }
 ```
 
@@ -582,7 +583,6 @@ import java.util.Base64;
 
 @ApplicationScoped
 public class AesEncryptionService {
-    private static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int IV_LENGTH = 12;
     private static final int TAG_LENGTH_BITS = 128;
 
@@ -605,7 +605,7 @@ public class AesEncryptionService {
         try {
             byte[] iv = new byte[IV_LENGTH];
             SecureRandom.getInstanceStrong().nextBytes(iv);
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BITS, iv));
             byte[] ciphertext = cipher.doFinal(plaintext);
             byte[] combined = new byte[IV_LENGTH + ciphertext.length];
@@ -626,7 +626,7 @@ public class AesEncryptionService {
             byte[] combined = Base64.getDecoder().decode(ciphertext);
             byte[] iv = Arrays.copyOfRange(combined, 0, IV_LENGTH);
             byte[] encrypted = Arrays.copyOfRange(combined, IV_LENGTH, combined.length);
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BITS, iv));
             return cipher.doFinal(encrypted);
         } catch (Exception e) {
@@ -671,6 +671,8 @@ git commit -m "feat: add AES-256-GCM encryption service for HBCI credentials"
 
 - [ ] **Step 1: Create HbciConfigRepositoryImpl**
 
+All DB operations use `HBCI_CONFIG.ACCOUNT_ID` as the lookup column — the surrogate PK (`id`) is only used internally when inserting.
+
 ```java
 package de.flur4.roomiefunds.infrastructure.repository;
 
@@ -705,12 +707,12 @@ public class HbciConfigRepositoryImpl implements HbciConfigRepository {
                         HBCI_CONFIG.ACCOUNT_ID,
                         HBCI_CONFIG.LAST_SYNCED_AT
                 ).from(HBCI_CONFIG)
-                .orderBy(HBCI_CONFIG.ID)
+                .orderBy(HBCI_CONFIG.ACCOUNT_ID)
                 .fetch(mapping(HbciConfig::new));
     }
 
     @Override
-    public Optional<HbciConfig> findById(long id) {
+    public Optional<HbciConfig> findByAccountId(long accountId) {
         return jooq.select(
                         HBCI_CONFIG.ID,
                         HBCI_CONFIG.BLZ,
@@ -718,12 +720,12 @@ public class HbciConfigRepositoryImpl implements HbciConfigRepository {
                         HBCI_CONFIG.ACCOUNT_ID,
                         HBCI_CONFIG.LAST_SYNCED_AT
                 ).from(HBCI_CONFIG)
-                .where(HBCI_CONFIG.ID.eq(id))
+                .where(HBCI_CONFIG.ACCOUNT_ID.eq(accountId))
                 .fetchOptional(mapping(HbciConfig::new));
     }
 
     @Override
-    public Optional<HbciCredentials> loadCredentials(long configId) {
+    public Optional<HbciCredentials> loadCredentials(long accountId) {
         return jooq.select(
                         HBCI_CONFIG.BLZ,
                         HBCI_CONFIG.USERNAME,
@@ -732,7 +734,7 @@ public class HbciConfigRepositoryImpl implements HbciConfigRepository {
                         HBCI_CONFIG.ACCOUNT_ID,
                         HBCI_CONFIG.LAST_SYNCED_AT
                 ).from(HBCI_CONFIG)
-                .where(HBCI_CONFIG.ID.eq(configId))
+                .where(HBCI_CONFIG.ACCOUNT_ID.eq(accountId))
                 .fetchOptional(r -> new HbciCredentials(
                         r.value1(),
                         r.value2(),
@@ -750,38 +752,39 @@ public class HbciConfigRepositoryImpl implements HbciConfigRepository {
                 .values(dto.blz(), dto.username(), aes.encrypt(dto.pin()), dto.accountId())
                 .returningResult(HBCI_CONFIG.ID)
                 .fetchOne().value1();
-        return findById(newId).orElseThrow();
+        return findByAccountId(dto.accountId()).orElseThrow();
     }
 
     @Override
-    public void updateConfig(long id, SaveHbciConfigDto dto) {
+    public void updateConfig(long accountId, SaveHbciConfigDto dto) {
         jooq.update(HBCI_CONFIG)
                 .set(HBCI_CONFIG.BLZ, dto.blz())
                 .set(HBCI_CONFIG.USERNAME, dto.username())
                 .set(HBCI_CONFIG.ENCRYPTED_PIN, aes.encrypt(dto.pin()))
-                .set(HBCI_CONFIG.ACCOUNT_ID, dto.accountId())
-                .where(HBCI_CONFIG.ID.eq(id))
+                .where(HBCI_CONFIG.ACCOUNT_ID.eq(accountId))
                 .execute();
     }
 
     @Override
-    public void deleteById(long id) {
-        jooq.deleteFrom(HBCI_CONFIG).where(HBCI_CONFIG.ID.eq(id)).execute();
+    public void deleteByAccountId(long accountId) {
+        jooq.deleteFrom(HBCI_CONFIG)
+                .where(HBCI_CONFIG.ACCOUNT_ID.eq(accountId))
+                .execute();
     }
 
     @Override
-    public void savePassportBytes(long configId, byte[] passportBytes) {
+    public void savePassportBytes(long accountId, byte[] passportBytes) {
         jooq.update(HBCI_CONFIG)
                 .set(HBCI_CONFIG.ENCRYPTED_PASSPORT, aes.encryptBytes(passportBytes))
-                .where(HBCI_CONFIG.ID.eq(configId))
+                .where(HBCI_CONFIG.ACCOUNT_ID.eq(accountId))
                 .execute();
     }
 
     @Override
-    public void updateLastSyncedAt(long configId, OffsetDateTime syncedAt) {
+    public void updateLastSyncedAt(long accountId, OffsetDateTime syncedAt) {
         jooq.update(HBCI_CONFIG)
                 .set(HBCI_CONFIG.LAST_SYNCED_AT, syncedAt)
-                .where(HBCI_CONFIG.ID.eq(configId))
+                .where(HBCI_CONFIG.ACCOUNT_ID.eq(accountId))
                 .execute();
     }
 }
@@ -796,7 +799,7 @@ Expected: BUILD SUCCESS
 
 ```bash
 git add src/main/java/de/flur4/roomiefunds/infrastructure/repository/HbciConfigRepositoryImpl.java
-git commit -m "feat: add HbciConfigRepositoryImpl with AES encryption"
+git commit -m "feat: add HbciConfigRepositoryImpl with accountId-based lookup"
 ```
 
 ---
@@ -884,15 +887,15 @@ public class HbciSyncLogRepositoryImpl implements HbciSyncLogRepository {
     final DSLContext jooq;
 
     @Override
-    public void saveLog(long configId, int importedCount, int skippedCount, boolean success, String errorMessage) {
+    public void saveLog(long accountId, int importedCount, int skippedCount, boolean success, String errorMessage) {
         jooq.insertInto(HBCI_SYNC_LOG)
                 .columns(
-                        HBCI_SYNC_LOG.HBCI_CONFIG_ID,
+                        HBCI_SYNC_LOG.ACCOUNT_ID,
                         HBCI_SYNC_LOG.IMPORTED_COUNT,
                         HBCI_SYNC_LOG.SKIPPED_COUNT,
                         HBCI_SYNC_LOG.SUCCESS,
                         HBCI_SYNC_LOG.ERROR_MESSAGE
-                ).values(configId, importedCount, skippedCount, success, errorMessage)
+                ).values(accountId, importedCount, skippedCount, success, errorMessage)
                 .execute();
     }
 }
@@ -931,21 +934,17 @@ import de.flur4.roomiefunds.models.hbci.HbciSyncException;
 import de.flur4.roomiefunds.models.hbci.HbciTransactionEntry;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.slf4j.Slf4j;
 import org.kapott.hbci.GV.HBCIJob;
-import org.kapott.hbci.GV_Result.GVRKUms;
-import org.kapott.hbci.callback.AbstractHBCICallback;
+import org.kapott.hbci.GV_Result.HBCIJobResult;
+import org.kapott.hbci.callback.HBCICallback;
 import org.kapott.hbci.exceptions.HBCI_Exception;
-import org.kapott.hbci.manager.BankInfo;
 import org.kapott.hbci.manager.HBCIHandler;
 import org.kapott.hbci.manager.HBCIUtils;
 import org.kapott.hbci.manager.HBCIVersion;
 import org.kapott.hbci.passport.AbstractHBCIPassport;
-import org.kapott.hbci.passport.HBCIPassport;
-import org.kapott.hbci.status.HBCIExecStatus;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -954,7 +953,7 @@ import java.util.List;
 import java.util.Properties;
 
 @ApplicationScoped
-@JBossLog
+@Slf4j
 public class HbciClientImpl implements HbciClient {
     private String currentBlz;
     private String currentUsername;
@@ -969,7 +968,7 @@ public class HbciClientImpl implements HbciClient {
     public HbciFetchResult fetchTransactions(HbciCredentials credentials, DateRange dateRange) {
         this.currentBlz = credentials.blz();
         this.currentUsername = credentials.username();
-        this.currentPin = credentials.decryptedPin();
+        this.currentPin = credentials.pin();
 
         File passportFile = null;
         try {
@@ -979,86 +978,66 @@ public class HbciClientImpl implements HbciClient {
             }
 
             HBCIUtils.setParam("client.passport.default", "PinTan");
+            HBCIUtils.setParam("client.passport.PinTan.filename", passportFile.getAbsolutePath());
             HBCIUtils.setParam("client.passport.PinTan.init", "1");
 
-            HBCIPassport passport = AbstractHBCIPassport.getInstance(passportFile);
+            AbstractHBCIPassport passport = AbstractHBCIPassport.getInstance();
             passport.setCountry("DE");
-            BankInfo info = HBCIUtils.getBankInfo(currentBlz);
-            passport.setHost(info.getPinTanAddress());
-            passport.setPort(443);
+            passport.setServer(HBCIUtils.getBankInfo(currentBlz).getPinTanAddress());
+            passport.setPort(new Integer(443));
             passport.setFilterType("Base64");
 
-            HBCIHandler handle = null;
-            try {
-                handle = new HBCIHandler(HBCIVersion.HBCI_300.getId(), passport);
+            HBCIHandler handler = new HBCIHandler(HBCIVersion.HBCI300.getId(), passport);
 
-                Date startDate = toDate(dateRange.from());
-                Date endDate = toDate(dateRange.to());
+            HBCIJob job = handler.newJob("KUmsAllCamt");
+            job.setParam("my", passport.getAccounts()[0]);
+            job.setParam("startdate", toDate(dateRange.from()));
+            job.setParam("enddate", toDate(dateRange.to()));
+            job.addToQueue();
 
-                HBCIJob umsatzJob = handle.newJob("KUmsAllCamt");
-                umsatzJob.setParam("my", passport.getAccounts()[0]);
-                umsatzJob.setParam("startdate", startDate);
-                umsatzJob.setParam("enddate", endDate);
-                umsatzJob.addToQueue();
+            HBCIExecStatus status = handler.execute();
+            handler.close();
 
-                HBCIExecStatus status = handle.execute();
-                if (!status.isOK()) {
-                    throw new HbciSyncException("HBCI execution failed: " + status.toString());
-                }
-
-                GVRKUms result = (GVRKUms) umsatzJob.getJobResult();
-                if (!result.isOK()) {
-                    throw new HbciSyncException("HBCI transaction fetch failed: " + result.toString());
-                }
-
-                List<HbciTransactionEntry> entries = new ArrayList<>();
-                for (GVRKUms.UmsLine buchung : result.getFlatData()) {
-                    if (buchung.id == null || buchung.id.isBlank()) {
-                        log.warnf("Skipping HBCI entry with no CAMT ID on %s", buchung.valuta);
-                        continue;
-                    }
-                    int amountCents = buchung.value != null
-                            ? buchung.value.getBigDecimalValue().multiply(BigDecimal.valueOf(100)).intValue()
-                            : 0;
-                    String iban = (buchung.other != null) ? buchung.other.iban : null;
-                    String usage = (buchung.usage != null && !buchung.usage.isEmpty())
-                            ? String.join(" ", buchung.usage)
-                            : "";
-                    java.time.LocalDate valueDate = buchung.valuta.toInstant()
-                            .atZone(java.time.ZoneId.systemDefault())
-                            .toLocalDate();
-                    entries.add(new HbciTransactionEntry(buchung.id, valueDate, amountCents, iban, usage));
-                }
-
-                byte[] updatedPassport = Files.readAllBytes(passportFile.toPath());
-                return new HbciFetchResult(entries, updatedPassport);
-            } finally {
-                if (handle != null) handle.close();
-                passport.close();
+            GVRKUms result = (GVRKUms) job.getJobResult();
+            if (!result.isOK()) {
+                throw new HbciSyncException("HBCI job failed: " + result.toString());
             }
+
+            List<HbciTransactionEntry> entries = new ArrayList<>();
+            for (GVRKUms.UmsLine line : result.getFlatData()) {
+                if (line.id == null || line.id.isBlank()) {
+                    log.warn("Skipping entry without CAMT ID on {}", line.bdate);
+                    continue;
+                }
+                String iban = line.other != null ? line.other.iban : null;
+                String usage = line.usage != null ? String.join(" ", line.usage) : "";
+                LocalDate valueDate = line.valuta.toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDate();
+                int amountCents = line.value.getBigDecimalValue()
+                        .multiply(BigDecimal.valueOf(100)).intValue();
+                entries.add(new HbciTransactionEntry(line.id, valueDate, amountCents, iban, usage));
+            }
+
+            byte[] updatedPassport = Files.readAllBytes(passportFile.toPath());
+            return new HbciFetchResult(entries, updatedPassport);
+
         } catch (HbciSyncException e) {
             throw e;
-        } catch (HBCI_Exception e) {
-            throw new HbciSyncException("HBCI communication failed: " + e.getMessage(), e);
-        } catch (IOException e) {
-            throw new HbciSyncException("Passport I/O failed: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new HbciSyncException("HBCI fetch failed: " + e.getMessage(), e);
         } finally {
             if (passportFile != null) passportFile.delete();
         }
     }
 
-    private Date toDate(java.time.LocalDate localDate) {
-        return Date.from(localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+    private Date toDate(LocalDate d) {
+        return Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     private class HbciCallback extends AbstractHBCICallback {
         @Override
-        public void log(String msg, int level, Date date, StackTraceElement trace) {
-            log.debugf("HBCI: %s", msg);
-        }
-
-        @Override
-        public void callback(HBCIPassport passport, int reason, String msg, int datatype, StringBuffer retData) {
+        public void callback(HBCIPassport passport, int reason, String msg,
+                             int datatype, StringBuffer retData) {
             switch (reason) {
                 case NEED_PASSPHRASE_LOAD, NEED_PASSPHRASE_SAVE ->
                         retData.replace(0, retData.length(), currentPin);
@@ -1069,16 +1048,17 @@ public class HbciClientImpl implements HbciClient {
                 case NEED_USERID, NEED_CUSTOMERID ->
                         retData.replace(0, retData.length(), currentUsername);
                 case NEED_PT_DECOUPLED ->
-                        log.info("HBCI: Waiting for pushTAN approval on phone...");
-                case HAVE_ERROR ->
-                        log.errorf("HBCI error: %s", msg);
-                default -> { }
+                        log.info("Waiting for phone approval...");
             }
         }
 
         @Override
-        public void status(HBCIPassport passport, int statusTag, Object[] o) {
+        public void log(String msg, int level, Date date, StackTraceElement trace) {
+            log.debug("HBCI: {}", msg);
         }
+
+        @Override
+        public void status(HBCIPassport passport, int statusTag, Object[] o) {}
     }
 }
 ```
@@ -1086,7 +1066,7 @@ public class HbciClientImpl implements HbciClient {
 - [ ] **Step 2: Compile**
 
 Run: `mvn compile -q`
-Expected: BUILD SUCCESS. Fix any import issues.
+Expected: BUILD SUCCESS
 
 - [ ] **Step 3: Commit**
 
@@ -1115,127 +1095,97 @@ import de.flur4.roomiefunds.domain.spi.HbciClient;
 import de.flur4.roomiefunds.domain.spi.HbciConfigRepository;
 import de.flur4.roomiefunds.domain.spi.HbciSyncLogRepository;
 import de.flur4.roomiefunds.domain.spi.TransactionRepository;
-import de.flur4.roomiefunds.models.hbci.AccountIban;
-import de.flur4.roomiefunds.models.hbci.CreateAccountIbanDto;
-import de.flur4.roomiefunds.models.hbci.DateRange;
 import de.flur4.roomiefunds.models.hbci.HbciConfig;
-import de.flur4.roomiefunds.models.hbci.HbciFetchResult;
-import de.flur4.roomiefunds.models.hbci.HbciSyncException;
 import de.flur4.roomiefunds.models.hbci.HbciSyncResult;
-import de.flur4.roomiefunds.models.hbci.HbciTransactionEntry;
-import de.flur4.roomiefunds.models.hbci.SaveHbciConfigDto;
 import de.flur4.roomiefunds.models.transaction.CreateTransactionDto;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-
 @RequiredArgsConstructor
 public class HbciSyncService implements GetHbciConfig, SaveHbciConfig, SyncBankTransactions {
-    private final HbciConfigRepository configRepository;
-    private final AccountIbanRepository ibanRepository;
-    private final HbciSyncLogRepository logRepository;
+    private final HbciConfigRepository hbciConfigRepository;
+    private final AccountIbanRepository accountIbanRepository;
+    private final HbciSyncLogRepository syncLogRepository;
     private final HbciClient hbciClient;
     private final TransactionRepository transactionRepository;
     private final int initialLookbackDays;
 
     @Override
     public List<HbciConfig> getConfigs() {
-        return configRepository.findAll();
+        return hbciConfigRepository.findAll();
     }
 
     @Override
-    public Optional<HbciConfig> getConfigById(long id) {
-        return configRepository.findById(id);
+    public Optional<HbciConfig> getConfigByAccountId(long accountId) {
+        return hbciConfigRepository.findByAccountId(accountId);
     }
 
     @Override
     public List<AccountIban> getIbans() {
-        return ibanRepository.findAll();
+        return accountIbanRepository.findAll();
     }
 
     @Override
     public HbciConfig createConfig(SaveHbciConfigDto dto) {
-        return configRepository.createConfig(dto);
+        return hbciConfigRepository.createConfig(dto);
     }
 
     @Override
-    public void updateConfig(long id, SaveHbciConfigDto dto) {
-        configRepository.updateConfig(id, dto);
+    public void updateConfig(long accountId, SaveHbciConfigDto dto) {
+        hbciConfigRepository.updateConfig(accountId, dto);
     }
 
     @Override
-    public void deleteConfig(long id) {
-        configRepository.deleteById(id);
+    public void deleteConfig(long accountId) {
+        hbciConfigRepository.deleteByAccountId(accountId);
     }
 
     @Override
     public AccountIban addIban(CreateAccountIbanDto dto) {
-        return ibanRepository.save(dto);
+        return accountIbanRepository.save(dto);
     }
 
     @Override
     public void deleteIban(long id) {
-        ibanRepository.deleteById(id);
+        accountIbanRepository.deleteById(id);
     }
 
     @Override
-    public HbciSyncResult sync(long configId) {
-        var credentials = configRepository.loadCredentials(configId)
-                .orElseThrow(() -> new HbciSyncException("No HBCI configuration found for id " + configId));
+    public HbciSyncResult sync(long accountId) {
+        var credentials = hbciConfigRepository.loadCredentials(accountId)
+                .orElseThrow(() -> new HbciSyncException("No HBCI config found for account " + accountId));
 
         DateRange dateRange = buildDateRange(credentials.lastSyncedAt());
 
         HbciFetchResult fetchResult;
         try {
             fetchResult = hbciClient.fetchTransactions(credentials, dateRange);
-        } catch (HbciSyncException e) {
-            logRepository.saveLog(configId, 0, 0, false, e.getMessage());
-            throw e;
+        } catch (Exception e) {
+            syncLogRepository.saveLog(accountId, 0, 0, false, e.getMessage());
+            throw e instanceof HbciSyncException ? (HbciSyncException) e
+                    : new HbciSyncException("HBCI fetch failed", e);
         }
 
-        configRepository.savePassportBytes(configId, fetchResult.updatedPassportBytes());
+        hbciConfigRepository.savePassportBytes(accountId, fetchResult.updatedPassportBytes());
 
-        int imported = 0;
-        int skipped = 0;
-
+        int imported = 0, skipped = 0;
         try {
-            for (HbciTransactionEntry entry : fetchResult.entries()) {
-                if (entry.amountCents() <= 0) {
-                    skipped++;
-                    continue;
-                }
-                if (transactionRepository.camtIdExists(entry.camtId())) {
-                    skipped++;
-                    continue;
-                }
-                Optional<Long> sourceAccountId = ibanRepository.findAccountByIban(entry.counterpartyIban());
-                if (sourceAccountId.isEmpty()) {
-                    skipped++;
-                    continue;
-                }
+            for (var entry : fetchResult.entries()) {
+                if (entry.amountCents() <= 0) { skipped++; continue; }
+                if (transactionRepository.camtIdExists(entry.camtId())) { skipped++; continue; }
+                var sourceAccountId = accountIbanRepository.findAccountByIban(entry.counterpartyIban());
+                if (sourceAccountId.isEmpty()) { skipped++; continue; }
                 transactionRepository.createTransactionWithCamtId(
-                        new CreateTransactionDto(
-                                sourceAccountId.get(),
-                                credentials.accountId(),
-                                entry.amountCents(),
-                                entry.valueDate(),
-                                entry.usage()
-                        ),
-                        entry.camtId()
-                );
+                        new CreateTransactionDto(sourceAccountId.get(), accountId,
+                                entry.amountCents(), entry.valueDate(), entry.usage()),
+                        entry.camtId());
                 imported++;
             }
-
-            configRepository.updateLastSyncedAt(configId, OffsetDateTime.now());
-            logRepository.saveLog(configId, imported, skipped, true, null);
+            hbciConfigRepository.updateLastSyncedAt(accountId, OffsetDateTime.now());
+            syncLogRepository.saveLog(accountId, imported, skipped, true, null);
         } catch (Exception e) {
-            logRepository.saveLog(configId, imported, skipped, false, e.getMessage());
+            syncLogRepository.saveLog(accountId, imported, skipped, false, e.getMessage());
             throw e;
         }
-
         return new HbciSyncResult(imported, skipped);
     }
 
@@ -1257,8 +1207,8 @@ Expected: BUILD SUCCESS
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/main/java/de/flur4/roomiefunds/domain/api/hbcisync/
-git commit -m "feat: add HbciSyncService implementing multi-config HBCI import logic"
+git add src/main/java/de/flur4/roomiefunds/domain/api/hbcisync/impl/HbciSyncService.java
+git commit -m "feat: add HbciSyncService"
 ```
 
 ---
@@ -1292,32 +1242,32 @@ public class HbciSyncContext {
 
     @Produces
     @ApplicationScoped
-    public GetHbciConfig getHbciConfig(HbciConfigRepository configRepository,
-                                       AccountIbanRepository ibanRepository,
-                                       HbciSyncLogRepository logRepository,
+    public GetHbciConfig getHbciConfig(HbciConfigRepository configRepo,
+                                       AccountIbanRepository ibanRepo,
                                        HbciClient hbciClient,
-                                       TransactionRepository transactionRepository) {
-        return new HbciSyncService(configRepository, ibanRepository, logRepository, hbciClient, transactionRepository, initialLookbackDays);
+                                       TransactionRepository txRepo,
+                                       HbciSyncLogRepository logRepo) {
+        return new HbciSyncService(configRepo, ibanRepo, logRepo, hbciClient, txRepo, initialLookbackDays);
     }
 
     @Produces
     @ApplicationScoped
-    public SaveHbciConfig saveHbciConfig(HbciConfigRepository configRepository,
-                                         AccountIbanRepository ibanRepository,
-                                         HbciSyncLogRepository logRepository,
+    public SaveHbciConfig saveHbciConfig(HbciConfigRepository configRepo,
+                                         AccountIbanRepository ibanRepo,
                                          HbciClient hbciClient,
-                                         TransactionRepository transactionRepository) {
-        return new HbciSyncService(configRepository, ibanRepository, logRepository, hbciClient, transactionRepository, initialLookbackDays);
+                                         TransactionRepository txRepo,
+                                         HbciSyncLogRepository logRepo) {
+        return new HbciSyncService(configRepo, ibanRepo, logRepo, hbciClient, txRepo, initialLookbackDays);
     }
 
     @Produces
     @ApplicationScoped
-    public SyncBankTransactions syncBankTransactions(HbciConfigRepository configRepository,
-                                                     AccountIbanRepository ibanRepository,
-                                                     HbciSyncLogRepository logRepository,
-                                                     HbciClient hbciClient,
-                                                     TransactionRepository transactionRepository) {
-        return new HbciSyncService(configRepository, ibanRepository, logRepository, hbciClient, transactionRepository, initialLookbackDays);
+    public SyncBankTransactions syncBankTransactions(HbciConfigRepository configRepo,
+                                                      AccountIbanRepository ibanRepo,
+                                                      HbciClient hbciClient,
+                                                      TransactionRepository txRepo,
+                                                      HbciSyncLogRepository logRepo) {
+        return new HbciSyncService(configRepo, ibanRepo, logRepo, hbciClient, txRepo, initialLookbackDays);
     }
 }
 ```
@@ -1331,7 +1281,7 @@ Expected: BUILD SUCCESS
 
 ```bash
 git add src/main/java/de/flur4/roomiefunds/bootstrap/HbciSyncContext.java
-git commit -m "feat: add HbciSyncContext CDI bootstrap"
+git commit -m "feat: add HbciSyncContext bootstrap"
 ```
 
 ---
@@ -1343,6 +1293,8 @@ git commit -m "feat: add HbciSyncContext CDI bootstrap"
 
 - [ ] **Step 1: Create HbciController**
 
+The path parameter in all `/configs/{accountId}` routes is the internal account's ID, not the hbci_config surrogate key.
+
 ```java
 package de.flur4.roomiefunds.infrastructure.web;
 
@@ -1352,27 +1304,20 @@ import de.flur4.roomiefunds.domain.api.hbcisync.SyncBankTransactions;
 import de.flur4.roomiefunds.models.hbci.AccountIban;
 import de.flur4.roomiefunds.models.hbci.CreateAccountIbanDto;
 import de.flur4.roomiefunds.models.hbci.HbciConfig;
-import de.flur4.roomiefunds.models.hbci.HbciSyncException;
 import de.flur4.roomiefunds.models.hbci.HbciSyncResult;
 import de.flur4.roomiefunds.models.hbci.SaveHbciConfigDto;
-import io.quarkus.cache.CacheInvalidateAll;
+import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.validation.Valid;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
 
 import java.util.List;
 
 @Path("/api/hbci")
-@RolesAllowed({"roomiefunds-admin"})
-@JBossLog
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@RolesAllowed("admin")
 @RequiredArgsConstructor
 public class HbciController {
     final GetHbciConfig getHbciConfig;
@@ -1387,42 +1332,26 @@ public class HbciController {
 
     @POST
     @Path("/configs")
-    public HbciConfig createConfig(@Valid SaveHbciConfigDto dto) {
+    public HbciConfig createConfig(SaveHbciConfigDto dto) {
         return saveHbciConfig.createConfig(dto);
     }
 
-    @GET
-    @Path("/configs/{id:\\d+}")
-    public HbciConfig getConfig(@PathParam("id") long id) {
-        return getHbciConfig.getConfigById(id)
-                .orElseThrow(() -> new NotFoundException("HBCI config not found: " + id));
-    }
-
     @PUT
-    @Path("/configs/{id:\\d+}")
-    public void updateConfig(@PathParam("id") long id, @Valid SaveHbciConfigDto dto) {
-        saveHbciConfig.updateConfig(id, dto);
+    @Path("/configs/{accountId}")
+    public void updateConfig(@PathParam("accountId") long accountId, SaveHbciConfigDto dto) {
+        saveHbciConfig.updateConfig(accountId, dto);
     }
 
     @DELETE
-    @Path("/configs/{id:\\d+}")
-    public void deleteConfig(@PathParam("id") long id) {
-        saveHbciConfig.deleteConfig(id);
+    @Path("/configs/{accountId}")
+    public void deleteConfig(@PathParam("accountId") long accountId) {
+        saveHbciConfig.deleteConfig(accountId);
     }
 
     @POST
-    @Path("/configs/{id:\\d+}/sync")
-    @CacheInvalidateAll(cacheName = "accounts-with-balances")
-    public HbciSyncResult sync(@PathParam("id") long id) {
-        try {
-            return syncBankTransactions.sync(id);
-        } catch (HbciSyncException e) {
-            log.errorf("HBCI sync failed for config %d: %s", id, e.getMessage());
-            throw new jakarta.ws.rs.InternalServerErrorException(e.getMessage(), e);
-        } catch (Exception e) {
-            log.errorf(e, "Unexpected error during HBCI sync for config %d", id);
-            throw new jakarta.ws.rs.InternalServerErrorException("Sync failed unexpectedly", e);
-        }
+    @Path("/configs/{accountId}/sync")
+    public HbciSyncResult sync(@PathParam("accountId") long accountId) {
+        return syncBankTransactions.sync(accountId);
     }
 
     @GET
@@ -1433,12 +1362,12 @@ public class HbciController {
 
     @POST
     @Path("/ibans")
-    public AccountIban addIban(@Valid CreateAccountIbanDto dto) {
+    public AccountIban addIban(CreateAccountIbanDto dto) {
         return saveHbciConfig.addIban(dto);
     }
 
     @DELETE
-    @Path("/ibans/{id:\\d+}")
+    @Path("/ibans/{id}")
     public void deleteIban(@PathParam("id") long id) {
         saveHbciConfig.deleteIban(id);
     }
@@ -1454,40 +1383,33 @@ Expected: BUILD SUCCESS
 
 ```bash
 git add src/main/java/de/flur4/roomiefunds/infrastructure/web/HbciController.java
-git commit -m "feat: add HbciController REST endpoints"
+git commit -m "feat: add HbciController"
 ```
 
 ---
 
-## Task 13: End-to-End Compile and Smoke Check
+## Task 13: End-to-End Smoke Check
 
-- [ ] **Step 1: Full compile**
-
-Run: `mvn compile -q`
-Expected: BUILD SUCCESS with no warnings about unimplemented interfaces.
-
-- [ ] **Step 2: Start the app (with HBCI_AES_KEY set)**
-
-Generate a test key and start the app:
+- [ ] **Step 1: Start the application**
 
 ```bash
 export HBCI_AES_KEY=$(openssl rand -base64 32)
-./mvnw quarkus:dev -Dquarkus.http.port=8080
+./mvnw quarkus:dev
 ```
 
-Expected: App starts. No CDI ambiguity errors. Flyway runs V0016 and V0017. Check logs for `Migrated to version 17`.
+Expected: Application starts successfully with Flyway migrations applied (V16, V17).
 
-- [ ] **Step 3: Verify endpoints register**
+- [ ] **Step 2: Verify endpoints are reachable**
 
 ```bash
-curl -s http://localhost:8080/q/openapi | grep '/api/hbci'
+curl -s http://localhost:8080/api/hbci/configs | jq .
 ```
 
-Expected: Paths `/api/hbci/configs`, `/api/hbci/configs/{id}`, `/api/hbci/configs/{id}/sync`, `/api/hbci/ibans` appear.
+Expected: Empty array `[]`
 
-- [ ] **Step 4: Commit final check**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add -p  # verify nothing unintended is staged
-git commit -m "feat: HBCI bank sync feature complete"
+git add -A
+git commit -m "feat: complete HBCI bank sync implementation"
 ```
