@@ -22,8 +22,7 @@
         <quarkus.jooq.version>2.1.0</quarkus.jooq.version>
         <java-typst.version>1.4.0</java-typst.version>
         <lombok.version>1.18.38</lombok.version>
-        <bouncycastle.version>1.81</bouncycastle.version>
-        <java-jwt.version>4.5.0</java-jwt.version>
+        <hbci4j.version>4.1.11</hbci4j.version>
         <javatuples.version>1.2</javatuples.version>
 
         <postgresContainerVersion>postgres:17.3-alpine</postgresContainerVersion>
@@ -151,14 +150,9 @@
             <version>${javatuples.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>java-jwt</artifactId>
-            <version>${java-jwt.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>${bouncycastle.version}</version>
+            <groupId>com.github.hbci4j</groupId>
+            <artifactId>hbci4j-core</artifactId>
+            <version>${hbci4j.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -203,6 +197,13 @@
                 <version>${compiler-plugin.version}</version>
                 <configuration>
                     <parameters>true</parameters>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -214,6 +215,24 @@
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${buildHelperPlugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/jooq</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -257,7 +276,7 @@
                 </property>
             </activation>
             <properties>
-                <testcontainers.version>1.21.3</testcontainers.version>
+                <testcontainers.version>1.21.4</testcontainers.version>
             </properties>
             <build>
                 <plugins>
