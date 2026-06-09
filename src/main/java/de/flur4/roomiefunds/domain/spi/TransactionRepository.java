@@ -21,6 +21,10 @@ public interface TransactionRepository {
 
     Transaction createTransaction(CreateTransactionDto createTransactionDto);
 
+    Transaction createTransactionWithCamtId(CreateTransactionDto createTransactionDto, String camtId);
+
+    boolean camtIdExists(String camtId);
+
     Transaction updateTransaction(long transactionId, UpdateTransactionDto updateTransactionDto);
 
     Optional<ReceiptDto> getTransactionReceipt(long transactionId);

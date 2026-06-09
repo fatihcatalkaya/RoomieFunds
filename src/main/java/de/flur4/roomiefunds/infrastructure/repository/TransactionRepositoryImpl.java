@@ -109,6 +109,35 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     }
 
     @Override
+    public boolean camtIdExists(String camtId) {
+        return jooq.select(exists(
+                jooq.selectOne()
+                        .from(TRANSACTION)
+                        .where(TRANSACTION.CAMT_ID.eq(camtId))
+        )).fetchOne().value1();
+    }
+
+    @Override
+    public Transaction createTransactionWithCamtId(CreateTransactionDto dto, String camtId) {
+        long newTransactionId = jooq.insertInto(TRANSACTION).columns(
+                TRANSACTION.SOURCE_ACCOUNT_ID,
+                TRANSACTION.TARGET_ACCOUNT_ID,
+                TRANSACTION.AMOUNT,
+                TRANSACTION.VALUE_DATE,
+                TRANSACTION.DESCRIPTION,
+                TRANSACTION.CAMT_ID
+        ).values(
+                dto.sourceAccountId(),
+                dto.targetAccountId(),
+                dto.amount(),
+                dto.valueDate(),
+                dto.description(),
+                camtId
+        ).returningResult(TRANSACTION.ID).fetchOne().value1();
+        return getTransactionById(newTransactionId).orElseThrow();
+    }
+
+    @Override
     public Transaction updateTransaction(long transactionId, UpdateTransactionDto updateTransactionDto) {
         var account = jooq.selectFrom(TRANSACTION).where(TRANSACTION.ID.eq(transactionId)).fetchOne();
         assert account != null;
