@@ -1,0 +1,1 @@
+ALTER TABLE transaction ADD COLUMN camt_id TEXT UNIQUE;
