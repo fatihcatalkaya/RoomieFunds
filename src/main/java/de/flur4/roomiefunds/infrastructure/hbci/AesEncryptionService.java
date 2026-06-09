@@ -36,7 +36,7 @@ public class AesEncryptionService {
     public String encryptBytes(byte[] plaintext) {
         try {
             byte[] iv = new byte[IV_LENGTH];
-            SecureRandom.getInstanceStrong().nextBytes(iv);
+            new SecureRandom().nextBytes(iv);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BITS, iv));
             byte[] ciphertext = cipher.doFinal(plaintext);

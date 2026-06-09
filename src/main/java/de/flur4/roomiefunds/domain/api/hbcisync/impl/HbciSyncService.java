@@ -19,12 +19,14 @@ import de.flur4.roomiefunds.models.hbci.HbciTransactionEntry;
 import de.flur4.roomiefunds.models.hbci.SaveHbciConfigDto;
 import de.flur4.roomiefunds.models.transaction.CreateTransactionDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.jbosslog.JBossLog;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@JBossLog
 @RequiredArgsConstructor
 public class HbciSyncService implements GetHbciConfig, SaveHbciConfig, SyncBankTransactions {
     private final HbciConfigRepository hbciConfigRepository;
@@ -95,7 +97,11 @@ public class HbciSyncService implements GetHbciConfig, SaveHbciConfig, SyncBankT
         int imported = 0, skipped = 0;
         try {
             for (var entry : fetchResult.entries()) {
-                if (entry.amountCents() <= 0) { skipped++; continue; }
+                if (entry.amountCents() <= 0) {
+                    log.debugf("Skipping non-positive amount entry (camtId=%s, amountCents=%d)", entry.camtId(), entry.amountCents());
+                    skipped++;
+                    continue;
+                }
                 if (transactionRepository.camtIdExists(entry.camtId())) { skipped++; continue; }
                 if (entry.counterpartyIban() == null) { skipped++; continue; }
                 var sourceAccountId = accountIbanRepository.findAccountByIban(entry.counterpartyIban());

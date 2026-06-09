@@ -63,6 +63,9 @@ public class HbciClientImpl implements HbciClient {
             HBCIPassport passport = AbstractHBCIPassport.getInstance(passportFile);
             passport.setCountry("DE");
             BankInfo info = HBCIUtils.getBankInfo(currentBlz);
+            if (info == null) {
+                throw new HbciSyncException("Unknown BLZ: " + currentBlz);
+            }
             passport.setHost(info.getPinTanAddress());
             passport.setPort(443);
             passport.setFilterType("Base64");
@@ -72,6 +75,9 @@ public class HbciClientImpl implements HbciClient {
                 handle = new HBCIHandler(HBCIVersion.HBCI_300.getId(), passport);
 
                 HBCIJob umsatzJob = handle.newJob("KUmsAllCamt");
+                if (passport.getAccounts() == null || passport.getAccounts().length == 0) {
+                    throw new HbciSyncException("No bank accounts found in HBCI passport for BLZ: " + currentBlz);
+                }
                 umsatzJob.setParam("my", passport.getAccounts()[0]);
                 umsatzJob.setParam("startdate", toDate(dateRange.from()));
                 umsatzJob.setParam("enddate", toDate(dateRange.to()));
