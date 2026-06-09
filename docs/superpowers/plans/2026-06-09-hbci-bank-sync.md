@@ -747,11 +747,10 @@ public class HbciConfigRepositoryImpl implements HbciConfigRepository {
 
     @Override
     public HbciConfig createConfig(SaveHbciConfigDto dto) {
-        long newId = jooq.insertInto(HBCI_CONFIG)
+        jooq.insertInto(HBCI_CONFIG)
                 .columns(HBCI_CONFIG.BLZ, HBCI_CONFIG.USERNAME, HBCI_CONFIG.ENCRYPTED_PIN, HBCI_CONFIG.ACCOUNT_ID)
                 .values(dto.blz(), dto.username(), aes.encrypt(dto.pin()), dto.accountId())
-                .returningResult(HBCI_CONFIG.ID)
-                .fetchOne().value1();
+                .execute();
         return findByAccountId(dto.accountId()).orElseThrow();
     }
 
@@ -934,26 +933,32 @@ import de.flur4.roomiefunds.models.hbci.HbciSyncException;
 import de.flur4.roomiefunds.models.hbci.HbciTransactionEntry;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.jbosslog.JBossLog;
 import org.kapott.hbci.GV.HBCIJob;
-import org.kapott.hbci.GV_Result.HBCIJobResult;
-import org.kapott.hbci.callback.HBCICallback;
+import org.kapott.hbci.GV_Result.GVRKUms;
+import org.kapott.hbci.callback.AbstractHBCICallback;
 import org.kapott.hbci.exceptions.HBCI_Exception;
+import org.kapott.hbci.manager.BankInfo;
 import org.kapott.hbci.manager.HBCIHandler;
 import org.kapott.hbci.manager.HBCIUtils;
 import org.kapott.hbci.manager.HBCIVersion;
 import org.kapott.hbci.passport.AbstractHBCIPassport;
+import org.kapott.hbci.passport.HBCIPassport;
+import org.kapott.hbci.status.HBCIExecStatus;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
 @ApplicationScoped
-@Slf4j
+@JBossLog
 public class HbciClientImpl implements HbciClient {
     private String currentBlz;
     private String currentUsername;
@@ -968,7 +973,7 @@ public class HbciClientImpl implements HbciClient {
     public HbciFetchResult fetchTransactions(HbciCredentials credentials, DateRange dateRange) {
         this.currentBlz = credentials.blz();
         this.currentUsername = credentials.username();
-        this.currentPin = credentials.pin();
+        this.currentPin = credentials.decryptedPin();
 
         File passportFile = null;
         try {
@@ -978,66 +983,83 @@ public class HbciClientImpl implements HbciClient {
             }
 
             HBCIUtils.setParam("client.passport.default", "PinTan");
-            HBCIUtils.setParam("client.passport.PinTan.filename", passportFile.getAbsolutePath());
             HBCIUtils.setParam("client.passport.PinTan.init", "1");
 
-            AbstractHBCIPassport passport = AbstractHBCIPassport.getInstance();
+            HBCIPassport passport = AbstractHBCIPassport.getInstance(passportFile);
             passport.setCountry("DE");
-            passport.setServer(HBCIUtils.getBankInfo(currentBlz).getPinTanAddress());
-            passport.setPort(new Integer(443));
+            BankInfo info = HBCIUtils.getBankInfo(currentBlz);
+            passport.setHost(info.getPinTanAddress());
+            passport.setPort(443);
             passport.setFilterType("Base64");
 
-            HBCIHandler handler = new HBCIHandler(HBCIVersion.HBCI300.getId(), passport);
+            HBCIHandler handle = null;
+            try {
+                handle = new HBCIHandler(HBCIVersion.HBCI_300.getId(), passport);
 
-            HBCIJob job = handler.newJob("KUmsAllCamt");
-            job.setParam("my", passport.getAccounts()[0]);
-            job.setParam("startdate", toDate(dateRange.from()));
-            job.setParam("enddate", toDate(dateRange.to()));
-            job.addToQueue();
+                HBCIJob umsatzJob = handle.newJob("KUmsAllCamt");
+                umsatzJob.setParam("my", passport.getAccounts()[0]);
+                umsatzJob.setParam("startdate", toDate(dateRange.from()));
+                umsatzJob.setParam("enddate", toDate(dateRange.to()));
+                umsatzJob.addToQueue();
 
-            HBCIExecStatus status = handler.execute();
-            handler.close();
-
-            GVRKUms result = (GVRKUms) job.getJobResult();
-            if (!result.isOK()) {
-                throw new HbciSyncException("HBCI job failed: " + result.toString());
-            }
-
-            List<HbciTransactionEntry> entries = new ArrayList<>();
-            for (GVRKUms.UmsLine line : result.getFlatData()) {
-                if (line.id == null || line.id.isBlank()) {
-                    log.warn("Skipping entry without CAMT ID on {}", line.bdate);
-                    continue;
+                HBCIExecStatus status = handle.execute();
+                if (!status.isOK()) {
+                    throw new HbciSyncException("HBCI execution failed: " + status.toString());
                 }
-                String iban = line.other != null ? line.other.iban : null;
-                String usage = line.usage != null ? String.join(" ", line.usage) : "";
-                LocalDate valueDate = line.valuta.toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDate();
-                int amountCents = line.value.getBigDecimalValue()
-                        .multiply(BigDecimal.valueOf(100)).intValue();
-                entries.add(new HbciTransactionEntry(line.id, valueDate, amountCents, iban, usage));
+
+                GVRKUms result = (GVRKUms) umsatzJob.getJobResult();
+                if (!result.isOK()) {
+                    throw new HbciSyncException("HBCI transaction fetch failed: " + result.toString());
+                }
+
+                List<HbciTransactionEntry> entries = new ArrayList<>();
+                for (GVRKUms.UmsLine buchung : result.getFlatData()) {
+                    if (buchung.id == null || buchung.id.isBlank()) {
+                        log.warnf("Skipping HBCI entry with no CAMT ID on %s", buchung.valuta);
+                        continue;
+                    }
+                    int amountCents = buchung.value != null
+                            ? buchung.value.getBigDecimalValue().multiply(BigDecimal.valueOf(100)).intValue()
+                            : 0;
+                    String iban = (buchung.other != null) ? buchung.other.iban : null;
+                    String usage = (buchung.usage != null && !buchung.usage.isEmpty())
+                            ? String.join(" ", buchung.usage)
+                            : "";
+                    LocalDate valueDate = buchung.valuta.toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate();
+                    entries.add(new HbciTransactionEntry(buchung.id, valueDate, amountCents, iban, usage));
+                }
+
+                byte[] updatedPassport = Files.readAllBytes(passportFile.toPath());
+                return new HbciFetchResult(entries, updatedPassport);
+            } finally {
+                if (handle != null) handle.close();
+                passport.close();
             }
-
-            byte[] updatedPassport = Files.readAllBytes(passportFile.toPath());
-            return new HbciFetchResult(entries, updatedPassport);
-
         } catch (HbciSyncException e) {
             throw e;
-        } catch (Exception e) {
-            throw new HbciSyncException("HBCI fetch failed: " + e.getMessage(), e);
+        } catch (HBCI_Exception e) {
+            throw new HbciSyncException("HBCI communication failed: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new HbciSyncException("Passport I/O failed: " + e.getMessage(), e);
         } finally {
             if (passportFile != null) passportFile.delete();
         }
     }
 
-    private Date toDate(LocalDate d) {
-        return Date.from(d.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    private Date toDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     private class HbciCallback extends AbstractHBCICallback {
         @Override
-        public void callback(HBCIPassport passport, int reason, String msg,
-                             int datatype, StringBuffer retData) {
+        public void log(String msg, int level, Date date, StackTraceElement trace) {
+            log.debugf("HBCI: %s", msg);
+        }
+
+        @Override
+        public void callback(HBCIPassport passport, int reason, String msg, int datatype, StringBuffer retData) {
             switch (reason) {
                 case NEED_PASSPHRASE_LOAD, NEED_PASSPHRASE_SAVE ->
                         retData.replace(0, retData.length(), currentPin);
@@ -1048,17 +1070,16 @@ public class HbciClientImpl implements HbciClient {
                 case NEED_USERID, NEED_CUSTOMERID ->
                         retData.replace(0, retData.length(), currentUsername);
                 case NEED_PT_DECOUPLED ->
-                        log.info("Waiting for phone approval...");
+                        log.info("HBCI: Waiting for pushTAN approval on phone...");
+                case HAVE_ERROR ->
+                        log.errorf("HBCI error: %s", msg);
+                default -> { }
             }
         }
 
         @Override
-        public void log(String msg, int level, Date date, StackTraceElement trace) {
-            log.debug("HBCI: {}", msg);
+        public void status(HBCIPassport passport, int statusTag, Object[] o) {
         }
-
-        @Override
-        public void status(HBCIPassport passport, int statusTag, Object[] o) {}
     }
 }
 ```
@@ -1095,10 +1116,22 @@ import de.flur4.roomiefunds.domain.spi.HbciClient;
 import de.flur4.roomiefunds.domain.spi.HbciConfigRepository;
 import de.flur4.roomiefunds.domain.spi.HbciSyncLogRepository;
 import de.flur4.roomiefunds.domain.spi.TransactionRepository;
+import de.flur4.roomiefunds.models.hbci.AccountIban;
+import de.flur4.roomiefunds.models.hbci.CreateAccountIbanDto;
+import de.flur4.roomiefunds.models.hbci.DateRange;
 import de.flur4.roomiefunds.models.hbci.HbciConfig;
+import de.flur4.roomiefunds.models.hbci.HbciFetchResult;
+import de.flur4.roomiefunds.models.hbci.HbciSyncException;
 import de.flur4.roomiefunds.models.hbci.HbciSyncResult;
+import de.flur4.roomiefunds.models.hbci.HbciTransactionEntry;
+import de.flur4.roomiefunds.models.hbci.SaveHbciConfigDto;
 import de.flur4.roomiefunds.models.transaction.CreateTransactionDto;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class HbciSyncService implements GetHbciConfig, SaveHbciConfig, SyncBankTransactions {
@@ -1304,20 +1337,24 @@ import de.flur4.roomiefunds.domain.api.hbcisync.SyncBankTransactions;
 import de.flur4.roomiefunds.models.hbci.AccountIban;
 import de.flur4.roomiefunds.models.hbci.CreateAccountIbanDto;
 import de.flur4.roomiefunds.models.hbci.HbciConfig;
+import de.flur4.roomiefunds.models.hbci.HbciSyncException;
 import de.flur4.roomiefunds.models.hbci.HbciSyncResult;
 import de.flur4.roomiefunds.models.hbci.SaveHbciConfigDto;
-import io.quarkus.security.Authenticated;
+import io.quarkus.cache.CacheInvalidateAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.jbosslog.JBossLog;
 
 import java.util.List;
 
 @Path("/api/hbci")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@RolesAllowed("admin")
+@RolesAllowed({"roomiefunds-admin"})
+@JBossLog
 @RequiredArgsConstructor
 public class HbciController {
     final GetHbciConfig getHbciConfig;
@@ -1332,26 +1369,42 @@ public class HbciController {
 
     @POST
     @Path("/configs")
-    public HbciConfig createConfig(SaveHbciConfigDto dto) {
+    public HbciConfig createConfig(@Valid SaveHbciConfigDto dto) {
         return saveHbciConfig.createConfig(dto);
     }
 
+    @GET
+    @Path("/configs/{accountId:\\d+}")
+    public HbciConfig getConfig(@PathParam("accountId") long accountId) {
+        return getHbciConfig.getConfigByAccountId(accountId)
+                .orElseThrow(() -> new NotFoundException("No HBCI config for account " + accountId));
+    }
+
     @PUT
-    @Path("/configs/{accountId}")
-    public void updateConfig(@PathParam("accountId") long accountId, SaveHbciConfigDto dto) {
+    @Path("/configs/{accountId:\\d+}")
+    public void updateConfig(@PathParam("accountId") long accountId, @Valid SaveHbciConfigDto dto) {
         saveHbciConfig.updateConfig(accountId, dto);
     }
 
     @DELETE
-    @Path("/configs/{accountId}")
+    @Path("/configs/{accountId:\\d+}")
     public void deleteConfig(@PathParam("accountId") long accountId) {
         saveHbciConfig.deleteConfig(accountId);
     }
 
     @POST
-    @Path("/configs/{accountId}/sync")
+    @Path("/configs/{accountId:\\d+}/sync")
+    @CacheInvalidateAll(cacheName = "accounts-with-balances")
     public HbciSyncResult sync(@PathParam("accountId") long accountId) {
-        return syncBankTransactions.sync(accountId);
+        try {
+            return syncBankTransactions.sync(accountId);
+        } catch (HbciSyncException e) {
+            log.errorf("HBCI sync failed for account %d: %s", accountId, e.getMessage());
+            throw new InternalServerErrorException(e.getMessage(), e);
+        } catch (Exception e) {
+            log.errorf(e, "Unexpected error during HBCI sync for account %d", accountId);
+            throw new InternalServerErrorException("Sync failed unexpectedly", e);
+        }
     }
 
     @GET
@@ -1362,12 +1415,12 @@ public class HbciController {
 
     @POST
     @Path("/ibans")
-    public AccountIban addIban(CreateAccountIbanDto dto) {
+    public AccountIban addIban(@Valid CreateAccountIbanDto dto) {
         return saveHbciConfig.addIban(dto);
     }
 
     @DELETE
-    @Path("/ibans/{id}")
+    @Path("/ibans/{id:\\d+}")
     public void deleteIban(@PathParam("id") long id) {
         saveHbciConfig.deleteIban(id);
     }
