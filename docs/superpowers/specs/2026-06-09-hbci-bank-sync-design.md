@@ -7,7 +7,7 @@
 
 ## Overview
 
-Automatically import incoming payments from the shared bank account into RoomieFunds by fetching transactions via HBCI/FinTS using the hbci4java library. Only incoming credits whose counterparty IBAN matches a known person account are imported. All other transactions are skipped.
+Automatically import incoming payments from shared bank accounts into RoomieFunds by fetching transactions via HBCI/FinTS using the hbci4java library. Multiple bank account configurations are supported. Only incoming credits whose counterparty IBAN matches a known person account are imported. All other transactions are skipped.
 
 ---
 
@@ -18,13 +18,14 @@ Automatically import incoming payments from the shared bank account into RoomieF
 | Library | hbci4java (`KUmsAllCamt` job) |
 | Authentication | PIN/TAN — pushTAN Decoupled (admin taps Accept in banking app; no TAN code to type) |
 | Trigger | Admin-triggered only via REST endpoint; no background scheduler |
-| HTTP model | Long-poll: frontend sends `POST /sync`, shows spinner, awaits response (3-min timeout) |
+| HTTP model | Long-poll: frontend sends `POST /configs/{id}/sync`, shows spinner, awaits response (3-min timeout) |
 | Import filter | Incoming credits only (`value > 0`); counterparty IBAN must match a known account |
 | Unmatched transactions | Skipped silently; counted in sync log |
 | Outgoing debits | Ignored entirely |
 | Deduplication | CAMT transaction ID stored on `transaction.camt_id` with UNIQUE constraint |
 | Passport storage | AES-encrypted blob in `hbci_config.encrypted_passport`; written to temp file at runtime, saved back after each use |
 | Credential encryption | AES-256-GCM; key from `HBCI_AES_KEY` environment variable; same key for PIN and passport blob |
+| Multiple configs | Supported; each `hbci_config` row is independent (own BLZ, username, PIN, passport, account) |
 
 ---
 
@@ -38,8 +39,8 @@ CREATE TABLE hbci_config (
     blz                 TEXT NOT NULL,
     username            TEXT NOT NULL,
     encrypted_pin       TEXT NOT NULL,     -- AES-256-GCM encrypted, base64-encoded
-    encrypted_passport  BYTEA,             -- AES-256-GCM encrypted hbci4java passport blob; NULL until first connect
-    account_id          BIGINT NOT NULL,   -- FK → account (the shared bank account)
+    encrypted_passport  TEXT,              -- AES-256-GCM encrypted hbci4java passport blob; NULL until first connect
+    account_id          BIGINT NOT NULL,   -- FK → account (the shared bank account this config syncs into)
     last_synced_at      TIMESTAMPTZ        -- start of next fetch window; NULL = never synced
 );
 ALTER TABLE hbci_config ADD FOREIGN KEY (account_id) REFERENCES account (id);
@@ -53,13 +54,15 @@ CREATE TABLE account_iban (
 ALTER TABLE account_iban ADD FOREIGN KEY (account_id) REFERENCES account (id);
 
 CREATE TABLE hbci_sync_log (
-    id              BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    synced_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-    imported_count  INT NOT NULL,
-    skipped_count   INT NOT NULL,          -- unmatched incoming credits
-    success         BOOLEAN NOT NULL,
-    error_message   TEXT                   -- NULL on success
+    id               BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    hbci_config_id   BIGINT NOT NULL,
+    synced_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    imported_count   INT NOT NULL,
+    skipped_count    INT NOT NULL,          -- unmatched incoming credits
+    success          BOOLEAN NOT NULL,
+    error_message    TEXT                   -- NULL on success
 );
+ALTER TABLE hbci_sync_log ADD FOREIGN KEY (hbci_config_id) REFERENCES hbci_config (id);
 ```
 
 ### V0017 — Extend `transaction`
@@ -73,17 +76,15 @@ ALTER TABLE transaction ADD COLUMN camt_id TEXT UNIQUE;
 ### Transaction direction
 
 An incoming payment from a roommate is recorded as:
-- `source_account_id` = person's internal account (payer)
+- `source_account_id` = person's internal account (payer, resolved via `account_iban`)
 - `target_account_id` = `hbci_config.account_id` (the shared bank account)
 - `description` = `buchung.usage` lines joined
 - `value_date` = `buchung.valuta`
 - `camt_id` = `buchung.id`
 
-A `physical_transaction` row is also created with `source = 'bank_account'` (enum value already exists).
-
 ### Fetch date range
 
-- **First sync:** `[today - ${HBCI_INITIAL_LOOKBACK_DAYS:-90}, today]`
+- **First sync:** `[today - ${app.hbci.initial-lookback-days:-90}, today]`
 - **Subsequent syncs:** `[last_synced_at - 3 days, today]` (3-day overlap catches late-posted entries)
 
 ---
@@ -96,20 +97,20 @@ Package root: `domain/api/hbcisync/` and `domain/spi/`
 
 | Interface | Responsibility |
 |---|---|
-| `GetHbciConfig` | Read current config (BLZ, username, linked account — never exposes decrypted PIN) |
-| `SaveHbciConfig` | Create or update credentials (accepts plaintext PIN, service encrypts before persisting) |
-| `SyncBankTransactions` | Trigger HBCI fetch + import; returns `HbciSyncResult` (imported, skipped, error) |
+| `GetHbciConfig` | List all configs and get one by ID (never exposes decrypted PIN); list IBAN mappings |
+| `SaveHbciConfig` | Create, update, or delete a config (accepts plaintext PIN, service encrypts before persisting); manage IBAN mappings |
+| `SyncBankTransactions` | Trigger HBCI fetch + import for a specific config by ID; returns `HbciSyncResult` |
 
 ### SPI interfaces
 
 | Interface | Responsibility |
 |---|---|
-| `HbciConfigRepository` | CRUD for `hbci_config`; load/save passport blob; update `last_synced_at` |
+| `HbciConfigRepository` | CRUD for `hbci_config`; load/save passport blob by config ID; update `last_synced_at` by config ID |
 | `AccountIbanRepository` | CRUD for `account_iban`; `findAccountByIban(String): Optional<Long>` |
-| `HbciSyncLogRepository` | Append-only write of `hbci_sync_log` rows |
-| `HbciClient` | Port for hbci4java interaction; `fetchTransactions(HbciCredentials, byte[], DateRange): HbciFetchResult` |
+| `HbciSyncLogRepository` | Append-only write of `hbci_sync_log` rows (includes `configId`) |
+| `HbciClient` | Port for hbci4java interaction; `fetchTransactions(HbciCredentials, DateRange): HbciFetchResult` |
 
-`HbciFetchResult` carries a list of `HbciTransactionEntry` (a domain record — see below) plus updated passport bytes. `HbciClientImpl` maps each `UmsLine` to `HbciTransactionEntry` before returning, keeping hbci4java types out of the domain entirely.
+`HbciFetchResult` carries a list of `HbciTransactionEntry` (a domain record) plus updated passport bytes. `HbciClientImpl` maps each `UmsLine` to `HbciTransactionEntry` before returning, keeping hbci4java types out of the domain entirely.
 
 **`HbciTransactionEntry`** (domain record):
 - `camtId: String` — `buchung.id`
@@ -118,17 +119,17 @@ Package root: `domain/api/hbcisync/` and `domain/spi/`
 - `counterpartyIban: String` — `buchung.other.iban` (nullable)
 - `usage: String` — `buchung.usage` lines joined
 
-### `HbciSyncService` — `syncBankTransactions()` flow
+### `HbciSyncService` — `sync(long configId)` flow
 
-1. Load config from `HbciConfigRepository`; decrypt PIN and passport blob via `AesEncryptionService`
+1. Load config from `HbciConfigRepository.loadCredentials(configId)`; decrypt PIN and passport blob via `AesEncryptionService`
 2. Call `HbciClient.fetchTransactions(...)` — blocks until phone approval
-3. Save updated passport bytes back via `HbciConfigRepository` **in its own transaction** (independent of step 4; must not roll back if import fails)
+3. Save updated passport bytes back via `HbciConfigRepository.savePassportBytes(configId, ...)` **in its own transaction** (independent of step 4; must not roll back if import fails)
 4. For each `HbciTransactionEntry`:
    - Skip if `amountCents ≤ 0` (outgoing/debit)
    - Skip if `camtId` already in `transaction` table (dedup)
    - Look up counterparty IBAN via `AccountIbanRepository`; skip if no match
-   - Insert `transaction` row + `physical_transaction` row via `TransactionRepository`
-5. Update `last_synced_at`; write `hbci_sync_log` row
+   - Insert `transaction` row via `TransactionRepository`
+5. Update `last_synced_at` for this config; write `hbci_sync_log` row
 6. Return `HbciSyncResult`
 
 `HbciSyncContext` (bootstrap) wires the service — same pattern as `RecurringTransactionContext`.
@@ -151,27 +152,32 @@ Package root: `domain/api/hbcisync/` and `domain/spi/`
 - jOOQ, `@ApplicationScoped`
 - Injects `AesEncryptionService` (reads `HBCI_AES_KEY` env var, AES-256-GCM)
 - Encrypts PIN and passport blob before writes; decrypts after reads
+- All lookups are by `id` — no `LIMIT 1` anywhere
 
 ### `AesEncryptionService`
 
 - `@ApplicationScoped` utility; no domain dependency
-- `encrypt(byte[]): String` (base64-encoded ciphertext+IV) / `decrypt(String): byte[]`
+- `encrypt(String): String` / `encryptBytes(byte[]): String` (base64-encoded ciphertext+IV)
+- `decrypt(String): String` / `decryptBytes(String): byte[]`
 - Key sourced from `HBCI_AES_KEY` environment variable
 
 ### `AccountIbanRepositoryImpl` / `HbciSyncLogRepositoryImpl`
 
 - jOOQ, straightforward
 
-### REST — `HbciSyncResource` (`@Path("/api/hbci")`)
+### REST — `HbciController` (`@Path("/api/hbci")`)
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/config` | Returns current config (PIN masked) |
-| `PUT` | `/config` | Save/update credentials |
-| `GET` | `/config/ibans` | List IBANs |
-| `POST` | `/config/ibans` | Add IBAN → account mapping |
-| `DELETE` | `/config/ibans/{id}` | Remove IBAN mapping |
-| `POST` | `/sync` | Trigger sync (3-min HTTP timeout) |
+| `GET` | `/configs` | List all configs (PINs masked) |
+| `POST` | `/configs` | Create a new config |
+| `GET` | `/configs/{id}` | Get one config by ID |
+| `PUT` | `/configs/{id}` | Update credentials for a config |
+| `DELETE` | `/configs/{id}` | Delete a config |
+| `POST` | `/configs/{id}/sync` | Trigger sync for that config (3-min HTTP timeout) |
+| `GET` | `/ibans` | List all IBAN → account mappings |
+| `POST` | `/ibans` | Add an IBAN mapping |
+| `DELETE` | `/ibans/{id}` | Remove an IBAN mapping |
 
 ---
 
@@ -180,6 +186,7 @@ Package root: `domain/api/hbcisync/` and `domain/spi/`
 | Scenario | Behaviour |
 |---|---|
 | Bank unreachable / wrong credentials | `HbciClientImpl` catches `HBCI_Exception`, wraps in `HbciSyncException`; service writes failed log row; REST returns 502 |
+| Config not found | `HbciSyncException` thrown; REST controller maps to 404 |
 | Partial import DB error | Entire import runs `@Transactional`; any failure rolls back completely; sync log written in separate transaction |
 | Duplicate CAMT ID (DB constraint violation) | Caught; counted as skip, not error |
 | Passport write-back failure | Log warning; old passport bytes remain; hbci4java re-fetches BPD/UPD on next connect |
@@ -192,4 +199,3 @@ Package root: `domain/api/hbcisync/` and `domain/spi/`
 - Outgoing debit import
 - Manual mapping UI for unrecognised transactions
 - Automated background scheduling
-- Multiple simultaneous HBCI configs
