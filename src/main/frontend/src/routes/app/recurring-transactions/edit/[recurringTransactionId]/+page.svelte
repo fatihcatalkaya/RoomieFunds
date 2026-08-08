@@ -9,6 +9,7 @@
 		type UpdateRecurringTransactionDto
 	} from '$lib/client';
 	import MdiDelete from '~icons/mdi/delete';
+	import EuroInput from '$lib/components/EuroInput.svelte';
 
 	let { data } = $props();
 
@@ -143,7 +144,7 @@
 		</label>
 		<label class="flex w-full items-center">
 			<span class="w-1/4">Betrag</span>
-			<input type="number" class="input w-3/4" bind:value={formData.amount} />
+			<EuroInput class="input w-3/4" bind:value={formData.amount} />
 		</label>
 		<label class="flex w-full items-center">
 			<span class="w-1/4"

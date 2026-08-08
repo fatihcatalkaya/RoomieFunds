@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@hey-api/client-fetch": "^0.13.1",
 		"@tailwindcss/typography": "^0.5.20",
-		"oidc-spa": "^10.2.11"
+		"oidc-spa": "^10.2.11",
+		"svelte-number-format": "^2.0.0"
 	}
 }

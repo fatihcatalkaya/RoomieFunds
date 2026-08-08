@@ -17,6 +17,7 @@
 	import MdiClose from '~icons/mdi/close-bold';
 	import MdiUpload from '~icons/mdi/upload';
 	import MdiDownload from '~icons/mdi/download';
+	import EuroInput from '$lib/components/EuroInput.svelte';
 
 	let {
 		dto,
@@ -41,7 +42,7 @@
 	);
 	let date: string = $state(dto.transaction?.valueDate!);
 	let description: string = $state(dto.transaction?.description!);
-	let floatAmount: number = $state(dto.transaction?.amount! / 100.0);
+	let amount: number | null = $state(dto.transaction?.amount ?? null);
 	let receiptFile: FileList | undefined = $state();
 
 	// a $derived(...) would make sense here but we can't bind to that. Value is manually set in allowEdit()
@@ -80,7 +81,7 @@
 			direction === 'decrease'
 				? dto.transaction?.targetAccountId!
 				: dto.transaction?.sourceAccountId!;
-		floatAmount = dto.transaction?.amount! / 100.0;
+		amount = dto.transaction?.amount ?? null;
 
 		editToggle = true;
 	}
@@ -95,7 +96,7 @@
 			body: {
 				valueDate: new Date(date!).toISOString().substring(0, 10),
 				description: description!,
-				amount: Math.round(floatAmount! * 100.0),
+				amount: amount ?? 0,
 				sourceAccountId: direction === 'decrease' ? account.id! : bookAccountId!,
 				targetAccountId: direction === 'decrease' ? bookAccountId! : account.id!
 			}
@@ -269,16 +270,11 @@
 			</button>
 		</td>
 		<td>
-			<label class="input" lang="de">
-				<input
-					lang="de"
-					form="transaction-new-form-{dto.transaction?.id}"
-					bind:value={floatAmount}
-					type="number"
-					step="0.01"
-				/>
-				€
-			</label>
+			<EuroInput
+				class="input min-w-20"
+				form="transaction-new-form-{dto.transaction?.id}"
+				bind:value={amount}
+			/>
 		</td>
 		<td>
 			<label>

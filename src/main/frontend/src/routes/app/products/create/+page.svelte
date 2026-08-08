@@ -7,6 +7,7 @@
 
 	import { postApiProduct } from '$lib/client';
 	import { error } from '@sveltejs/kit';
+	import EuroInput from '$lib/components/EuroInput.svelte';
 
 	let name = $state('');
 	let price: number | undefined = $state();
@@ -37,7 +38,7 @@
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Price</span>
-		<input type="number" class="input w-3/4" placeholder="100" bind:value={price} />
+		<EuroInput class="input w-3/4" placeholder="1,00" bind:value={price} />
 	</label>
 	<div class="flex w-full items-center">
 		<span class="w-1/4 text-center"> </span>

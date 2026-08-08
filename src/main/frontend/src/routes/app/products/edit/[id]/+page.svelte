@@ -7,6 +7,7 @@
 		type Product
 	} from '$lib/client';
 	import MdiDelete from '~icons/mdi/delete';
+	import EuroInput from '$lib/components/EuroInput.svelte';
 
 	let { data } = $props();
 
@@ -94,7 +95,7 @@
 		</label>
 		<label class="flex w-full items-center">
 			<span class="w-1/4">Price</span>
-			<input type="number" class="input w-3/4" bind:value={price} />
+			<EuroInput class="input w-3/4" bind:value={price} />
 		</label>
 		<div class="flex w-full items-center">
 			<span class="w-1/4 text-center"> </span>

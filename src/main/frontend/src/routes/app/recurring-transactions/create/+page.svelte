@@ -9,6 +9,7 @@
 		postApiRecurringTransaction,
 		type CreateRecurringTransactionDto
 	} from '$lib/client';
+	import EuroInput from '$lib/components/EuroInput.svelte';
 
 	let accountsQuery = $derived.by(async () => {
 		const accountsQuery = await getApiAccount();
@@ -79,8 +80,8 @@
 		</select>
 	</label>
 	<label class="flex w-full items-center">
-		<span class="w-1/4">Betrag (ct)</span>
-		<input type="number" class="input w-3/4" bind:value={formData.amount} step="1" required />
+		<span class="w-1/4">Betrag</span>
+		<EuroInput class="input w-3/4" bind:value={formData.amount} required />
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4"

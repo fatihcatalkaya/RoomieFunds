@@ -9,6 +9,7 @@
 	import MdiChequebookRight from '~icons/mdi/chequebook-arrow-left';
 	import MdiUpload from '~icons/mdi/upload';
 	import MdiClose from '~icons/mdi/close-bold';
+	import EuroInput from '$lib/components/EuroInput.svelte';
 
 	const accountList = $derived.by(async () => {
 		const accountQuery = await getApiAccount();
@@ -31,7 +32,7 @@
 	let date: string = $state(new Date(Date.now()).toDateString());
 	let description: string = $state('');
 	let bookAccountId: number | undefined = $state();
-	let floatAmount: number = $state(0.0);
+	let amount: number | null = $state(null);
 	let direction: BookDirection = $state('decrease');
 	let files: FileList | undefined = $state();
 
@@ -44,7 +45,7 @@
 				description,
 				sourceAccountId: direction == 'decrease' ? parentAccountId : bookAccountId,
 				targetAccountId: direction == 'decrease' ? bookAccountId : parentAccountId,
-				amount: floatAmount * 100
+				amount: amount ?? 0
 			}
 		});
 
@@ -119,17 +120,7 @@
 		</button>
 	</td>
 	<td>
-		<label class="input" lang="de">
-			<input
-				lang="de"
-				class="min-w-20"
-				form="transaction-new-form"
-				bind:value={floatAmount}
-				type="number"
-				step="0.01"
-			/>
-			€
-		</label>
+		<EuroInput class="input min-w-20" form="transaction-new-form" bind:value={amount} />
 	</td>
 	<td>
 		<label>
