@@ -6,6 +6,7 @@
 		postApiTransactionByTransactionIdReceipt
 	} from '$lib/client';
 	import { error } from '@sveltejs/kit';
+	import { todayAsIsoDate } from '$lib/formatter';
 	import MdiChequebookRight from '~icons/mdi/chequebook-arrow-left';
 	import EuroInput from '$lib/components/EuroInput.svelte';
 	import ReceiptFileInput from '$lib/components/ReceiptFileInput.svelte';
@@ -28,7 +29,7 @@
 
 	let { parentAccountId, refreshTransactions }: TransactionInsertProps = $props();
 
-	let date: string = $state(new Date(Date.now()).toDateString());
+	let date: string = $state(todayAsIsoDate());
 	let description: string = $state('');
 	let bookAccountId: number | undefined = $state();
 	let amount: number | null = $state(null);
@@ -40,7 +41,7 @@
 
 		const query = await postApiTransaction({
 			body: {
-				valueDate: new Date(date).toISOString().substring(0, 10),
+				valueDate: date,
 				description,
 				sourceAccountId: direction == 'decrease' ? parentAccountId : bookAccountId,
 				targetAccountId: direction == 'decrease' ? bookAccountId : parentAccountId,
@@ -72,7 +73,7 @@
 
 <tr class="bg-base-200">
 	<td>
-		<input form="transaction-new-form" bind:value={date} type="date" class="input" />
+		<input form="transaction-new-form" bind:value={date} type="date" class="input" required />
 	</td>
 	<td>
 		<input

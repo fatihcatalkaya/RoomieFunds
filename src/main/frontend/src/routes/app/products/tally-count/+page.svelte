@@ -6,7 +6,7 @@
 	import { goto } from '$app/navigation';
 
 	import { getApiPerson, postApiTransaction, type Person, type Product } from '$lib/client';
-	import { formatEuroCents } from '$lib/formatter';
+	import { formatEuroCents, todayAsIsoDate } from '$lib/formatter';
 	import { error } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
 
@@ -51,7 +51,7 @@
 				description: 'Strichlistenzählung',
 				sourceAccountId: selectedPerson?.accountId,
 				targetAccountId: mainAccount.id,
-				valueDate: new Date(Date.now()).toISOString().substring(0, 10)
+				valueDate: todayAsIsoDate()
 			}
 		});
 
