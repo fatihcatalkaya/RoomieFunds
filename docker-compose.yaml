@@ -10,5 +10,33 @@ services:
       POSTGRES_PASSWORD: app
       POSTGRES_DATABASE: app
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: [ "start-dev", "--import-realm" ]
+    ports:
+      - "9090:8080"
+    volumes:
+      # Realm is re-imported on every start, since no data volume is mounted.
+      # See README.md for how to export console changes back into the realm file.
+      - ./keycloak/import:/opt/keycloak/data/import
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Fixes the issuer of minted tokens to the URL the app is configured against
+      KC_HOSTNAME: http://localhost:9090
+      KC_HEALTH_ENABLED: "true"
+    healthcheck:
+      # The Keycloak image ships no curl/wget, so talk to the management port over bash's /dev/tcp
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"status": "UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
 volumes:
   roomiefunds-db:

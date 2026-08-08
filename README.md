@@ -4,6 +4,42 @@ This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
+## Local infrastructure
+
+```shell script
+docker compose up -d
+```
+
+This starts PostgreSQL on port 5432 and Keycloak on port 9090. Keycloak imports the `roomiefunds` realm from
+`keycloak/import/roomiefunds-realm.json` on every fresh start, so the defaults in `application.properties` work
+without further setup.
+
+| What                     | Value                                                   |
+|--------------------------|---------------------------------------------------------|
+| Admin console            | <http://localhost:9090> — `admin` / `admin`             |
+| Realm                    | `roomiefunds`                                           |
+| Test user                | `user` / `user` (member of group `roomiefunds-admin`)   |
+| Backend client           | `roomiefunds`, secret `roomiefunds-dev-secret`          |
+| Sync service account     | `roomiefunds-svc`, secret `roomiefunds-svc-dev-secret`  |
+| Frontend client (public) | `roomiefunds-frontend`, redirects to `localhost:5173`   |
+
+The realm also contains the realm role `roomiefunds-admin` (granted through the group of the same name, and required
+by every REST endpoint), the group `floor-members`, and the user attributes `room` and `isCurrentTenant` used by the
+Keycloak sync service.
+
+Keycloak keeps no data volume, so `docker compose down` discards any changes made in the admin console. To write them
+back into the realm file, stop the container first — the export cannot run while the server holds the lock on its
+embedded database:
+
+```shell script
+docker compose stop keycloak
+docker commit roomiefunds-keycloak-1 kc-export-tmp
+docker run --rm -v "$PWD/keycloak/import":/export kc-export-tmp \
+  export --dir /export --users realm_file --realm roomiefunds
+docker rmi kc-export-tmp
+docker compose start keycloak
+```
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
