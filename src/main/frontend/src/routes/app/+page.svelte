@@ -8,7 +8,6 @@
 	import MdiCashClock from '~icons/mdi/cash-clock';
 	import MdiAccount from '~icons/mdi/account';
 	import MdiAccountGroup from '~icons/mdi/account-group';
-	import MdiCashMultiple from '~icons/mdi/cash-multiple';
 	import MdiHelp from '~icons/mdi/help';
 	import MainMenuButton from '$lib/components/MainMenuButton.svelte';
 </script>
@@ -35,15 +34,6 @@
 			<MdiLiquor class="text-4xl" />
 			Getränke
 		</MainMenuButton>
-		<div class="indicator">
-			<span class="indicator-item badge badge-warning mr-2 p-0 px-1 font-bold text-white">ToDo</span
-			>
-			<MainMenuButton redirectTo="/app/banking">
-				<MdiCashMultiple class="text-4xl" />
-				Banking
-			</MainMenuButton>
-		</div>
-
 		<MainMenuButton redirectTo="/app/help">
 			<MdiHelp class="h-10 w-10" />
 			Anleitung

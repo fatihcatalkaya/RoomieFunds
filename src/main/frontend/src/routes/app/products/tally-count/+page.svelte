@@ -5,13 +5,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 
-	import {
-		getApiPerson,
-		postApiTransaction,
-		type Account,
-		type Person,
-		type Product
-	} from '$lib/client';
+	import { getApiPerson, postApiTransaction, type Person, type Product } from '$lib/client';
 	import { formatEuroCents } from '$lib/formatter';
 	import { error } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
@@ -116,7 +110,7 @@
 			{#await personQuery}
 				<option value="" disabled>Loading persons...</option>
 			{:then personList}
-				{#each personList! as person}
+				{#each personList! as person (person.id!)}
 					<option value={person}>{person.firstName} {person.lastName} {person.room}</option>
 				{/each}
 			{:catch}
@@ -124,7 +118,7 @@
 			{/await}
 		</select>
 	</label>
-	{#each tallyData as tally, index}
+	{#each tallyData as tally, index (index)}
 		<label class="mt-2 flex items-center gap-2">
 			<span class="flex-4">{tally.product.name}</span>
 			<span class="flex-1 text-right">{formatEuroCents(tally.product.price!)}</span>
