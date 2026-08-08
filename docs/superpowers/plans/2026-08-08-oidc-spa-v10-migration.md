@@ -13,6 +13,7 @@
 ## Global Constraints
 
 - **Build the backend with JDK 21, never the machine default JDK 25.** Every `mvnw` invocation in this plan must be prefixed with `JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64`. On JDK 25 Lombok annotation processing is off by default and the build fails before your changes are even compiled. This is pre-existing — do not try to fix it here.
+- **`quarkus:dev` requires `-Djooq`.** Without it the `jooq` profile is inactive, `build-helper-maven-plugin` never adds `target/generated-sources/jooq` as a source root, and compilation dies with dozens of `Package de.flur4.roomiefunds.infrastructure.jooq ist nicht vorhanden`. With `-Djooq` Maven starts a Testcontainers PostgreSQL, runs Flyway against it and regenerates the jOOQ classes, which takes ~1–2 minutes per start. (A bare `./mvnw compile` can appear to succeed without the flag simply because `target/classes` is already up to date — that is not a real check.)
 - **oidc-spa version:** `^10.2.11` (current `latest`). Do not use the `next` tag (`10.3.0-rc.x`).
 - **Import path is `oidc-spa/core`, not `oidc-spa`.** In v10 the package root (`.`) re-exports only the entrypoint helpers. `createOidc`, `oidcEarlyInit` and the `Oidc` type all come from `oidc-spa/core`.
 - **Do NOT use `oidc-spa/vite-plugin`.** It is the documented default for Vite projects, but for a non-React/non-Nuxt project it resolves the client entrypoint by parsing a root `index.html`, and throws `"oidc-spa: Could not locate index.html"` during `configResolved`. SvelteKit has no root `index.html` (it uses `src/app.html` and a generated JS client entry), so the plugin fails at startup in both `dev` and `build`. Use the documented **"Manual - Easy"** setup instead: call `oidcEarlyInit()` at the top of the same module that calls `createOidc()`. The oidc-spa docs note this option has a slightly weaker security posture than a split entrypoint; it is the only option SvelteKit's generated client entry leaves us.
@@ -81,7 +82,7 @@ Run this in a background shell — Quarkus dev mode hot-reloads, so you start it
 
 ```bash
 cd /home/fatih/IdeaProjects/RoomieFunds
-JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw quarkus:dev
+JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw -Djooq quarkus:dev
 ```
 
 Wait until the log prints `Listening on: http://0.0.0.0:8080`. If it fails to start, check the Global Constraints — the JDK 21 prefix is not optional.
@@ -89,10 +90,12 @@ Wait until the log prints `Listening on: http://0.0.0.0:8080`. If it fails to st
 - [ ] **Step 3: Write the failing check — confirm the endpoint does not exist yet**
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/api/config/oidc
+curl -s -i http://localhost:8080/api/config/oidc | head -8
 ```
 
-Expected: `404`. (Not `200`. If you get `200`, someone already did this task — stop and re-read the current state of the repo.)
+Expected: **`200 OK` with `Content-Type: application/octet-stream` and an HTML body starting `<!doctype html>`** — *not* a 404. `GatewayResource` declares a catch-all `@Path("/{fileName:.+}")` that serves the SPA fallback page for any path no other resource claims, so an unimplemented API route returns the frontend's HTML rather than 404.
+
+The red state is therefore "HTML instead of JSON". If you already get `{"issuerUri":...}`, someone did this task — stop and re-read the repo state.
 
 - [ ] **Step 4: Create the DTO**
 
@@ -196,7 +199,7 @@ Stop the dev-mode process, then:
 cd /home/fatih/IdeaProjects/RoomieFunds
 OIDC_FRONTEND_ISSUER_URI=https://auth.example.test/realms/other \
 OIDC_FRONTEND_CLIENT_ID=some-other-client \
-JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw quarkus:dev
+JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw -Djooq quarkus:dev
 ```
 
 Once it is listening:
@@ -207,7 +210,7 @@ curl -s http://localhost:8080/api/config/oidc
 
 Expected: `{"issuerUri":"https://auth.example.test/realms/other","clientId":"some-other-client"}`
 
-Then stop it and restart plain `JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw quarkus:dev` so the defaults are back for the following tasks.
+Then stop it and restart plain `JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw -Djooq quarkus:dev` so the defaults are back for the following tasks.
 
 - [ ] **Step 9: Verify the backend still compiles from clean**
 
@@ -309,6 +312,8 @@ Expected (measured on this branch before any change): **`svelte-check found 722 
 | `src/routes/app/groups/edit/[id]/+page.svelte` | 1 |
 
 All of these are pre-existing and unrelated to auth. **Do not fix them** — that is a different ticket, and a 718-error file would swamp this diff.
+
+That measurement was taken with the `node_modules` that happened to be on disk. Running `npm install` in Step 2 reconciles `node_modules` with the committed `package-lock.json`, after which the same command additionally reports **23 `state_referenced_locally` warnings across 18 files** — all in components untouched by this work. They are pre-existing code smells that a stale `node_modules` had been hiding; leave them. The error count is the number that must not move.
 
 None of the four files this task touches appear in that list, so your success criterion is precise: **the count must come back to 722, and none of the errors may be in a file you edited.**
 
@@ -547,7 +552,12 @@ npx eslint vite.config.ts src/lib/oidc.ts src/hooks.client.ts \
   src/routes/+page.svelte "src/routes/app/+layout.svelte"
 ```
 
-Expected: Prettier rewrites/confirms just those five files, and ESLint exits 0 with no output.
+Expected: the three `.ts` files report `(unchanged)`.
+
+**Two pre-existing tool failures will show up here. Neither is caused by this work — confirm, then move on:**
+
+1. **Prettier cannot parse any `.svelte` file** once `node_modules` matches the committed lockfile: `TypeError: getVisitorKeys is not a function or its return value is not iterable`. Verify it is not yours by running it on a file you never touched, e.g. `npx prettier --check src/lib/components/ErrorAlert.svelte` — it fails identically. This is a `prettier` / `prettier-plugin-svelte` / `svelte` version mismatch in `package-lock.json`; fixing it means bumping dependencies, which is a separate ticket.
+2. **ESLint flags `src/routes/+page.svelte`**: `Unexpected goto() call without resolve() (svelte/no-navigation-without-resolve)`. The offending `goto('/app')` is unchanged from `HEAD` — confirm with `git stash push src/routes/+page.svelte && npx eslint src/routes/+page.svelte && git stash pop`. It was never visible before because `npm run lint` is `prettier --check . && eslint .`, and the Prettier stage fails first, so ESLint never ran.
 
 - [ ] **Step 11: Verify the production build works**
 
@@ -638,7 +648,7 @@ curl -s http://localhost:8080/api/config/oidc
 ```
 
 Expected: `db` and `keycloak` running, and the curl returns the JSON. If the backend is not running, start it again:
-`JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw quarkus:dev`
+`JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64 ./mvnw -Djooq quarkus:dev`
 
 - [ ] **Step 2: Start the frontend dev server in the background**
 
@@ -698,7 +708,9 @@ playwright-cli request <index-of-api-person>
 playwright-cli console
 ```
 
-Expected: no `error`-level entries. Keycloak or Vite may emit `warning`/`info` lines — those are fine. Any error mentioning `oidc-spa`, `BASE_URL`, or an unhandled rejection is a real failure: stop, fix it, and re-run from Step 3.
+Expected: no `error`-level entries. Any error mentioning `oidc-spa`, `BASE_URL`, or an unhandled rejection is a real failure: stop, fix it, and re-run from Step 3.
+
+**One warning is expected and benign:** *"Avoid using `history.pushState(...)` and `history.replaceState(...)` as these will conflict with SvelteKit's router."* oidc-spa strips the auth response out of the URL with `history.replaceState` after the redirect back from Keycloak. This is precisely the client-side-routing caveat the oidc-spa docs attach to the "Manual - Easy" setup. It is a warning, not a conflict — navigation, login and logout all behave correctly. If the app's routing ever does start misbehaving after login, this warning is the first thing to revisit.
 
 - [ ] **Step 7: Verify logout**
 

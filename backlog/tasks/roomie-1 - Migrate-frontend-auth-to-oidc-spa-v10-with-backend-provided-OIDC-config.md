@@ -1,11 +1,11 @@
 ---
 id: ROOMIE-1
 title: Migrate frontend auth to oidc-spa v10 with backend-provided OIDC config
-status: In Progress
+status: Done
 assignee:
   - '@fatih'
 created_date: '2026-08-08 12:51'
-updated_date: '2026-08-08 13:00'
+updated_date: '2026-08-08 13:15'
 labels: []
 dependencies: []
 references:
@@ -28,14 +28,14 @@ Frontend: fetch that endpoint at bootstrap, feed it into oidc-spa v10 createOidc
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 GET on the new OIDC config endpoint returns issuer URI and client ID as JSON without any Authorization header
-- [ ] #2 Issuer URI and client ID served by the endpoint are configurable through environment variables and default to the docker-compose Keycloak realm
-- [ ] #3 Frontend depends on oidc-spa v10 and no longer references VITE_OIDC_ISSUER_URI or VITE_OIDC_CLIENT_ID
-- [ ] #4 Frontend obtains issuer URI and client ID from the backend endpoint at runtime instead of build time
-- [ ] #5 Frontend uses the oidc-spa v10 Framework Agnostic Adapter API for init, login, logout, token access and token rotation
-- [ ] #6 Login, authenticated API calls, access-denied handling and logout all still work end-to-end against the docker-compose Keycloak
-- [ ] #7 A browser run driven by playwright-cli demonstrates the full login-to-logout flow with no console errors
-- [ ] #8 README and .env.example describe the new backend-provided configuration instead of the removed Vite env vars
+- [x] #1 GET on the new OIDC config endpoint returns issuer URI and client ID as JSON without any Authorization header
+- [x] #2 Issuer URI and client ID served by the endpoint are configurable through environment variables and default to the docker-compose Keycloak realm
+- [x] #3 Frontend depends on oidc-spa v10 and no longer references VITE_OIDC_ISSUER_URI or VITE_OIDC_CLIENT_ID
+- [x] #4 Frontend obtains issuer URI and client ID from the backend endpoint at runtime instead of build time
+- [x] #5 Frontend uses the oidc-spa v10 Framework Agnostic Adapter API for init, login, logout, token access and token rotation
+- [x] #6 Login, authenticated API calls, access-denied handling and logout all still work end-to-end against the docker-compose Keycloak
+- [x] #7 A browser run driven by playwright-cli demonstrates the full login-to-logout flow with no console errors
+- [x] #8 README and .env.example describe the new backend-provided configuration instead of the removed Vite env vars
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -804,3 +804,47 @@ Do not tick a criterion you did not personally observe passing. Criteria #1/#2 m
 - Adding a test framework (JUnit for the backend, Vitest/Playwright test project for the frontend).
 - Fixing the JDK 25 build failure.
 <!-- SECTION:PLAN:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implementation complete on branch integrate-oidc-spa (commits 6a7cf28 backend, 6cb0b3b frontend).
+
+Key decisions:
+- Used the oidc-spa "Manual - Easy" setup (oidcEarlyInit() at the top of $lib/oidc.ts) instead of the recommended oidc-spa Vite plugin. The plugin resolves its client entrypoint by parsing a root index.html; SvelteKit has none (it uses src/app.html plus a generated JS entry), so the plugin throws during configResolved in both dev and build. Replicated the plugin only-for-other-project-types optimizeDeps.exclude by hand in vite.config.ts.
+- Bootstrap uses plain fetch() rather than the generated OpenAPI client: it runs before the bearer interceptor is installed and the endpoint needs no auth. src/lib/client was deliberately not regenerated.
+- Kept app.oidc.frontend.issuer-uri separate from quarkus.oidc.auth-server-url: the browser and the backend may reach Keycloak on different hostnames.
+- Fixed an interceptor leak carried over from v6: hooks.client.ts used to register a new request interceptor on every token rotation; it now registers one that reads the current token from a closure.
+
+Verification evidence:
+- curl before implementation returned the SPA fallback HTML (GatewayResource has a catch-all @Path("/{fileName:.+}") so a missing API route is 200 text/html, not 404); after, 200 application/json {"issuerUri":"http://localhost:9090/realms/roomiefunds","clientId":"roomiefunds-frontend"} with no Authorization header sent.
+- Restarted with OIDC_FRONTEND_ISSUER_URI=https://auth.example.test/realms/other and OIDC_FRONTEND_CLIENT_ID=some-other-client; endpoint returned exactly those values.
+- svelte-check: 722 errors before and after, none in any touched file (verified by stashing the changes: v6 code against v10 gives 726).
+- npm run build succeeds with adapter-static.
+- playwright-cli: localhost:5173 redirected to Keycloak with client_id=roomiefunds-frontend (proving the runtime fetch), login as user/user landed on /app/, GET /api/person returned 200 with a Bearer token whose azp is roomiefunds-frontend and realm_access includes roomiefunds-admin, 0 console errors, logout returned to the Keycloak sign-in page.
+
+Environment notes for the next person:
+- quarkus:dev needs -Djooq, otherwise target/generated-sources/jooq is not on the source path and compilation fails.
+- Build with JDK 21; the machine default JDK 25 breaks Lombok annotation processing.
+
+Pre-existing issues found but NOT fixed (out of scope, all confirmed present without these changes):
+- prettier cannot parse ANY .svelte file with the committed lockfile ("getVisitorKeys is not a function"), so npm run lint fails at its first stage and eslint never runs.
+- eslint flags the unchanged goto("/app") in src/routes/+page.svelte (svelte/no-navigation-without-resolve), previously masked by the prettier failure.
+- 722 svelte-check errors, 718 of them in src/lib/aspsps.ts.
+- username in src/routes/app/+layout.svelte is declared $state but never assigned, so the header username chip never renders.
+- Benign console warning after login: SvelteKit warns about history.replaceState, which oidc-spa uses to strip the auth response from the URL. Expected for the "Manual - Easy" setup; navigation works.
+
+Access-denied path verified separately with playwright-cli request mocking (route "**/api/person" --status=403): after login the layout renders the "Du hast keinen Zugriff auf diese Anwendung" panel and its "Abmelden" button logs the user out back to the Keycloak sign-in page. The only console error in that run is the deliberately mocked 403 itself; the unmocked happy-path run had 0 errors.
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Moved the public OIDC settings out of the frontend bundle and onto the backend, and upgraded the SPA to oidc-spa v10.
+
+Backend: new unauthenticated GET /api/config/oidc (OidcConfigurationController + OidcConfigurationDto) returning {issuerUri, clientId} from app.oidc.frontend.* properties backed by the OIDC_FRONTEND_ISSUER_URI / OIDC_FRONTEND_CLIENT_ID env vars, defaulting to the docker-compose Keycloak. Documented in README.
+
+Frontend: oidc-spa 6.15 -> 10.2 on the Framework Agnostic Adapter. $lib/oidc.ts now runs oidcEarlyInit() and feeds the fetched config into createOidc(), exporting getOidc() in place of the OidcWrapper singleton; call sites moved to getTokens() and the oidc-spa/core types. The oidc-spa Vite plugin could not be used because it resolves its client entrypoint from a root index.html that SvelteKit does not have, so the documented "Manual - Easy" setup is used and the plugin optimizeDeps.exclude is replicated by hand. VITE_OIDC_* removed from .env.example. Also collapsed a per-token-rotation interceptor leak in hooks.client.ts into a single interceptor.
+
+Verified: curl showed HTML before and JSON after, plus an env-var override run returning the overridden values; svelte-check error count unchanged at its 722 pre-existing baseline with none in the touched files; npm run build succeeds; and a playwright-cli run against the docker-compose Keycloak covered login (redirect carried client_id from the endpoint), an authenticated GET /api/person -> 200 with the Bearer token, logout, and the access-denied panel via a mocked 403 -- 0 console errors on the happy path.
+<!-- SECTION:FINAL_SUMMARY:END -->
