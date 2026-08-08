@@ -24,7 +24,7 @@
         <buildHelperPlugin.version>3.6.1</buildHelperPlugin.version>
         <jooq.version>3.21.7</jooq.version>
         <quarkus.jooq.version>2.1.0</quarkus.jooq.version>
-        <java-typst.version>2.2.0</java-typst.version>
+        <java-typst.version>1.4.0</java-typst.version>
         <lombok.version>1.18.46</lombok.version>
         <bouncycastle.version>1.85.2</bouncycastle.version>
         <java-jwt.version>4.6.0</java-jwt.version>
