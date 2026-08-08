@@ -15,9 +15,9 @@
 	import MdiCancel from '~icons/mdi/cancel';
 	import MdiCheck from '~icons/mdi/check-bold';
 	import MdiClose from '~icons/mdi/close-bold';
-	import MdiUpload from '~icons/mdi/upload';
 	import MdiDownload from '~icons/mdi/download';
 	import EuroInput from '$lib/components/EuroInput.svelte';
+	import ReceiptFileInput from '$lib/components/ReceiptFileInput.svelte';
 
 	let {
 		dto,
@@ -123,21 +123,44 @@
 	let receiptDownloadIsLoading = $state(false);
 
 	async function showReceipt() {
+		// Open the tab synchronously, still inside the click handler's user activation,
+		// so iOS Safari does not block it once the fetch below resolves.
+		const newTab = window.open('', '_blank');
 		receiptDownloadIsLoading = true;
-		let query = await getApiTransactionByTransactionIdReceipt({
-			path: { transactionId: dto.transaction?.id! }
-		});
-		openPDFInNewTab(query.data as Blob);
-		receiptDownloadIsLoading = false;
+		try {
+			let query = await getApiTransactionByTransactionIdReceipt({
+				path: { transactionId: dto.transaction?.id! }
+			});
+			const blob = query.data as Blob | undefined;
+			if (!blob) {
+				newTab?.close();
+				return;
+			}
+			openPDFInNewTab(blob, newTab);
+		} catch (e) {
+			// Don't leave the pre-opened blank tab behind if the download failed.
+			newTab?.close();
+			console.error(e);
+		} finally {
+			receiptDownloadIsLoading = false;
+		}
 	}
 
 	// Assuming arrayBuffer is already available
-	function openPDFInNewTab(blob: Blob) {
+	function openPDFInNewTab(blob: Blob, newTab: Window | null) {
 		const url = URL.createObjectURL(blob);
-		const newTab = window.open(url, '_blank')!;
-		newTab.onbeforeunload = () => {
-			URL.revokeObjectURL(url);
-		};
+		if (!newTab) {
+			// Popup was blocked despite the synchronous window.open attempt; fall back
+			// to the previous behaviour of opening a new tab after the blob resolves.
+			newTab = window.open(url, '_blank');
+		} else {
+			newTab.location.href = url;
+		}
+		if (newTab) {
+			newTab.onbeforeunload = () => {
+				URL.revokeObjectURL(url);
+			};
+		}
 	}
 </script>
 
@@ -250,24 +273,7 @@
 			</select>
 		</td>
 		<td>
-			<label class="btn btn-primary h-8 w-8 p-0 text-lg">
-				<MdiUpload />
-				<input
-					type="file"
-					class="hidden"
-					bind:files={receiptFile}
-					capture="environment"
-					multiple={false}
-					accept="image/*,pdf"
-				/>
-			</label>
-			<button
-				class="btn btn-error h-8 w-8 p-0 text-lg"
-				disabled={!(receiptFile && receiptFile.length > 0)}
-				onclick={() => (receiptFile = undefined)}
-			>
-				<MdiClose />
-			</button>
+			<ReceiptFileInput bind:files={receiptFile} />
 		</td>
 		<td>
 			<EuroInput

@@ -87,7 +87,11 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
     }
 
     @Override
-    public void setTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId, FileUpload fileUpload) throws TransactionNotFoundException, IOException {
+    public void setTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId, FileUpload fileUpload) throws TransactionNotFoundException, InvalidReceiptContentTypeException, IOException {
+        if (!isAllowedReceiptContentType(fileUpload.contentType())) {
+            throw new InvalidReceiptContentTypeException(fileUpload.contentType());
+        }
+
         var transaction = transactionRepository.getTransactionById(transactionId);
         if(transaction.isEmpty()) {
             throw new TransactionNotFoundException(transactionId);
@@ -100,6 +104,14 @@ public class TransactionService implements GetTransaction, CreateTransaction, Up
                 Optional.of(transactionBefore),
                 Optional.of(transactionAfter)
         ));
+    }
+
+    private static boolean isAllowedReceiptContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return false;
+        }
+        var normalized = contentType.split(";", 2)[0].trim().toLowerCase();
+        return normalized.startsWith("image/") || normalized.equals("application/pdf");
     }
 
     @Override
