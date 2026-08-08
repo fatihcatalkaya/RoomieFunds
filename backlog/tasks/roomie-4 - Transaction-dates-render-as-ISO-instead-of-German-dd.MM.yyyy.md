@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@fatih'
 created_date: '2026-08-08 16:11'
-updated_date: '2026-08-08 16:25'
+updated_date: '2026-08-08 16:30'
 labels:
   - frontend
   - bug
@@ -52,6 +52,8 @@ The default must be today in the user local timezone, formatted as ISO `yyyy-MM-
 - [x] #7 The new-transaction row date field is pre-filled with today upon page load, instead of rendering empty
 - [x] #8 The pre-filled default is the correct local calendar day, including for users whose local date differs from the UTC date
 - [x] #9 Submitting the new-transaction form without touching the date field books the transaction with today rather than throwing a RangeError
+- [x] #10 Striche zählen (/app/products/tally-count/) books with the local calendar day, not the UTC-converted day
+- [x] #11 Clearing the date in an existing transaction edit row cannot submit an empty value or throw a RangeError
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -123,6 +125,45 @@ Do not "simplify" either helper into the other pattern — that is exactly how t
 
 - There is no frontend test framework in this repo (no vitest, no `*.test.ts`), so verification is `npm run check`, `npm run build`, and the browser checks above. `formatIsoDate` and `todayAsIsoDate` are pure functions and would be the natural first unit tests if a harness is ever added — out of scope here.
 - Step 4 sweep from the original plan still applies: `grep -rn "valueDate\|createdAt" --include=*.svelte src/main/frontend/src | grep -v lib/client`. Known state: `LogTable.svelte:52` already formats a datetime with `de-DE` and stays as is; `routes/app/products/tally-count/+page.svelte:54` uses `toISOString()` for a write and should be reviewed against the same timezone rule. Report before widening beyond the transactions page.
+
+---
+
+## Follow-up round 2 — remaining `toISOString()` date writes
+
+Added after PR #171 review: the follow-up flagged in that PR is being folded into this ticket rather than filed separately.
+
+A full sweep of the frontend for date construction/serialization (`grep -rn "toISOString\|toDateString\|toLocaleDateString\|toLocaleString\|new Date(" --include=*.svelte --include=*.ts src | grep -v lib/client`) found exactly three non-generated sites. Two are defective, one is fine.
+
+### Site A — `routes/app/products/tally-count/+page.svelte:54` (AC #10)
+
+`valueDate: new Date(Date.now()).toISOString().substring(0, 10)` — the same UTC-conversion bug already fixed in `TransactionInsert`. This page has no date input at all; the booking date is implicitly "today", so the wrong day is silently written with nothing for the user to correct.
+
+This bites the actual target audience. Reproduced under `TZ=Europe/Berlin` (UTC+2): at the instant `2026-08-08T22:30:00Z`, which is `2026-08-09 00:30` local, `toISOString().substring(0,10)` yields `2026-08-08` while the local calendar day is `2026-08-09`. Every tally booked in the first one-to-two hours after local midnight is dated to the previous day.
+
+- [ ] Replace with `valueDate: todayAsIsoDate()`.
+- [ ] The file already imports `formatEuroCents` from `$lib/formatter` on line 9 — extend that existing import rather than adding a second one.
+
+### Site B — `lib/components/TransactionDisplayRow.svelte:97` (AC #11)
+
+`valueDate: new Date(date!).toISOString().substring(0, 10)` in `submitChange`. Here `date` originates from an ISO source (the stored `valueDate`, or the `<input type="date">`), so `new Date(iso)` is UTC midnight and the round-trip returns the same day in every timezone. The timezone behaviour is therefore NOT broken.
+
+It is still worth fixing for two reasons:
+1. The round-trip is redundant — `date` is already exactly the `yyyy-MM-dd` the API wants.
+2. It carries the identical latent crash that defect 2 had: the edit-row date input on lines 217-222 has no `required`, so a user can clear it, and `new Date("").toISOString()` throws `RangeError: Invalid time value` (verified). The insert row was hardened against this; the edit row was not.
+
+- [ ] Replace with `valueDate: date`.
+- [ ] Add `required` to the edit-row date input, matching the insert row.
+
+### Site C — `lib/components/LogTable.svelte:52` — no change
+
+`new Date(entry.createdAt!).toLocaleString("de-DE")` formats a full timestamp, not a calendar date. `createdAt` is an instant, so local-time conversion is correct here, and the output is already German. Leave as is.
+
+### Verification for this round
+
+- [ ] `npm run check` still matches the 5 ERRORS / 20 WARNINGS baseline, with no new entries for `tally-count/+page.svelte` (it has 2 pre-existing errors and 1 pre-existing warning — the count must not grow).
+- [ ] `npm run build` succeeds.
+- [ ] Re-run the Berlin repro and confirm `todayAsIsoDate()` tracks the local calendar day where `toISOString()` did not.
+- [ ] Browser probe confirming the edit-row date input now blocks submission when cleared (`checkValidity() === false`), the same evidence used for the insert row.
 <!-- SECTION:PLAN:END -->
 
 ## Implementation Notes
@@ -153,10 +194,38 @@ Implemented by a Sonnet subagent, verified independently by the parent session.
 ## AC #9 verification route
 
 Per the plans stated option, this was confirmed by inspection plus the browser probe above, NOT by a live submit — the dev database was deliberately not written to. Evidence: `toISOString()` no longer appears in the `TransactionInsert` submit path, so the RangeError is structurally impossible; `date` is always a valid ISO string; and `required` makes Chromium block submission when the field is empty (`checkValidity() === false`). The POST payload shape is unchanged from before (`valueDate` was already a yyyy-MM-dd string). The end-to-end POST against a running backend was not exercised.
+
+## Round 2 — remaining `toISOString()` date writes (folded in after PR #171 review)
+
+Swept the whole frontend for date construction/serialization; three non-generated sites, two defective.
+
+- `routes/app/products/tally-count/+page.svelte:54` — now `valueDate: todayAsIsoDate()`, extending the existing `$lib/formatter` import on line 9. This page has no date input, so the wrong day was written silently with nothing for the user to correct. Reproduced the defect under `TZ=Europe/Berlin` at instant `2026-08-08T22:30:00Z` (= `2026-08-09 00:30` local): `toISOString().substring(0,10)` gave `2026-08-08` against a local calendar day of `2026-08-09`. Every tally booked in the first one-to-two hours after local midnight was dated to the previous day.
+- `lib/components/TransactionDisplayRow.svelte:97` — now `valueDate: date`, plus `required` on the edit-row date input. The timezone behaviour here was NOT broken (`date` is already ISO, so the round-trip returned the same day in every zone), but the round-trip was redundant and carried the same latent crash as defect 2: the edit input had no `required`, and `new Date("").toISOString()` throws `RangeError: Invalid time value` (verified directly).
+- `lib/components/LogTable.svelte:52` — deliberately unchanged. It formats an instant (`createdAt`) as a full timestamp, so local-time conversion is correct and the output is already German.
+
+### Round 2 verification evidence
+
+- `npm run check`: `COMPLETED 302 FILES 5 ERRORS 20 WARNINGS 15 FILES_WITH_PROBLEMS` — still identical to the original pre-change baseline. The 2 pre-existing errors and 1 pre-existing warning in `tally-count/+page.svelte` (`Property "name" does not exist on type "Person"`, `state_referenced_locally`) are unrelated to the edited line and did not grow.
+- `npm run build`: succeeded.
+- `npx prettier --check` on all four touched files: "All matched files use Prettier code style!"
+- Chromium probe of the edit-row input as changed (`type="date" required` inside a form): loading a stored `2026-08-08` gives `blocksSubmit: false`; clearing it gives `readBack: ""`, `valueMissing: true`, `blocksSubmit: true`. The empty value can no longer reach the submit handler, so the `RangeError` is unreachable (AC #11).
+- Confirmed no `toISOString()` remains anywhere in `src/main/frontend/src` outside the generated `lib/client/` serializers and the explanatory comment in `formatter.ts`.
 <!-- SECTION:NOTES:END -->
 
 ## Final Summary
 
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-Transaction dates now render in German dd.MM.yyyy via a new reusable `formatIsoDate` helper in `src/lib/formatter.ts`, and the new-transaction date input defaults to a spec-valid ISO `todayAsIsoDate()` instead of `toDateString()`, which Chromium rejected outright and which made an untouched date field throw a RangeError on submit. Both helpers are timezone-correct in opposite directions: `formatIsoDate` pins `timeZone: "UTC"` so dates do not shift back a day at negative offsets, and `todayAsIsoDate` reads local calendar fields rather than `toISOString()`. Verified with `npm run check` identical to the pre-change baseline (5 errors / 20 warnings, none in the touched files), a successful `npm run build`, direct execution of the real formatter module across five timezones, and a real-Chromium probe of `<input type="date">` proving the old default was rejected and the new one is accepted. AC #9 was confirmed by inspection plus that browser probe rather than a live submit; the dev database was not written to.
+Transaction dates now render in German dd.MM.yyyy via a new reusable `formatIsoDate` helper in `src/lib/formatter.ts`, and every date the frontend writes goes through `todayAsIsoDate()` or an already-ISO value instead of `toISOString()`/`toDateString()`.
+
+Four defects fixed across four files:
+1. The Buchungsdatum column rendered the raw ISO `valueDate` instead of `08.08.2026`.
+2. The new-transaction row defaulted to `toDateString()`, which Chromium rejects outright, leaving the field empty and making an untouched date throw a RangeError on submit.
+3. Striche zählen wrote `toISOString()`-derived dates with no date input to correct them, misdating every tally booked in the first one-to-two hours after local midnight (reproduced under Europe/Berlin).
+4. The transaction edit row carried the same redundant round-trip and the same latent RangeError, with no `required` on its date input.
+
+The two helpers are timezone-correct in opposite directions: `formatIsoDate` pins `timeZone: "UTC"` so dates do not shift back a day at negative offsets, and `todayAsIsoDate` reads local calendar fields rather than `toISOString()`, which converts to UTC first.
+
+Verified with `npm run check` identical to the pre-change baseline (5 errors / 20 warnings, none newly attributable to the touched files), a successful `npm run build`, prettier clean on all four files, direct execution of the real formatter module across five timezones, a Europe/Berlin repro of the tally-count misdating, and Chromium probes of `<input type="date">` proving the old default was rejected, the new one is accepted, and a cleared edit-row date now blocks submission. No `toISOString()` remains outside the generated client.
+
+AC #9 was confirmed by inspection plus browser probe rather than a live submit; the dev database was never written to, so an end-to-end booking smoke test is still worth doing before merge.
 <!-- SECTION:FINAL_SUMMARY:END -->

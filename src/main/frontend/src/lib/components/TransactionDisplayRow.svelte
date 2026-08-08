@@ -94,7 +94,7 @@
 				transactionId: dto.transaction?.id!
 			},
 			body: {
-				valueDate: new Date(date!).toISOString().substring(0, 10),
+				valueDate: date,
 				description: description!,
 				amount: amount ?? 0,
 				sourceAccountId: direction === 'decrease' ? account.id! : bookAccountId!,
@@ -219,6 +219,7 @@
 				bind:value={date}
 				type="date"
 				class="input"
+				required
 			/>
 		</td>
 		<td>
