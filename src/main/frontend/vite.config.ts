@@ -9,6 +9,11 @@ export default defineConfig({
 			'top-level-await': true
 		}
 	},
+	// The oidc-spa Vite plugin does this for us in other stacks, but it only supports projects with a
+	// root index.html, which SvelteKit does not have. Pre-bundling oidc-spa breaks its early init.
+	optimizeDeps: {
+		exclude: ['oidc-spa', 'oidc-spa/core', 'oidc-spa/entrypoint']
+	},
 	plugins: [
 		Icons({
 			compiler: 'svelte',
