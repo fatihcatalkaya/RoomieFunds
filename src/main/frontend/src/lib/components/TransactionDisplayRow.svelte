@@ -8,7 +8,7 @@
 		type Account,
 		type TransactionSaldoDto
 	} from '$lib/client';
-	import { formatEuroCents } from '$lib/formatter';
+	import { formatEuroCents, formatIsoDate } from '$lib/formatter';
 	import RightArrowMarker from './RightArrowMarker.svelte';
 	import MdiPencil from '~icons/mdi/pencil';
 	import MdiDelete from '~icons/mdi/delete';
@@ -143,7 +143,7 @@
 
 {#if !editToggle}
 	<tr>
-		<td>{dto.transaction?.valueDate}</td>
+		<td>{formatIsoDate(dto.transaction?.valueDate)}</td>
 		<td>{dto.transaction?.description}</td>
 		<td class="text-nowrap">
 			{#if dto.transaction?.sourceAccountName === account.name}
