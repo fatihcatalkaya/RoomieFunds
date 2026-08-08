@@ -1,24 +1,24 @@
-import { getApiLogByTableName } from "$lib/client";
-import type { PageLoad } from "./$types";
+import { getApiLogByTableName } from '$lib/client';
+import type { PageLoad } from './$types';
 
-const tableName = "person";
+const tableName = 'person';
 
 export const load: PageLoad = () => {
-    const logQuery = async () => {
-        let query = await getApiLogByTableName(({
-            path: { table_name: tableName }
-        }));
+	const logQuery = async () => {
+		let query = await getApiLogByTableName({
+			path: { table_name: tableName }
+		});
 
-        if (query.error) {
-            throw query.error;
-        } else {
-            return query.data;
-        }
-    }
+		if (query.error) {
+			throw query.error;
+		} else {
+			return query.data;
+		}
+	};
 
-    return {
-        streamed: {
-            logQuery: logQuery()
-        }
-    }
-}
+	return {
+		streamed: {
+			logQuery: logQuery()
+		}
+	};
+};

@@ -1,8 +1,8 @@
-import { getApiRecurringTransaction } from "$lib/client";
-import type { PageLoad } from "./$types";
+import { getApiRecurringTransaction } from '$lib/client';
+import type { PageLoad } from './$types';
 
 export const load: PageLoad = () => {
-    const recurringQuery = async () => {
+	const recurringQuery = async () => {
 		let query = await getApiRecurringTransaction();
 
 		if (query.error) {
@@ -12,7 +12,7 @@ export const load: PageLoad = () => {
 		}
 	};
 
-    return {
-        recurringQuery: recurringQuery()
-    }
-}
+	return {
+		recurringQuery: recurringQuery()
+	};
+};

@@ -1,10 +1,10 @@
 <script module lang="ts">
-    export const breadcrumbLabel = "Bearbeiten";
+	export const breadcrumbLabel = 'Bearbeiten';
 </script>
 
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { onMount } from "svelte";
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
-    onMount(() => goto('/app/persons'));
+	onMount(() => goto('/app/persons'));
 </script>

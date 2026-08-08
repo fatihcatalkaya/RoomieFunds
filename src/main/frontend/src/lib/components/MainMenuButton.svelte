@@ -5,7 +5,7 @@
 </script>
 
 <a
-	class="h-40 w-40 btn rounded-xl bg-base-100 shadow-md font-normal text-2xl flex flex-col"
+	class="btn bg-base-100 flex h-40 w-40 flex-col rounded-xl text-2xl font-normal shadow-md"
 	href={redirectTo}
 >
 	{@render children?.()}

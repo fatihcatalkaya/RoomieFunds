@@ -96,7 +96,7 @@
 
 <div class="my-4 inline-flex w-full items-center">
 	<h1 class="flex-grow text-2xl font-bold">Gruppe {page.params.id} Bearbeiten</h1>
-	<button class="btn btn-error h-8 w-8 p-0 m-0 text-lg" onclick={deleteGroup}>
+	<button class="btn btn-error m-0 h-8 w-8 p-0 text-lg" onclick={deleteGroup}>
 		<MdiDelete />
 	</button>
 </div>
@@ -120,13 +120,15 @@
 	</div>
 </form>
 
-<div class="mx-auto max-w-md mt-6">
-	<h2 class="text-xl font-bold mb-2">Personen in Gruppe</h2>
+<div class="mx-auto mt-6 max-w-md">
+	<h2 class="mb-2 text-xl font-bold">Personen in Gruppe</h2>
 	{#await personsPromise}
 		<span class="loading loading-spinner"></span>
 	{:then persons}
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border border-slate-300">
-			<table class="table table-zebra text-nowrap">
+		<div
+			class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border border-slate-300"
+		>
+			<table class="table-zebra table text-nowrap">
 				<thead>
 					<tr>
 						<th>ID</th>
@@ -152,16 +154,18 @@
 			</table>
 		</div>
 		{#await allPersonsPromise then allPersons}
-			{@const availablePersons = allPersons.filter(p => !persons.some(pp => pp.id === p.id))}
+			{@const availablePersons = allPersons.filter((p) => !persons.some((pp) => pp.id === p.id))}
 			{#if availablePersons.length > 0}
-				<div class="flex gap-2 mt-2">
+				<div class="mt-2 flex gap-2">
 					<select class="select select-bordered flex-grow" bind:value={selectedPersonId}>
 						<option value={0} disabled>Person hinzufügen...</option>
 						{#each availablePersons as p}
 							<option value={p.id}>{p.firstName} {p.lastName} ({p.room})</option>
 						{/each}
 					</select>
-					<button class="btn btn-primary" onclick={addPerson} disabled={selectedPersonId === 0}>+</button>
+					<button class="btn btn-primary" onclick={addPerson} disabled={selectedPersonId === 0}
+						>+</button
+					>
 				</div>
 			{/if}
 		{/await}

@@ -42,16 +42,25 @@
 	<form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
-<div class="inline-flex items-center w-full my-4 gap-1">
+<div class="my-4 inline-flex w-full items-center gap-1">
 	<h1 class="flex-grow text-2xl font-bold">Gruppen</h1>
-	<button class="btn btn-warning h-8 w-8 p-0 m-0 text-lg" onclick={fullSync} disabled={syncLoading} title="Vollständige Synchronisation">
+	<button
+		class="btn btn-warning m-0 h-8 w-8 p-0 text-lg"
+		onclick={fullSync}
+		disabled={syncLoading}
+		title="Vollständige Synchronisation"
+	>
 		{#if syncLoading}
 			<span class="loading loading-spinner loading-sm"></span>
 		{:else}
 			<MdiSync />
 		{/if}
 	</button>
-	<a href="/app/groups/create" title="Gruppe Erstellen" class="btn btn-success h-8 w-8 p-0 m-0 text-lg">
+	<a
+		href="/app/groups/create"
+		title="Gruppe Erstellen"
+		class="btn btn-success m-0 h-8 w-8 p-0 text-lg"
+	>
 		<MdiPlus />
 	</a>
 </div>
@@ -59,8 +68,10 @@
 {#await groupQuery}
 	Loading groups...
 {:then groups}
-	<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border border-slate-300 px-0 mx-0">
-		<table class="table table-zebra text-nowrap">
+	<div
+		class="rounded-box border-base-content/5 bg-base-100 mx-0 overflow-x-auto border border-slate-300 px-0"
+	>
+		<table class="table-zebra table text-nowrap">
 			<thead>
 				<tr>
 					<th>ID</th>
@@ -76,7 +87,11 @@
 						<td>{group.name}</td>
 						<td>{group.keycloakGroupId ?? '-'}</td>
 						<td class="text-center">
-							<a href="/app/groups/edit/{group.id}" title="Gruppe {group.id} bearbeiten" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
+							<a
+								href="/app/groups/edit/{group.id}"
+								title="Gruppe {group.id} bearbeiten"
+								class="btn btn-primary m-0 h-8 w-8 p-0 text-lg"
+							>
 								<MdiPencil />
 							</a>
 						</td>

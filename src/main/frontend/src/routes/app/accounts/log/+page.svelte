@@ -1,10 +1,10 @@
 <script module>
-	export const breadcrumbLabel = "Protokoll";
+	export const breadcrumbLabel = 'Protokoll';
 </script>
 
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { onMount } from "svelte";
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 
-    onMount(() => goto('../'))
+	onMount(() => goto('../'));
 </script>

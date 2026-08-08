@@ -1,5 +1,5 @@
 <script module lang="ts">
-	export const breadcrumbLabel = "Getränke";
+	export const breadcrumbLabel = 'Getränke';
 </script>
 
 <script lang="ts">
@@ -14,13 +14,17 @@
 	import MdiTallyMarkFive from '~icons/mdi/tally-mark-5';
 
 	import type { PageProps } from './$types';
-	import { getApiProductTallylist, postApiProductByProductIdMoveUp, postApiProductByProductIdMoveDown } from '$lib/client';
+	import {
+		getApiProductTallylist,
+		postApiProductByProductIdMoveUp,
+		postApiProductByProductIdMoveDown
+	} from '$lib/client';
 
 	let { data }: PageProps = $props();
 
 	async function printTallylist() {
 		let query = await getApiProductTallylist();
-		openPDFInNewTab(query.data as Blob)
+		openPDFInNewTab(query.data as Blob);
 	}
 
 	// Assuming arrayBuffer is already available
@@ -43,26 +47,42 @@
 	}
 </script>
 
-<div class="inline-flex items-center w-full my-4 gap-2">
-	<h1 class="flex-grow text-2xl font-bold">
-		Produktliste
-	</h1>
-	<a href="/app/products/tally-count" title="Strichliste Drucken" class="btn btn-secondary h-8 w-8 p-0 m-0 text-lg">
-		<MdiTallyMarkFive/>
+<div class="my-4 inline-flex w-full items-center gap-2">
+	<h1 class="flex-grow text-2xl font-bold">Produktliste</h1>
+	<a
+		href="/app/products/tally-count"
+		title="Strichliste Drucken"
+		class="btn btn-secondary m-0 h-8 w-8 p-0 text-lg"
+	>
+		<MdiTallyMarkFive />
 	</a>
-	<button title="Strichliste Drucken" class="btn btn-warning h-8 w-8 p-0 m-0 text-lg" onclick={printTallylist}>
-		<MdiPrinter/>
+	<button
+		title="Strichliste Drucken"
+		class="btn btn-warning m-0 h-8 w-8 p-0 text-lg"
+		onclick={printTallylist}
+	>
+		<MdiPrinter />
 	</button>
-	<a href="/app/products/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
-		<MdiScriptText/>
+	<a
+		href="/app/products/log"
+		title="Änderungsprotokoll"
+		class="btn btn-primary m-0 h-8 w-8 p-0 text-lg"
+	>
+		<MdiScriptText />
 	</a>
-	<a href="/app/products/create" title="Neues Produkt" class="btn btn-success h-8 w-8 p-0 m-0 text-lg">
-		<MdiPlus/>
+	<a
+		href="/app/products/create"
+		title="Neues Produkt"
+		class="btn btn-success m-0 h-8 w-8 p-0 text-lg"
+	>
+		<MdiPlus />
 	</a>
 </div>
 
-<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border border-slate-300 px-0 mx-0">
-	<table class="table table-zebra">
+<div
+	class="rounded-box border-base-content/5 bg-base-100 mx-0 overflow-x-auto border border-slate-300 px-0"
+>
+	<table class="table-zebra table">
 		<thead>
 			<tr>
 				<th>ID</th>
@@ -99,7 +119,11 @@
 						</div>
 					</td>
 					<td class="max-w-4 text-center">
-						<a href="/app/products/edit/{product.id}" title="Produkt {product.id} bearbeiten" class="btn btn-primary h-8 w-8 p-0 m-0 text-lg">
+						<a
+							href="/app/products/edit/{product.id}"
+							title="Produkt {product.id} bearbeiten"
+							class="btn btn-primary m-0 h-8 w-8 p-0 text-lg"
+						>
 							<MdiPencil />
 						</a>
 					</td>

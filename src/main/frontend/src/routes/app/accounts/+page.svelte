@@ -23,7 +23,7 @@
 
 	async function printAccountReport() {
 		let query = await getApiAccountReport();
-		openPDFInNewTab(query.data as Blob)
+		openPDFInNewTab(query.data as Blob);
 	}
 
 	// Assuming arrayBuffer is already available
@@ -34,7 +34,6 @@
 			URL.revokeObjectURL(url);
 		};
 	}
-
 </script>
 
 <div class="my-4 inline-flex w-full items-center">
@@ -47,11 +46,19 @@
 		</span>
 	</label>
 	<div class="flex-2"></div>
-	<button title="Strichliste Drucken" class="btn btn-warning h-8 w-8 p-0 m-0 mr-2 text-lg" onclick={printAccountReport}>
-		<MdiPrinter/>
+	<button
+		title="Strichliste Drucken"
+		class="btn btn-warning m-0 mr-2 h-8 w-8 p-0 text-lg"
+		onclick={printAccountReport}
+	>
+		<MdiPrinter />
 	</button>
-	<a href="/app/accounts/log" title="Änderungsprotokoll" class="btn btn-primary h-8 w-8 p-0 m-0 mr-2 text-lg">
-		<MdiScriptText/>
+	<a
+		href="/app/accounts/log"
+		title="Änderungsprotokoll"
+		class="btn btn-primary m-0 mr-2 h-8 w-8 p-0 text-lg"
+	>
+		<MdiScriptText />
 	</a>
 	<a href="/app/accounts/create" class="btn btn-success m-0 h-8 w-8 p-0 text-lg">
 		<MdiPlus />
@@ -62,9 +69,9 @@
 	<div>Loading data...</div>
 {:then accounts}
 	<ul class="menu bg-base-200 rounded-box w-full">
-        {#each accounts as tree}
-            <AccountListSubtree {...tree} />
-        {/each}
+		{#each accounts as tree}
+			<AccountListSubtree {...tree} />
+		{/each}
 	</ul>
 {:catch error}
 	Error while fetching data!

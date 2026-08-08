@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { LogEntryDto } from "$lib/client";
+	import type { LogEntryDto } from '$lib/client';
 
-    type LogTableProps = {
-        logEntries: LogEntryDto[]
-    }
+	type LogTableProps = {
+		logEntries: LogEntryDto[];
+	};
 
-    const { logEntries }: LogTableProps = $props();
+	const { logEntries }: LogTableProps = $props();
 
-    type Diff<T> = {
+	type Diff<T> = {
 		[K in keyof T]?: T[K] | null;
 	};
 
@@ -34,49 +34,51 @@
 	}
 </script>
 
-<div class="rounded-box border-base-content/5 flex-grow overflow-x-auto border border-slate-300 text-nowrap">
-    <table class="table">
-        <thead>
-            <tr>
-                <td>Zeitstempel</td>
-                <td>Benutzer</td>
-                <td>Aktion</td>
-                <td>Änderung</td>
-            </tr>
-        </thead>
-        <tbody>
-            {#each logEntries! as entry}
-                <tr>
-                    <td>{new Date(entry.createdAt!).toLocaleString("de-DE")}</td>
-                    <td>{entry.modifiedBy!.split(' ').slice(1).join(' ')}</td>
-                    <td>
-                        {#if entry.logOperation == 'create'}
-                            <div class="badge badge-success font-bold">Neu</div>
-                        {:else if entry.logOperation == 'update'}
-                            <div class="badge badge-warning font-bold">Ändern</div>
-                        {:else if entry.logOperation == 'delete'}
-                            <div class="badge badge-error font-bold">Löschen</div>
-                        {/if}
-                    </td>
-                    <td>
-                        <ul class="list-disc">
-                            {#if entry.logOperation == "create"}
-                                {#each Object.entries(JSON.parse(entry.subjectAfterJson!)) as [key, value]}
-                                    <li>{key}: {value}</li>
-                                {/each}
-                            {:else if entry.logOperation == "update"}
-                                {#each Object.entries(diffObjects(JSON.parse(entry.subjectBeforeJson!), JSON.parse(entry.subjectAfterJson!))) as [key, value]}
-                                    <li>{key}: {value}</li>
-                                {/each}
-                            {:else if entry.logOperation == "delete"}
-                                {#each Object.entries(JSON.parse(entry.subjectBeforeJson!)) as [key, value]}
-                                    <li>{key}: {value}</li>
-                                {/each}
-                            {/if}
-                        </ul>
-                    </td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
+<div
+	class="rounded-box border-base-content/5 flex-grow overflow-x-auto border border-slate-300 text-nowrap"
+>
+	<table class="table">
+		<thead>
+			<tr>
+				<td>Zeitstempel</td>
+				<td>Benutzer</td>
+				<td>Aktion</td>
+				<td>Änderung</td>
+			</tr>
+		</thead>
+		<tbody>
+			{#each logEntries! as entry}
+				<tr>
+					<td>{new Date(entry.createdAt!).toLocaleString('de-DE')}</td>
+					<td>{entry.modifiedBy!.split(' ').slice(1).join(' ')}</td>
+					<td>
+						{#if entry.logOperation == 'create'}
+							<div class="badge badge-success font-bold">Neu</div>
+						{:else if entry.logOperation == 'update'}
+							<div class="badge badge-warning font-bold">Ändern</div>
+						{:else if entry.logOperation == 'delete'}
+							<div class="badge badge-error font-bold">Löschen</div>
+						{/if}
+					</td>
+					<td>
+						<ul class="list-disc">
+							{#if entry.logOperation == 'create'}
+								{#each Object.entries(JSON.parse(entry.subjectAfterJson!)) as [key, value]}
+									<li>{key}: {value}</li>
+								{/each}
+							{:else if entry.logOperation == 'update'}
+								{#each Object.entries(diffObjects(JSON.parse(entry.subjectBeforeJson!), JSON.parse(entry.subjectAfterJson!))) as [key, value]}
+									<li>{key}: {value}</li>
+								{/each}
+							{:else if entry.logOperation == 'delete'}
+								{#each Object.entries(JSON.parse(entry.subjectBeforeJson!)) as [key, value]}
+									<li>{key}: {value}</li>
+								{/each}
+							{/if}
+						</ul>
+					</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
 </div>

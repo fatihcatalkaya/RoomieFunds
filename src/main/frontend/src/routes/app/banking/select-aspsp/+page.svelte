@@ -3,7 +3,12 @@
 </script>
 
 <script lang="ts">
-	import { type StartAuthorizationDto, type AspspData, type AuthMethod, postApiEnablebanking } from '$lib/client';
+	import {
+		type StartAuthorizationDto,
+		type AspspData,
+		type AuthMethod,
+		postApiEnablebanking
+	} from '$lib/client';
 	import type { PageProps } from './$types';
 
 	const { data }: PageProps = $props();
@@ -50,7 +55,7 @@
 
 	let bankSelectModal: HTMLDialogElement;
 	let selectedAspsp: AspspData | undefined = $state();
-    let selectedAuth: AuthMethod | undefined = $state();
+	let selectedAuth: AuthMethod | undefined = $state();
 
 	function selectBank(aspsp: AspspData) {
 		selectedAspsp = aspsp;
@@ -58,45 +63,49 @@
 	}
 
 	async function selectBankAndDingsbumd(aspsp: AspspData, authMethodName: string) {
-        const body: StartAuthorizationDto = {
+		const body: StartAuthorizationDto = {
 			aspsp: {
 				name: aspsp.name,
 				country: aspsp.country
 			},
 			authMethod: authMethodName,
 			maximumConsentValidity: aspsp.maximum_consent_validity
-		}
-		
+		};
+
 		const query = await postApiEnablebanking({ body });
 
 		if (query.error) {
-			console.error(query.error)
+			console.error(query.error);
 		} else {
 			let data = query.data!;
 			window.location = data.url! as any;
 		}
-    }
+	}
 </script>
 
 <dialog class="modal" bind:this={bankSelectModal}>
 	<div class="modal-box">
 		<h3 class="text-lg font-bold">{selectedAspsp?.name}</h3>
-		<p class="py-4 flex flex-wrap gap-2">
-            Wähle deine bevorzugte Authentifizierungsmethode aus:
-            <select class="select" bind:value={selectedAuth}>
-                {#if selectedAspsp}
-                    {#each selectedAspsp?.auth_methods!.filter(method => method.psu_type == "PERSONAL") as method}
-                        <option value="{method}">{method.title ?? method.name}</option>
-                    {/each}
-                {:else}
-                    <option value="" disabled>Fehler :(</option>
-                {/if}
-            </select>
-        </p>
+		<p class="flex flex-wrap gap-2 py-4">
+			Wähle deine bevorzugte Authentifizierungsmethode aus:
+			<select class="select" bind:value={selectedAuth}>
+				{#if selectedAspsp}
+					{#each selectedAspsp?.auth_methods!.filter((method) => method.psu_type == 'PERSONAL') as method}
+						<option value={method}>{method.title ?? method.name}</option>
+					{/each}
+				{:else}
+					<option value="" disabled>Fehler :(</option>
+				{/if}
+			</select>
+		</p>
 		<div class="modal-action">
 			<form method="dialog" class="join">
 				<button class="btn join-item">Abbrechen</button>
-				<button class="btn btn-primary join-item" onclick={() => selectBankAndDingsbumd(selectedAspsp!, selectedAuth?.name!)}>Auswählen</button>
+				<button
+					class="btn btn-primary join-item"
+					onclick={() => selectBankAndDingsbumd(selectedAspsp!, selectedAuth?.name!)}
+					>Auswählen</button
+				>
 			</form>
 		</div>
 	</div>
@@ -144,7 +153,9 @@
 				<h2 class="card-title">{aspsp.name}</h2>
 				<p>
 					<strong>Unterstützt:</strong>
-					{[...new Set(aspsp?.auth_methods?.map((method) => method.title ?? method.name))].join(', ')}
+					{[...new Set(aspsp?.auth_methods?.map((method) => method.title ?? method.name))].join(
+						', '
+					)}
 				</p>
 			</div>
 		</button>

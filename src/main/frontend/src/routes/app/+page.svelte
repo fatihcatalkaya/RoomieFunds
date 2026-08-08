@@ -1,5 +1,5 @@
 <script module lang="ts">
-	export const breadcrumbLabel = "Home";
+	export const breadcrumbLabel = 'Home';
 </script>
 
 <script>
@@ -23,7 +23,7 @@
 			<MdiAccountGroup class="text-4xl" />
 			Gruppen
 		</MainMenuButton>
-        <MainMenuButton redirectTo="/app/accounts">
+		<MainMenuButton redirectTo="/app/accounts">
 			<MdiBank class="text-4xl" />
 			Konten
 		</MainMenuButton>
@@ -36,7 +36,8 @@
 			Getränke
 		</MainMenuButton>
 		<div class="indicator">
-			<span class="indicator-item badge badge-warning text-white font-bold p-0 px-1 mr-2">ToDo</span>
+			<span class="indicator-item badge badge-warning mr-2 p-0 px-1 font-bold text-white">ToDo</span
+			>
 			<MainMenuButton redirectTo="/app/banking">
 				<MdiCashMultiple class="text-4xl" />
 				Banking
@@ -44,7 +45,7 @@
 		</div>
 
 		<MainMenuButton redirectTo="/app/help">
-			<MdiHelp class="w-10 h-10" />
+			<MdiHelp class="h-10 w-10" />
 			Anleitung
 		</MainMenuButton>
 	</div>

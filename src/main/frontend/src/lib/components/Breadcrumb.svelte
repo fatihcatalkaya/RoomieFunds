@@ -2,25 +2,23 @@
 	import { page } from '$app/state';
 
 	function decideLabel(routeModule: any, pathName: string) {
-		if (routeModule && Object.hasOwn(routeModule, "breadcrumbLabel")) {
-			return routeModule["breadcrumbLabel"];
+		if (routeModule && Object.hasOwn(routeModule, 'breadcrumbLabel')) {
+			return routeModule['breadcrumbLabel'];
 		} else {
 			return String(pathName).charAt(0).toUpperCase() + String(pathName).slice(1);
 		}
 	}
 
 	let crumbs: Array<{ label: string; href: string }> = $derived.by(() => {
-		const tokens = page.url.pathname
-			.split('/')
-			.filter((t) => t !== '');
+		const tokens = page.url.pathname.split('/').filter((t) => t !== '');
 
-		let routeModules = import.meta.glob("/src/routes/**/*.svelte", {
-			eager: true,
+		let routeModules = import.meta.glob('/src/routes/**/*.svelte', {
+			eager: true
 		});
 
-		let completeUrl = "";
-		let completeRoute = "/src/routes";
-		const paths = page.url.pathname.split("/").filter((p) => p != "");
+		let completeUrl = '';
+		let completeRoute = '/src/routes';
+		const paths = page.url.pathname.split('/').filter((p) => p != '');
 
 		let _crumbs = [];
 
@@ -29,26 +27,32 @@
 			let previousUrl = completeUrl;
 			completeUrl += `/${path}`;
 
-			if (Object.hasOwn(routeModules, completeRoute + "/+page.svelte")) {
-				completeRoute += `/${path}`
+			if (Object.hasOwn(routeModules, completeRoute + '/+page.svelte')) {
+				completeRoute += `/${path}`;
 				_crumbs.push({
-					label: decideLabel(routeModules["/src/routes" + completeUrl + "/+page.svelte"], path),
+					label: decideLabel(routeModules['/src/routes' + completeUrl + '/+page.svelte'], path),
 					href: completeUrl
 				});
 			} else {
-				let matchingRoutes = Object.keys(routeModules).filter(route => route.startsWith(completeRoute + "/["));
+				let matchingRoutes = Object.keys(routeModules).filter((route) =>
+					route.startsWith(completeRoute + '/[')
+				);
 				if (matchingRoutes.length != 1) {
-					console.warn(`Breadcrumb path ${completeUrl} matches multiple or no routes. Defaulting to capitalized path label.`)
+					console.warn(
+						`Breadcrumb path ${completeUrl} matches multiple or no routes. Defaulting to capitalized path label.`
+					);
 					// console.log(matchingRoutes) // <= uncomment to show what went wrong :)
 					_crumbs.push({
 						label: String(path).charAt(0).toUpperCase() + String(path).slice(1),
 						href: completeUrl
 					});
 				} else {
-					let string = matchingRoutes[0].replace("/src/routes" + previousUrl + "/", "").split("/")[0]
-					completeRoute += `/${string}`
+					let string = matchingRoutes[0]
+						.replace('/src/routes' + previousUrl + '/', '')
+						.split('/')[0];
+					completeRoute += `/${string}`;
 					_crumbs.push({
-						label: decideLabel(routeModules[completeRoute + "/+page.svelte"], path),
+						label: decideLabel(routeModules[completeRoute + '/+page.svelte'], path),
 						href: completeUrl
 					});
 				}
@@ -59,7 +63,10 @@
 	});
 </script>
 
-<nav aria-label="breadcrumb" class="px-4 py-2 mb-2 mt-4 rounded-box border-base-content/5 bg-base-100 border border-slate-300 overflow-x-scroll">
+<nav
+	aria-label="breadcrumb"
+	class="rounded-box border-base-content/5 bg-base-100 mt-4 mb-2 overflow-x-scroll border border-slate-300 px-4 py-2"
+>
 	<ol class="inline-flex items-center space-x-4 text-sm font-medium text-nowrap after:w-4">
 		{#each crumbs as c, i}
 			<li class="inline-flex items-center">

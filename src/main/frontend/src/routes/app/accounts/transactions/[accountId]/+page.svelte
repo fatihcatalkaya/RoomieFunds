@@ -1,10 +1,15 @@
 <script lang="ts">
-	import { page } from "$app/state";
-	import type { TransactionSaldoDto } from "$lib/client";
-    import { deleteApiTransactionByTransactionId, deleteApiTransactionByTransactionIdReceipt, getApiAccountByAccountIdStatement, getApiTransactionAccountByAccountId } from "$lib/client";
-	import TransactionInsert from "$lib/components/TransactionInsert.svelte";
-	import TransactionDisplayRow from "$lib/components/TransactionDisplayRow.svelte";
-    import MdiPencilPlus from '~icons/mdi/pencil';
+	import { page } from '$app/state';
+	import type { TransactionSaldoDto } from '$lib/client';
+	import {
+		deleteApiTransactionByTransactionId,
+		deleteApiTransactionByTransactionIdReceipt,
+		getApiAccountByAccountIdStatement,
+		getApiTransactionAccountByAccountId
+	} from '$lib/client';
+	import TransactionInsert from '$lib/components/TransactionInsert.svelte';
+	import TransactionDisplayRow from '$lib/components/TransactionDisplayRow.svelte';
+	import MdiPencilPlus from '~icons/mdi/pencil';
 	import MdiDelete from '~icons/mdi/delete';
 	import MdiScriptText from '~icons/mdi/script-text';
 	import MdiPrinter from '~icons/mdi/printer';
@@ -146,41 +151,53 @@
 		</button>
 	</div>
 
-    <div class="rounded-box border-base-content/5 overflow-x-auto overflow-y-scroll border border-slate-300 {updating ? "pointer-events-none opacity-40" : ""}">
-        <table class="table-zebra table-pin-rows table">
-            <thead class="text-neutral">
-                <tr>
-                    <th>Buchungsdatum</th>
-                    <th>Beschreibung</th>
-                    <th>Buchen Gegen</th>
-                    <th class="text-center">Beleg</th>
-                    <th class="text-right">Betrag</th>
-                    <th class="text-right">Saldo</th>
-                    <th>Bearbeiten</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#key transactions}
-                    {#if transactions.length == 0}
-                        <tr>
-                            <td colspan="6" class="text-lg p-6 pl-4">Auf diesem Konto sind keine Buchungen verzeichnet.</td>
-                        </tr>    
-                    {:else}
-                        {#each transactions! as dto}
-                            <TransactionDisplayRow {dto} {account} refreshTransaction={refreshTransactions} tryDelete={() => deleteTransaction(dto)} tryDeleteReceipt={() => deleteReceipt(dto.transaction?.id!)}/>
-                        {/each}
-                    {/if}
-                
-                    <TransactionInsert parentAccountId={account.id!} refreshTransactions={refreshTransactions}/>
-                {/key}
-            </tbody>
-        </table>
-    </div>
+	<div
+		class="rounded-box border-base-content/5 overflow-x-auto overflow-y-scroll border border-slate-300 {updating
+			? 'pointer-events-none opacity-40'
+			: ''}"
+	>
+		<table class="table-zebra table-pin-rows table">
+			<thead class="text-neutral">
+				<tr>
+					<th>Buchungsdatum</th>
+					<th>Beschreibung</th>
+					<th>Buchen Gegen</th>
+					<th class="text-center">Beleg</th>
+					<th class="text-right">Betrag</th>
+					<th class="text-right">Saldo</th>
+					<th>Bearbeiten</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#key transactions}
+					{#if transactions.length == 0}
+						<tr>
+							<td colspan="6" class="p-6 pl-4 text-lg"
+								>Auf diesem Konto sind keine Buchungen verzeichnet.</td
+							>
+						</tr>
+					{:else}
+						{#each transactions! as dto}
+							<TransactionDisplayRow
+								{dto}
+								{account}
+								refreshTransaction={refreshTransactions}
+								tryDelete={() => deleteTransaction(dto)}
+								tryDeleteReceipt={() => deleteReceipt(dto.transaction?.id!)}
+							/>
+						{/each}
+					{/if}
+
+					<TransactionInsert parentAccountId={account.id!} {refreshTransactions} />
+				{/key}
+			</tbody>
+		</table>
+	</div>
 {:catch error}
-    <ErrorAlert>
-        Konnte die Transaktionen für Konto {page.params.accountId} nicht laden!
-    </ErrorAlert>
-    <code class="w-full mt-4">
-        {JSON.stringify(error, null, 2)}
-    </code>
+	<ErrorAlert>
+		Konnte die Transaktionen für Konto {page.params.accountId} nicht laden!
+	</ErrorAlert>
+	<code class="mt-4 w-full">
+		{JSON.stringify(error, null, 2)}
+	</code>
 {/await}

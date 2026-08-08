@@ -1,8 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { deleteApiPersonByPersonId, patchApiPersonByPersonId, getApiPersonByPersonIdGroups, postApiPersonByPersonIdSyncKeycloak, getApiGroup, deleteApiGroupByGroupIdPersonsByPersonId, postApiGroupByGroupIdPersons } from '$lib/client';
-    import MdiDelete from '~icons/mdi/delete';
+	import {
+		deleteApiPersonByPersonId,
+		patchApiPersonByPersonId,
+		getApiPersonByPersonIdGroups,
+		postApiPersonByPersonIdSyncKeycloak,
+		getApiGroup,
+		deleteApiGroupByGroupIdPersonsByPersonId,
+		postApiGroupByGroupIdPersons
+	} from '$lib/client';
+	import MdiDelete from '~icons/mdi/delete';
 	import type { PageProps } from './$types';
 
 	const { data }: PageProps = $props();
@@ -22,20 +30,28 @@
 			path: {
 				personId: person!.id!
 			},
-			body: { firstName, lastName, room, paysFloorFees, printOnProductTallyList, email, emailAccountStatement }
+			body: {
+				firstName,
+				lastName,
+				room,
+				paysFloorFees,
+				printOnProductTallyList,
+				email,
+				emailAccountStatement
+			}
 		});
 
 		if (query.error) {
 			console.error(query.error);
 		} else {
-			goto("../");
+			goto('../');
 		}
 
 		return false;
 	}
 
-    let deleteConfirmModal: HTMLDialogElement;
-    let showConflictError = $state(false);
+	let deleteConfirmModal: HTMLDialogElement;
+	let showConflictError = $state(false);
 
 	let groupsPromise = $state(loadGroups());
 	let allGroupsPromise = $state(loadAllGroups());
@@ -58,7 +74,10 @@
 
 	async function addGroup() {
 		if (selectedGroupId === 0) return;
-		await postApiGroupByGroupIdPersons({ path: { groupId: selectedGroupId }, body: { personId: person!.id! } });
+		await postApiGroupByGroupIdPersons({
+			path: { groupId: selectedGroupId },
+			body: { personId: person!.id! }
+		});
 		selectedGroupId = 0;
 		groupsPromise = loadGroups();
 	}
@@ -77,24 +96,24 @@
 	}
 
 	async function deletePerson() {
-        deleteConfirmModal.showModal();
-    }
+		deleteConfirmModal.showModal();
+	}
 
-    async function reallyDeletePerson() {
-        let query = await deleteApiPersonByPersonId({
-            path: {
-                personId: person!.id!,
-            }
-        });
+	async function reallyDeletePerson() {
+		let query = await deleteApiPersonByPersonId({
+			path: {
+				personId: person!.id!
+			}
+		});
 
-        if (query.error && query.response.status == 409) {
-            showConflictError = true;
-        } else {
-            goto("../")
-        }
+		if (query.error && query.response.status == 409) {
+			showConflictError = true;
+		} else {
+			goto('../');
+		}
 
-        return true
-    }
+		return true;
+	}
 </script>
 
 <dialog class="modal" bind:this={deleteConfirmModal}>
@@ -114,21 +133,33 @@
 </dialog>
 
 {#if showConflictError}
-    <div role="alert" class="alert alert-error mt-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>Die Person kann nicht gelöscht werden, da mit dem zugehörigen Konto Buchungen verknüpft sind.</span>
-    </div>
+	<div role="alert" class="alert alert-error mt-4">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-6 w-6 shrink-0 stroke-current"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+			/>
+		</svg>
+		<span
+			>Die Person kann nicht gelöscht werden, da mit dem zugehörigen Konto Buchungen verknüpft sind.</span
+		>
+	</div>
 {/if}
 
 <div class="my-4 inline-flex w-full items-center">
 	<h1 class="flex-grow text-2xl font-bold">
 		Person {page.params.id} Bearbeiten
 	</h1>
-    <button class="btn btn-error h-8 w-8 p-0 m-0 text-lg" onclick={deletePerson}>
-        <MdiDelete/>
-    </button>
+	<button class="btn btn-error m-0 h-8 w-8 p-0 text-lg" onclick={deletePerson}>
+		<MdiDelete />
+	</button>
 </div>
 
 <form class="mx-auto grid max-w-md grid-cols-1 gap-2">
@@ -150,7 +181,14 @@
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">E-Mail</span>
-		<input type="text" class="input w-3/4" placeholder="peter@lustig.de" minlength=3 required bind:value={email} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="peter@lustig.de"
+			minlength="3"
+			required
+			bind:value={email}
+		/>
 	</label>
 	<div class="flex w-full items-center">
 		<span class="w-1/4 text-center"> </span>
@@ -174,10 +212,10 @@
 		</label>
 	</div>
 	{#if person.keycloakUserId}
-	<label class="flex w-full items-center mt-2">
-		<span class="w-1/4">KC User</span>
-		<input type="text" class="input w-3/4" value={person.keycloakUserId} disabled />
-	</label>
+		<label class="mt-2 flex w-full items-center">
+			<span class="w-1/4">KC User</span>
+			<input type="text" class="input w-3/4" value={person.keycloakUserId} disabled />
+		</label>
 	{/if}
 	<div class="join mt-2 w-full">
 		<a href="/app/persons" class="join-item btn btn-warn w-1/2"> Zurück </a>
@@ -185,14 +223,14 @@
 	</div>
 </form>
 
-<div class="mx-auto max-w-md mt-6">
-	<h2 class="text-xl font-bold mb-2">Gruppen</h2>
+<div class="mx-auto mt-6 max-w-md">
+	<h2 class="mb-2 text-xl font-bold">Gruppen</h2>
 	{#await groupsPromise}
 		<span class="loading loading-spinner"></span>
 	{:then groups}
-		<div class="flex flex-wrap gap-2 mb-4">
+		<div class="mb-4 flex flex-wrap gap-2">
 			{#if person.paysFloorFees}
-				<div class="badge badge-info gap-1 tooltip" data-tip="Automatisch durch Flurbeitrag">
+				<div class="badge badge-info tooltip gap-1" data-tip="Automatisch durch Flurbeitrag">
 					floor-members
 				</div>
 			{/if}
@@ -204,7 +242,7 @@
 			{/each}
 		</div>
 		{#await allGroupsPromise then allGroups}
-			{@const availableGroups = allGroups.filter(g => !groups.some(pg => pg.id === g.id))}
+			{@const availableGroups = allGroups.filter((g) => !groups.some((pg) => pg.id === g.id))}
 			{#if availableGroups.length > 0}
 				<div class="flex gap-2">
 					<select class="select select-bordered flex-grow" bind:value={selectedGroupId}>
@@ -213,7 +251,9 @@
 							<option value={group.id}>{group.name}</option>
 						{/each}
 					</select>
-					<button class="btn btn-primary" onclick={addGroup} disabled={selectedGroupId === 0}>+</button>
+					<button class="btn btn-primary" onclick={addGroup} disabled={selectedGroupId === 0}
+						>+</button
+					>
 				</div>
 			{/if}
 		{/await}
@@ -222,7 +262,7 @@
 	{/await}
 </div>
 
-<div class="mx-auto max-w-md mt-6">
+<div class="mx-auto mt-6 max-w-md">
 	<button class="btn btn-warning w-full" onclick={syncKeycloak} disabled={syncLoading}>
 		{#if syncLoading}
 			<span class="loading loading-spinner loading-sm"></span>

@@ -22,21 +22,33 @@
 	}
 </script>
 
-<div class="inline-flex items-center w-full my-4">
+<div class="my-4 inline-flex w-full items-center">
 	<h1 class="flex-grow text-2xl font-bold">Neue Gruppe</h1>
 </div>
 
 <form class="mx-auto grid max-w-md grid-cols-1 gap-2" onsubmit={createGroup}>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Name</span>
-		<input type="text" class="input w-3/4" placeholder="floor-members" minlength="1" required bind:value={newGroup.name} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="floor-members"
+			minlength="1"
+			required
+			bind:value={newGroup.name}
+		/>
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">KC Group ID</span>
-		<input type="text" class="input w-3/4" placeholder="(optional)" bind:value={newGroup.keycloakGroupId} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="(optional)"
+			bind:value={newGroup.keycloakGroupId}
+		/>
 	</label>
-	<div class="mt-2 join grid grid-cols-2">
-		<button class="btn order-1 btn-success join-item">Speichern</button>
-		<a href="/app/groups" class="btn order-0 join-item">Zurück</a>
+	<div class="join mt-2 grid grid-cols-2">
+		<button class="btn btn-success join-item order-1">Speichern</button>
+		<a href="/app/groups" class="btn join-item order-0">Zurück</a>
 	</div>
 </form>

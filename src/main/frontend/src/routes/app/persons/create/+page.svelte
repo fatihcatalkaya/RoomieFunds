@@ -1,59 +1,85 @@
 <script module lang="ts">
-    export const breadcrumbLabel = "Neu";
+	export const breadcrumbLabel = 'Neu';
 </script>
 
 <script lang="ts">
-	import { goto } from "$app/navigation";
+	import { goto } from '$app/navigation';
 
-	import { postApiPerson, type CreatePersonDto } from "$lib/client";
+	import { postApiPerson, type CreatePersonDto } from '$lib/client';
 
 	let newPerson: CreatePersonDto = $state({
-		firstName: "",
-		lastName: "",
-		room: "",
+		firstName: '',
+		lastName: '',
+		room: '',
 		paysFloorFees: true,
 		printOnProductTallyList: true,
-		email: "",
+		email: '',
 		emailAccountStatement: true
-	})
+	});
 
-    async function createPerson() {
-        let query = await postApiPerson({
-            body: {...newPerson}
-        });
+	async function createPerson() {
+		let query = await postApiPerson({
+			body: { ...newPerson }
+		});
 
-        if (query.error) {
-            console.error(query.error);
-        } else {
-            goto("../");
-        }
+		if (query.error) {
+			console.error(query.error);
+		} else {
+			goto('../');
+		}
 
-        return false;
-    }
+		return false;
+	}
 </script>
 
-<div class="inline-flex items-center w-full my-4">
-	<h1 class="flex-grow text-2xl font-bold">
-		Neue Person
-	</h1>
+<div class="my-4 inline-flex w-full items-center">
+	<h1 class="flex-grow text-2xl font-bold">Neue Person</h1>
 </div>
 
 <form class="mx-auto grid max-w-md grid-cols-1 gap-2" onsubmit={createPerson}>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Vorname</span>
-		<input type="text" class="input w-3/4" placeholder="Peter" minlength=1 required bind:value={newPerson.firstName} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="Peter"
+			minlength="1"
+			required
+			bind:value={newPerson.firstName}
+		/>
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Nachname</span>
-		<input type="text" class="input w-3/4" placeholder="Lustig" minlength=1 required bind:value={newPerson.lastName} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="Lustig"
+			minlength="1"
+			required
+			bind:value={newPerson.lastName}
+		/>
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">Zimmer</span>
-		<input type="text" class="input w-3/4" placeholder="R400" minlength=3 required bind:value={newPerson.room} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="R400"
+			minlength="3"
+			required
+			bind:value={newPerson.room}
+		/>
 	</label>
 	<label class="flex w-full items-center">
 		<span class="w-1/4">E-Mail</span>
-		<input type="text" class="input w-3/4" placeholder="peter@lustig.de" minlength=3 required bind:value={newPerson.email} />
+		<input
+			type="text"
+			class="input w-3/4"
+			placeholder="peter@lustig.de"
+			minlength="3"
+			required
+			bind:value={newPerson.email}
+		/>
 	</label>
 	<div class="flex w-full items-center">
 		<span class="w-1/4 text-center"> </span>
@@ -76,8 +102,8 @@
 			<span class="flex-grow">Erhält Konto-Auszug per Email</span>
 		</label>
 	</div>
-	<div class="mt-2 join grid grid-cols-2">
-		<button class="btn order-1 btn-success join-item">Speichern</button>
-		<a href="/app/persons" class="btn order-0 join-item">Zurück</a>
+	<div class="join mt-2 grid grid-cols-2">
+		<button class="btn btn-success join-item order-1">Speichern</button>
+		<a href="/app/persons" class="btn join-item order-0">Zurück</a>
 	</div>
 </form>
