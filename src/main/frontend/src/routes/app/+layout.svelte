@@ -5,19 +5,18 @@
 	import MdiPerson from '~icons/mdi/person';
 	import MdiExpand from '~icons/mdi/arrow-expand-horizontal';
 	import MdiCollapse from '~icons/mdi/arrow-collapse-horizontal';
-	import { OidcWrapper } from '$lib/oidc';
+	import { getOidc } from '$lib/oidc';
 	import { onMount } from 'svelte';
-	import type { Oidc } from 'oidc-spa';
+	import type { Oidc } from 'oidc-spa/core';
 	import { getApiPerson } from '$lib/client';
 
 	let username: string | null = $state<string | null>(null);
 	let expanded: boolean = $state(false);
 	let hasAccess: boolean | null = $state(null);
 
-	let oidcClient: Oidc.LoggedIn<Record<string, unknown>> | Oidc.NotLoggedIn | null = $state(null);
+	let oidcClient: Oidc | null = $state(null);
 	onMount(async () => {
-		const oidcPromise = OidcWrapper.getInstance().getOidcClient();
-		oidcClient = await oidcPromise;
+		oidcClient = await getOidc();
 
 		if (!oidcClient.isUserLoggedIn) {
 			oidcClient.login({

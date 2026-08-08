@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { OidcWrapper } from '$lib/oidc';
+	import { getOidc } from '$lib/oidc';
 	import { onMount } from 'svelte';
 
 	async function initializeOidc() {
-		const oidcPromise = OidcWrapper.getInstance().getOidcClient();
-		const oidc = await oidcPromise;
+		const oidc = await getOidc();
 		if (!oidc.isUserLoggedIn) {
 			oidc.login({
 				doesCurrentHrefRequiresAuth: false

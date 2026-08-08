@@ -1,34 +1,38 @@
-import { createOidc, type Oidc } from 'oidc-spa';
+import { createOidc, oidcEarlyInit, type Oidc } from 'oidc-spa/core';
 
-// `vite dev` talks to the Keycloak from docker-compose.yaml, every other build to production.
-// Override either one with VITE_OIDC_ISSUER_URI / VITE_OIDC_CLIENT_ID, see .env.example.
-const DEFAULT_ISSUER_URI = import.meta.env.DEV
-	? 'http://localhost:9090/realms/roomiefunds'
-	: 'https://auth.flur4.de/realms/flur4.de';
+// Must run before anything else inspects the URL, because oidc-spa picks the auth response out of it.
+// The oidc-spa Vite plugin would normally do this from a generated client entrypoint, but it resolves
+// that entrypoint from a root index.html which SvelteKit does not have. So we use the documented
+// "Manual - Easy" setup: https://docs.oidc-spa.dev/v/v10/integration-guides/usage
+oidcEarlyInit({ BASE_URL: import.meta.env.BASE_URL });
 
-const ISSUER_URI: string = import.meta.env.VITE_OIDC_ISSUER_URI ?? DEFAULT_ISSUER_URI;
-const CLIENT_ID: string = import.meta.env.VITE_OIDC_CLIENT_ID ?? 'roomiefunds-frontend';
+/** Mirrors OidcConfigurationDto served by the backend at GET /api/config/oidc. */
+type OidcConfiguration = {
+	issuerUri: string;
+	clientId: string;
+};
 
-export class OidcWrapper {
-	static instance: OidcWrapper;
-	oidcClient: Promise<Oidc.LoggedIn<Record<string, unknown>> | Oidc.NotLoggedIn>;
+/**
+ * The backend owns the OIDC parameters so one built bundle works in every environment.
+ * Uses plain fetch rather than the generated OpenAPI client: this runs before the client's bearer
+ * token interceptor is installed, and the endpoint needs no authentication anyway.
+ */
+async function fetchOidcConfiguration(): Promise<OidcConfiguration> {
+	const response = await fetch('/api/config/oidc');
 
-	private constructor() {
-		this.oidcClient = createOidc({
-			issuerUri: ISSUER_URI,
-			clientId: CLIENT_ID,
-			homeUrl: window.location.origin
-		});
+	if (!response.ok) {
+		throw new Error(
+			`Could not load the OIDC configuration from the backend: ${response.status} ${response.statusText}`
+		);
 	}
 
-	public static getInstance(): OidcWrapper {
-		if (this.instance === undefined || this.instance === null) {
-			this.instance = new OidcWrapper();
-		}
-		return this.instance;
-	}
+	return (await response.json()) as OidcConfiguration;
+}
 
-	async getOidcClient(): Promise<Promise<Oidc.LoggedIn<Record<string, unknown>> | Oidc.NotLoggedIn>> {
-		return this.oidcClient;
-	}
+const prOidc: Promise<Oidc> = fetchOidcConfiguration().then(({ issuerUri, clientId }) =>
+	createOidc({ issuerUri, clientId })
+);
+
+export async function getOidc(): Promise<Oidc> {
+	return prOidc;
 }

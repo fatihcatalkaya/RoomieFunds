@@ -42,6 +42,6 @@
 	"dependencies": {
 		"@hey-api/client-fetch": "^0.13.1",
 		"@tailwindcss/typography": "^0.5.16",
-		"oidc-spa": "^6.15.0"
+		"oidc-spa": "^10.2.11"
 	}
 }
