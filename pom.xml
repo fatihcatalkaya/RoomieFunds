@@ -6,24 +6,28 @@
     <version>1.0.17</version>
 
     <properties>
-        <compiler-plugin.version>3.14.0</compiler-plugin.version>
+        <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.20.2</quarkus.platform.version>
+        <!-- Pinned to 3.36.x: Quarkus 3.37.0 removed the deprecated
+             ReflectiveClassBuildItem(boolean, boolean, Class...) constructor that
+             io.quarkiverse.jooq:quarkus-jooq 2.1.0 (latest release) still calls,
+             which makes the augmentation step fail on 3.37+. -->
+        <quarkus.platform.version>3.36.3</quarkus.platform.version>
         <skipITs>true</skipITs>
-        <surefire-plugin.version>3.5.3</surefire-plugin.version>
-        <flywayMavenPlugin.version>11.10.4</flywayMavenPlugin.version>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
+        <flywayMavenPlugin.version>13.2.0</flywayMavenPlugin.version>
         <groovyMavenPluginVersion>2.1.1</groovyMavenPluginVersion>
         <buildHelperPlugin.version>3.6.1</buildHelperPlugin.version>
-        <jooq.version>3.20.4</jooq.version>
+        <jooq.version>3.21.7</jooq.version>
         <quarkus.jooq.version>2.1.0</quarkus.jooq.version>
-        <java-typst.version>1.4.0</java-typst.version>
-        <lombok.version>1.18.38</lombok.version>
-        <bouncycastle.version>1.81</bouncycastle.version>
-        <java-jwt.version>4.5.0</java-jwt.version>
+        <java-typst.version>2.2.0</java-typst.version>
+        <lombok.version>1.18.46</lombok.version>
+        <bouncycastle.version>1.85.2</bouncycastle.version>
+        <java-jwt.version>4.6.0</java-jwt.version>
         <javatuples.version>1.2</javatuples.version>
 
         <postgresContainerVersion>postgres:17.3-alpine</postgresContainerVersion>
@@ -257,7 +261,7 @@
                 </property>
             </activation>
             <properties>
-                <testcontainers.version>1.21.3</testcontainers.version>
+                <testcontainers.version>1.21.4</testcontainers.version>
             </properties>
             <build>
                 <plugins>
