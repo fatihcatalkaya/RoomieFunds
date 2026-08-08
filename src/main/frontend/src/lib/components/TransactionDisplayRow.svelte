@@ -17,6 +17,7 @@
 	import MdiClose from '~icons/mdi/close-bold';
 	import MdiDownload from '~icons/mdi/download';
 	import EuroInput from '$lib/components/EuroInput.svelte';
+	import { bookingFor, signedCentsFor } from '$lib/transactionAmount';
 	import ReceiptFileInput from '$lib/components/ReceiptFileInput.svelte';
 
 	let {
@@ -33,22 +34,23 @@
 		tryDeleteReceipt: () => void;
 	} = $props();
 
-	type BookDirection = 'decrease' | 'increase';
-
 	let editToggle = $state(false);
 
-	let direction: BookDirection = $state(
-		dto.transaction?.sourceAccountId! === account.id ? 'decrease' : 'increase'
-	);
 	let date: string = $state(dto.transaction?.valueDate!);
 	let description: string = $state(dto.transaction?.description!);
-	let amount: number | null = $state(dto.transaction?.amount ?? null);
 	let receiptFile: FileList | undefined = $state();
+
+	// The signed effect on the opened account, in cents — the same number the
+	// Betrag column shows, and the same number the user edits.
+	// svelte-ignore state_referenced_locally
+	let amount: number | null = $state(signedCentsFor(dto.transaction!, account.id!));
 
 	// a $derived(...) would make sense here but we can't bind to that. Value is manually set in allowEdit()
 	// svelte-ignore state_referenced_locally
 	let bookAccountId: number | undefined = $state(
-		direction === 'decrease' ? dto.transaction?.targetAccountId! : dto.transaction?.sourceAccountId!
+		dto.transaction?.sourceAccountId === account.id
+			? dto.transaction?.targetAccountId
+			: dto.transaction?.sourceAccountId
 	);
 
 	let accountList = $derived.by(async () => {
@@ -64,24 +66,14 @@
 		}
 	});
 
-	let doChangeAmountSign = $derived.by(() => {
-		console.log(dto.transaction?.sourceAccountActive, dto.transaction?.targetAccountActive);
-		if (dto.transaction?.sourceAccountActive! !== dto.transaction?.targetAccountActive!) {
-			return false;
-		} else {
-			return dto.transaction?.sourceAccountId === account.id;
-		}
-	});
-
 	async function allowEdit() {
-		direction = dto.transaction?.sourceAccountId! === account.id ? 'decrease' : 'increase';
 		date = dto.transaction?.valueDate!;
 		description = dto.transaction?.description!;
+		amount = signedCentsFor(dto.transaction!, account.id!);
 		bookAccountId =
-			direction === 'decrease'
-				? dto.transaction?.targetAccountId!
-				: dto.transaction?.sourceAccountId!;
-		amount = dto.transaction?.amount ?? null;
+			dto.transaction?.sourceAccountId === account.id
+				? dto.transaction?.targetAccountId
+				: dto.transaction?.sourceAccountId;
 
 		editToggle = true;
 	}
@@ -89,16 +81,19 @@
 	async function submitChange(event: SubmitEvent) {
 		event.preventDefault();
 
+		const counterAccount = (await accountList).find((entry) => entry.id === bookAccountId);
+		if (!counterAccount || amount == null || amount === 0) {
+			return;
+		}
+
 		const query = await patchApiTransactionByTransactionId({
 			path: {
 				transactionId: dto.transaction?.id!
 			},
 			body: {
-				valueDate: date,
+				valueDate: new Date(date!).toISOString().substring(0, 10),
 				description: description!,
-				amount: amount ?? 0,
-				sourceAccountId: direction === 'decrease' ? account.id! : bookAccountId!,
-				targetAccountId: direction === 'decrease' ? bookAccountId! : account.id!
+				...bookingFor(amount, account, counterAccount)
 			}
 		});
 
@@ -165,6 +160,7 @@
 </script>
 
 {#if !editToggle}
+	{@const signedAmount = signedCentsFor(dto.transaction!, account.id!)}
 	<tr>
 		<td>{formatIsoDate(dto.transaction?.valueDate)}</td>
 		<td>{dto.transaction?.description}</td>
@@ -203,19 +199,9 @@
 				<MdiClose class="text-error mx-auto" />
 			{/if}
 		</td>
-		{#if doChangeAmountSign && dto.transaction?.amount! > 0}
-			<td class="text-right font-semibold text-red-500"
-				>{formatEuroCents(dto.transaction?.amount! * -1)}</td
-			>
-		{:else if doChangeAmountSign && dto.transaction?.amount! < 0}
-			<td class="text-right">{formatEuroCents(dto.transaction?.amount! * -1)}</td>
-		{:else if dto.transaction?.amount! < 0}
-			<td class="text-right font-semibold text-red-500"
-				>{formatEuroCents(dto.transaction?.amount!)}</td
-			>
-		{:else}
-			<td class="text-right">{formatEuroCents(dto.transaction?.amount!)}</td>
-		{/if}
+		<td class="text-right {signedAmount < 0 ? 'font-semibold text-red-500' : ''}">
+			{formatEuroCents(signedAmount)}
+		</td>
 		{#if dto.saldo! >= 0}
 			<td class="text-right">{formatEuroCents(dto.saldo!)}</td>
 		{:else}
@@ -281,36 +267,10 @@
 				class="input min-w-20"
 				form="transaction-new-form-{dto.transaction?.id}"
 				bind:value={amount}
+				allowNegative
 			/>
 		</td>
-		<td>
-			<label>
-				<input
-					form="transaction-new-form-{dto.transaction?.id}"
-					type="radio"
-					class="radio"
-					bind:group={direction}
-					name="book-dir"
-					value="decrease"
-					defaultChecked
-					disabled={dto.transaction?.sourceAccountActive != dto.transaction?.targetAccountActive}
-				/>
-				Abnahme
-			</label>
-			<br />
-			<label>
-				<input
-					form="transaction-new-form-{dto.transaction?.id}"
-					type="radio"
-					class="radio"
-					bind:group={direction}
-					name="book-dir"
-					value="increase"
-					disabled={dto.transaction?.sourceAccountActive != dto.transaction?.targetAccountActive}
-				/>
-				Zunahme
-			</label>
-		</td>
+		<td></td>
 		<td>
 			<form
 				class="m-0 inline p-0"

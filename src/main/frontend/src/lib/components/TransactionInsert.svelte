@@ -3,13 +3,15 @@
 		getApiAccount,
 		getApiTransactionByTransactionIdReceipt,
 		postApiTransaction,
-		postApiTransactionByTransactionIdReceipt
+		postApiTransactionByTransactionIdReceipt,
+		type Account
 	} from '$lib/client';
 	import { error } from '@sveltejs/kit';
 	import { todayAsIsoDate } from '$lib/formatter';
 	import MdiChequebookRight from '~icons/mdi/chequebook-arrow-left';
 	import EuroInput from '$lib/components/EuroInput.svelte';
 	import ReceiptFileInput from '$lib/components/ReceiptFileInput.svelte';
+	import { bookingFor } from '$lib/transactionAmount';
 
 	const accountList = $derived.by(async () => {
 		const accountQuery = await getApiAccount();
@@ -21,38 +23,38 @@
 		}
 	});
 
-	type BookDirection = 'decrease' | 'increase';
 	type TransactionInsertProps = {
-		parentAccountId: number;
+		account: Account;
 		refreshTransactions: () => void;
 	};
 
-	let { parentAccountId, refreshTransactions }: TransactionInsertProps = $props();
+	let { account, refreshTransactions }: TransactionInsertProps = $props();
 
 	let date: string = $state(todayAsIsoDate());
 	let description: string = $state('');
 	let bookAccountId: number | undefined = $state();
 	let amount: number | null = $state(null);
-	let direction: BookDirection = $state('decrease');
 	let files: FileList | undefined = $state();
 
 	async function submitTransaction(event: SubmitEvent) {
 		event.preventDefault();
 
+		const counterAccount = (await accountList).find((entry) => entry.id === bookAccountId);
+		if (!counterAccount || amount == null || amount === 0) {
+			return;
+		}
+
 		const query = await postApiTransaction({
 			body: {
-				valueDate: date,
+				valueDate: new Date(date).toISOString().substring(0, 10),
 				description,
-				sourceAccountId: direction == 'decrease' ? parentAccountId : bookAccountId,
-				targetAccountId: direction == 'decrease' ? bookAccountId : parentAccountId,
-				amount: amount ?? 0
+				...bookingFor(amount, account, counterAccount)
 			}
 		});
 
 		if (query.error) {
 			console.error(error);
 		} else if (files && files.length > 0) {
-			console.log(files);
 			const receiptQuery = await postApiTransactionByTransactionIdReceipt({
 				path: {
 					transactionId: query.data?.id!
@@ -90,7 +92,7 @@
 				<option value="" disabled>Loading...</option>
 			{:then accountList}
 				{#each accountList as accountEntry}
-					{#if accountEntry.id !== parentAccountId}
+					{#if accountEntry.id !== account.id}
 						<option value={accountEntry.id}>{accountEntry.name}</option>
 					{/if}
 				{/each}
@@ -103,34 +105,14 @@
 		<ReceiptFileInput bind:files />
 	</td>
 	<td>
-		<EuroInput class="input min-w-20" form="transaction-new-form" bind:value={amount} />
+		<EuroInput
+			class="input min-w-20"
+			form="transaction-new-form"
+			bind:value={amount}
+			allowNegative
+		/>
 	</td>
-	<td>
-		<label>
-			<input
-				form="transaction-new-form"
-				type="radio"
-				class="radio"
-				bind:group={direction}
-				name="book-dir"
-				value="decrease"
-				defaultChecked
-			/>
-			Abnahme
-		</label>
-		<br />
-		<label>
-			<input
-				form="transaction-new-form"
-				type="radio"
-				class="radio"
-				bind:group={direction}
-				name="book-dir"
-				value="increase"
-			/>
-			Zunahme
-		</label>
-	</td>
+	<td></td>
 	<td>
 		<form id="transaction-new-form" onsubmit={submitTransaction}>
 			<button title="Buchen" class="btn btn-success m-0 h-8 w-17 p-0 text-lg"
