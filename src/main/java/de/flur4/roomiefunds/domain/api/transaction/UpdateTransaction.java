@@ -11,5 +11,5 @@ import java.io.IOException;
 public interface UpdateTransaction {
     Transaction updateTransaction(ModifyingPersonDto modifyingPerson, long transactionId, UpdateTransactionDto updateTransactionDto) throws TransactionNotFoundException, JsonProcessingException, IllegalArgumentException;
 
-    void setTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId, FileUpload fileUpload) throws TransactionNotFoundException, IOException;
+    void setTransactionReceipt(ModifyingPersonDto modifyingPerson, long transactionId, FileUpload fileUpload) throws TransactionNotFoundException, InvalidReceiptContentTypeException, IOException;
 }

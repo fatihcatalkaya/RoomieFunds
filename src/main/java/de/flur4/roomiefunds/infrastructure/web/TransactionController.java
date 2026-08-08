@@ -118,6 +118,8 @@ public class TransactionController {
             updateTransaction.setTransactionReceipt(modifyingPerson, transactionId, fileUpload);
         } catch (TransactionNotFoundException e) {
             throw new NotFoundException("Transaction with id " + transactionId + "not found");
+        } catch (InvalidReceiptContentTypeException e) {
+            throw new BadRequestException(e.getMessage());
         } catch (Exception e) {
             log.error("An error occurred while deleting transaction receipt", e);
             throw new InternalServerErrorException("An error occurred while deleting transaction receipt", e);

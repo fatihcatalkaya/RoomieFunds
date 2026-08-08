@@ -7,9 +7,8 @@
 	} from '$lib/client';
 	import { error } from '@sveltejs/kit';
 	import MdiChequebookRight from '~icons/mdi/chequebook-arrow-left';
-	import MdiUpload from '~icons/mdi/upload';
-	import MdiClose from '~icons/mdi/close-bold';
 	import EuroInput from '$lib/components/EuroInput.svelte';
+	import ReceiptFileInput from '$lib/components/ReceiptFileInput.svelte';
 
 	const accountList = $derived.by(async () => {
 		const accountQuery = await getApiAccount();
@@ -100,24 +99,7 @@
 		</select>
 	</td>
 	<td>
-		<label class="btn btn-primary h-8 w-8 p-0 text-lg">
-			<MdiUpload />
-			<input
-				type="file"
-				class="hidden"
-				bind:files
-				capture="environment"
-				multiple={false}
-				accept="image/*,pdf"
-			/>
-		</label>
-		<button
-			class="btn btn-error h-8 w-8 p-0 text-lg"
-			disabled={!(files && files.length > 0)}
-			onclick={() => (files = undefined)}
-		>
-			<MdiClose />
-		</button>
+		<ReceiptFileInput bind:files />
 	</td>
 	<td>
 		<EuroInput class="input min-w-20" form="transaction-new-form" bind:value={amount} />
