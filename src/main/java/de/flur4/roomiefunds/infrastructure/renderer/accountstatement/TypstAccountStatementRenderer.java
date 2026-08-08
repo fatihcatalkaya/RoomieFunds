@@ -48,15 +48,12 @@ public class TypstAccountStatementRenderer implements AccountStatementRenderer {
                 saldo += tx.amount();
             }
 
-            if(saldo < previousSaldo) {
-                if(!tx.targetAccountActive()) {
-                    sb.append('-');
-                }
-            } else {
-                sb.append('+');
-            }
+            // The sign shown is the direction this account's saldo moved, so the
+            // amount itself is printed without one — a stored amount may be
+            // negative for a booking between an Aktiv and a Passiv account.
+            sb.append(saldo < previousSaldo ? '-' : '+');
 
-            String amount = sb.append(formatCurrency(tx.amount())).toString();
+            String amount = sb.append(formatCurrency(Math.abs(tx.amount()))).toString();
             String resultingBalance = formatCurrency(saldo);
             printableTransactions.add(new PrintableTransaction(date, description, bookingTarget, amount, resultingBalance, saldo < 0));
             sb.setLength(0);

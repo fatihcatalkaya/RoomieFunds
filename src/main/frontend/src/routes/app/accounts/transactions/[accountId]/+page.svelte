@@ -188,7 +188,7 @@
 						{/each}
 					{/if}
 
-					<TransactionInsert parentAccountId={account.id!} {refreshTransactions} />
+					<TransactionInsert {account} {refreshTransactions} />
 				{/key}
 			</tbody>
 		</table>
