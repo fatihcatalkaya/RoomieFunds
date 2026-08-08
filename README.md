@@ -27,6 +27,20 @@ The realm also contains the realm role `roomiefunds-admin` (granted through the 
 by every REST endpoint), the group `floor-members`, and the user attributes `room` and `isCurrentTenant` used by the
 Keycloak sync service.
 
+### OIDC configuration for the frontend
+
+The SPA no longer bakes its OIDC settings into the bundle. It reads them at startup from
+`GET /api/config/oidc`, which the backend serves unauthenticated from these environment variables:
+
+| Environment variable       | Default (docker-compose)                   | Meaning                                  |
+|----------------------------|--------------------------------------------|------------------------------------------|
+| `OIDC_FRONTEND_ISSUER_URI` | `http://localhost:9090/realms/roomiefunds` | Issuer the browser authenticates against |
+| `OIDC_FRONTEND_CLIENT_ID`  | `roomiefunds-frontend`                     | Public OIDC client of the SPA            |
+
+These are separate from `quarkus.oidc.auth-server-url`, which is how the *backend* reaches Keycloak — in a deployment
+the backend may use an internal hostname the browser cannot resolve. Only values that are already public in the
+browser belong on this endpoint; never add a client secret to it.
+
 Keycloak keeps no data volume, so `docker compose down` discards any changes made in the admin console. To write them
 back into the realm file, stop the container first — the export cannot run while the server holds the lock on its
 embedded database:
