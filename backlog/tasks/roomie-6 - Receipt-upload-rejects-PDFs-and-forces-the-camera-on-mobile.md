@@ -1,11 +1,11 @@
 ---
 id: ROOMIE-6
 title: Receipt upload rejects PDFs and forces the camera on mobile
-status: In Progress
+status: Done
 assignee:
   - '@fatih'
 created_date: '2026-08-08 16:15'
-updated_date: '2026-08-08 16:27'
+updated_date: '2026-08-09 09:27'
 labels: []
 dependencies: []
 references:
@@ -15,7 +15,7 @@ references:
     src/main/java/de/flur4/roomiefunds/infrastructure/web/TransactionController.java
 priority: medium
 type: bug
-ordinal: 6000
+ordinal: 8000
 ---
 
 ## Description
