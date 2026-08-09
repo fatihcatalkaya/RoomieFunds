@@ -6,6 +6,7 @@
 	import MdiLiquor from '~icons/mdi/liquor';
 	import MdiBank from '~icons/mdi/bank';
 	import MdiCashClock from '~icons/mdi/cash-clock';
+	import MdiCashMultiple from '~icons/mdi/cash-multiple';
 	import MdiAccount from '~icons/mdi/account';
 	import MdiAccountGroup from '~icons/mdi/account-group';
 	import MdiHelp from '~icons/mdi/help';
@@ -29,6 +30,10 @@
 		<MainMenuButton redirectTo="/app/recurring-transactions">
 			<MdiCashClock class="text-4xl" />
 			Aufträge
+		</MainMenuButton>
+		<MainMenuButton redirectTo="/app/flurbeitrag">
+			<MdiCashMultiple class="text-4xl" />
+			Flurbeitrag
 		</MainMenuButton>
 		<MainMenuButton redirectTo="/app/products">
 			<MdiLiquor class="text-4xl" />
